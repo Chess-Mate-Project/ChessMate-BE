@@ -26,6 +26,10 @@ public class RedisService {
                 .set(key, value, expirationSeconds, TimeUnit.SECONDS);
     }
 
+    public void savePermanent(String key, Object value) {
+        redisTemplate.opsForValue().set(key, value);
+    }
+
     /**
      * Redis에서 꺼내올 때는 호출자가 원하는 타입으로 캐스팅합니다.
      *
