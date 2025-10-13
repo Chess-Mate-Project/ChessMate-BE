@@ -14,19 +14,29 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableAsync
 public class AsyncConfig {
 
-    @Bean(name = "taskExecutor")
+    @Bean(name = "InitStreaks")
     public Executor taskExcutor() {
         ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
         ex.setCorePoolSize(10);
         ex.setMaxPoolSize(20);
         ex.setQueueCapacity(500);
-        ex.setThreadNamePrefix("task-");
+        ex.setThreadNamePrefix("InitStreaks-");
         ex.setWaitForTasksToCompleteOnShutdown(true);
         ex.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         ex.setAwaitTerminationSeconds(180);
         ex.initialize();
         return ex;
+    }
 
+    @Bean(name = "defaultTask")
+    public Executor taskExecutor() {
+        ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
+        ex.setCorePoolSize(20);
+        ex.setMaxPoolSize(50);
+        ex.setQueueCapacity(2000);
+        ex.setThreadNamePrefix("defaultTask-");
+        ex.initialize();
+        return ex;
     }
 
     @Bean // @EnableScheduling 이 켜져 있으면 Spring 이 이 Bean 을 스케줄 트리거 풀로 사용
