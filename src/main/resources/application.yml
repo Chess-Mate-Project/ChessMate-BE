@@ -13,6 +13,7 @@ spring:
         games_key_base: "LICHESS_GAMES"
 
         play_count_base : "PLAY_COUNT"
+        game_summary_base : "GAME_SUMMARY"
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/chess_mate?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
