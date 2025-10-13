@@ -1,10 +1,7 @@
 package backend.chessmate.domain.user.controller;
 
 import backend.chessmate.domain.auth.config.UserPrincipal;
-import backend.chessmate.domain.user.dto.FirstMoveDto;
-import backend.chessmate.domain.user.dto.OpeningDto;
-import backend.chessmate.domain.user.dto.StreakDto;
-import backend.chessmate.domain.user.dto.UserPlayCountDto;
+import backend.chessmate.domain.user.dto.*;
 import backend.chessmate.domain.user.entity.FirstMove;
 import backend.chessmate.domain.user.entity.Opening;
 import backend.chessmate.domain.user.entity.Streak;
@@ -72,7 +69,7 @@ public class UserController {
     }
 
     @GetMapping("/count")
-    public ResponseEntity<SuccessResponse<Object>> getUserPlays(
+    public ResponseEntity<SuccessResponse<UserPlayCountDto>> getUserPlays(
             @AuthenticationPrincipal UserPrincipal u
     ) {
 
@@ -83,6 +80,17 @@ public class UserController {
         );
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<SuccessResponse<?>> getSummaryByGameType(
+            @AuthenticationPrincipal UserPrincipal u
+    ) {
+
+        GameSummaryDto response = userService.getGameSummary(u.getUser());
+
+        return ResponseEntity.ok(
+                new SuccessResponse<>("사용자 게임 타입별 통계 조회 성공", response)
+        );
+    }
 
 
 

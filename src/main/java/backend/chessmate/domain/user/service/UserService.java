@@ -2,10 +2,7 @@ package backend.chessmate.domain.user.service;
 
 
 import backend.chessmate.domain.auth.entity.User;
-import backend.chessmate.domain.user.dto.FirstMoveDto;
-import backend.chessmate.domain.user.dto.OpeningDto;
-import backend.chessmate.domain.user.dto.StreakDto;
-import backend.chessmate.domain.user.dto.UserPlayCountDto;
+import backend.chessmate.domain.user.dto.*;
 import backend.chessmate.domain.user.dto.api.UserAccount;
 import backend.chessmate.domain.user.dto.response.streak.UserStreak;
 import backend.chessmate.domain.user.dto.response.streak.UserStreaksResponse;
@@ -41,6 +38,9 @@ public class UserService {
 
     @Value("${spring.data.redis.key.play_count_base}")
     private String PLAY_COUNT_KEY;
+
+    @Value("${spring.data.redis.key.game_summary_base}")
+    private String GAME_SUMMARY_KEY;
 
     public List<StreakDto> getStreak(User u, int year) {
         List<Streak> streaks = streakRepository.findAllByUserAndYear(u, year);
@@ -79,7 +79,7 @@ public class UserService {
 
         UserAccount userAccount = lichessUtil.getUserAccount(oauthToken); // lichess api (account) 조회
 
-        var key = PLAY_COUNT_KEY + ":"; // 레디스 저장 및 조회용 playCount Key
+        var key = PLAY_COUNT_KEY + ":" + u.getId(); // 레디스 저장 및 조회용 playCount Key
 
         if (redisService.get(key, UserPlayCountDto.class) != null) { // 레디스에 playCount가 존재하면
             return redisService.get(key, UserPlayCountDto.class); // 바로 꺼내서 반환
@@ -92,6 +92,28 @@ public class UserService {
         );
         redisService.save(key, userPlayCountDto, 3600); // 1시간 레디스 저장 후
         return userPlayCountDto; // 반환
+
+    }
+
+    public GameSummaryDto getGameSummary(User u) {
+        String oauthKey = OAUTH_KEY + ":" + u.getId();
+        String oauthToken = redisService.get(oauthKey, String.class); // 유저 고유 lichess oauth api key
+
+        UserAccount userAccount = lichessUtil.getUserAccount(oauthToken); // lichess api (account) 조회
+
+        var key = GAME_SUMMARY_KEY + ":" + u.getId(); // 레디스 저장 및 조회용 playCount Key
+
+        if (redisService.get(key, GameSummaryDto.class) != null) { // 레디스에 playCount가 존재하면
+            return redisService.get(key, GameSummaryDto.class); // 바로 꺼내서 반환
+        }
+        GameSummaryDto gameSummaryDto = new GameSummaryDto( //존재하지 않으면 새로운 객체 생성
+                userAccount.getPerfs().getClassical().getGames(),
+                userAccount.getPerfs().getRapid().getGames(),
+                userAccount.getPerfs().getBullet().getGames(),
+                userAccount.getPerfs().getBlitz().getGames()
+        );
+        redisService.save(key, gameSummaryDto, 3600); // 1시간 레디스 저장 후
+        return gameSummaryDto; // 반환
 
     }
 
