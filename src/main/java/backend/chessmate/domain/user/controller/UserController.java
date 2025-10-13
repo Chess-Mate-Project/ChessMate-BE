@@ -4,6 +4,7 @@ import backend.chessmate.domain.auth.config.UserPrincipal;
 import backend.chessmate.domain.user.dto.FirstMoveDto;
 import backend.chessmate.domain.user.dto.OpeningDto;
 import backend.chessmate.domain.user.dto.StreakDto;
+import backend.chessmate.domain.user.dto.UserPlayCountDto;
 import backend.chessmate.domain.user.entity.FirstMove;
 import backend.chessmate.domain.user.entity.Opening;
 import backend.chessmate.domain.user.entity.Streak;
@@ -70,12 +71,21 @@ public class UserController {
         );
     }
 
-//    @GetMapping("/winrate")
-//    public ResponseEntity<SuccessResponse> getUserWinrate(@AuthenticationPrincipal UserPrincipal u) {
-//        return ResponseEntity.ok(
-//                new SuccessResponse<>("사용자 승률 조회 성공" , null)
-//        );
-//    }
+    @GetMapping("/count")
+    public ResponseEntity<SuccessResponse<Object>> getUserPlays(
+            @AuthenticationPrincipal UserPrincipal u
+    ) {
+
+        UserPlayCountDto response = userService.getPlayCount(u.getUser());
+
+        return ResponseEntity.ok(
+                new SuccessResponse<>("사용자 플레이 카운트 조회 성공", response)
+        );
+    }
+
+
+
+
 
 
 
