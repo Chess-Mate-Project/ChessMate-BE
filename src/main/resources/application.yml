@@ -11,6 +11,8 @@ spring:
         oauth_key_base: "LICHESS_OAUTH"
         perf_key_base: "LICHESS_PERF"
         games_key_base: "LICHESS_GAMES"
+
+        play_count_base : "PLAY_COUNT"
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/chess_mate?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
