@@ -1,4 +1,4 @@
-package backend.chessmate.global.common;
+package backend.chessmate.global.common.handler;
 
 
 import backend.chessmate.global.common.response.ErrorResponse;

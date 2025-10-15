@@ -3,8 +3,9 @@ package backend.chessmate.domain.user.service;
 import backend.chessmate.domain.auth.entity.User;
 import backend.chessmate.domain.auth.repository.UserRepository;
 import backend.chessmate.domain.user.utils.UserStatsDto;
+import backend.chessmate.global.common.code.UserErrorCode;
+import backend.chessmate.global.common.exception.UserException;
 import backend.chessmate.global.config.redis.RedisService;
-import backend.chessmate.domain.user.entity.Streak;
 import backend.chessmate.domain.user.repository.StreakRepository;
 import backend.chessmate.domain.user.utils.LichessUtil;
 import backend.chessmate.domain.user.utils.Status;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,19 +29,49 @@ public class StatService {
     private final StreakRepository streakRepository;
     private final EntityManager entityManager;
     private final LichessUtil lichessUtil;
-    private final UserRepository userRepository;
-    private final RedisService redisService;
 
+
+    @Async("InitStreaks")
+    @Transactional
+    public void asyncGames(User u) {
+        try {
+            Long lastMoveAt = streakRepository.findLastMoveAtByUser(u).orElse(null);
+            if (lastMoveAt == null) {
+                initGames(u);
+            } else {
+                upsertGames(u, lastMoveAt);
+            }
+        } catch(Exception e) {
+
+        }
+    }
+    /**
+     * writer 단계
+     * lichessUtils 에서 받아온 UserStatDto 정보를 전부 upsert
+     */
+    @Transactional
+    public void initGames(User u) {
+        UserStatsDto userStatsDto = lichessUtil.getUserGamesApi(u, 0L, System.currentTimeMillis());
+        bulkUpsertAll(u, userStatsDto);
+    }
 
     /**
      * writer 단계
-     * lichessUtils 에서 받아온 UserStatDto 정보를 전부 insert / upsert
+     * lichessUtils 에서 받아온 UserStatDto 정보를 전부 upsert
+     *
      */
-    @Async("InitStreaks")
     @Transactional
-    public void saveInitStreaks(User u) {
-        UserStatsDto userStatsDto = lichessUtil.initUserGameStreaks(u);
+    public void upsertGames(User u, Long lastMoveAt) {
+        UserStatsDto userStatsDto = lichessUtil.getUserGamesApi(u, lastMoveAt + 1,  System.currentTimeMillis());
+        bulkUpsertAll(u, userStatsDto);
 
+
+
+
+
+    }
+
+    private void bulkUpsertAll(User u, UserStatsDto userStatsDto) {
         var statusByDate = userStatsDto.getStatusByDate();
         var countByOpening = userStatsDto.getCountByOpening();
         var countByFirstMove = userStatsDto.getCountByFirstMove();
@@ -47,8 +79,6 @@ public class StatService {
         bulkUpsertStreaks(u, statusByDate);
         bulkUpsertOpenings(u, countByOpening);
         bulkUpsertFirstMove(u, countByFirstMove);
-
-
     }
 
     public void bulkUpsertStreaks(User u, Map<LocalDate, Status> streaks) {

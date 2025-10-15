@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface StreakRepository extends JpaRepository<Streak, StreakId> {
@@ -27,13 +28,25 @@ public interface StreakRepository extends JpaRepository<Streak, StreakId> {
             @Param("year") int year
     );
 
-    @Modifying
-    @Query(value = """
-INSERT INTO streak (user_id, date, total, win, lose, draw)
-VALUES (:userId, :date, :total, :win, :lose, :draw)X
-ON DUPLICATE KEY UPDATE
-total = :total, win = :win, lose = :lose, draw = :draw
-""", nativeQuery = true)
-    void upsertStreak(Long userId, LocalDate date, int total, int win, int lose, int draw);
+    @Query("""
+        SELECT s.lastMoveAt
+        FROM Streak s
+        WHERE s.user = :user 
+        ORDER BY s.lastMoveAt DESC
+        limit 1
+    """
+    )
+    Optional<Long> findLastMoveAtByUser(
+            @Param("user") User user
+    );
+
+//    @Modifying
+//    @Query(value = """
+//INSERT INTO streak (user_id, date, total, win, lose, draw)
+//VALUES (:userId, :date, :total, :win, :lose, :draw)X
+//ON DUPLICATE KEY UPDATE
+//total = :total, win = :win, lose = :lose, draw = :draw
+//""", nativeQuery = true)
+//    void upsertStreak(Long userId, LocalDate date, int total, int win, int lose, int draw);
 
 }
