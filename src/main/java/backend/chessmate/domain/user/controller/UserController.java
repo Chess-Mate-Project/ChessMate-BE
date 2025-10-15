@@ -2,17 +2,10 @@ package backend.chessmate.domain.user.controller;
 
 import backend.chessmate.domain.auth.config.UserPrincipal;
 import backend.chessmate.domain.user.dto.*;
-import backend.chessmate.domain.user.entity.FirstMove;
-import backend.chessmate.domain.user.entity.Opening;
-import backend.chessmate.domain.user.entity.Streak;
-import backend.chessmate.global.common.response.SuccessResponse;
-
-import backend.chessmate.domain.user.dto.response.streak.UserStreaksResponse;
-
 import backend.chessmate.domain.user.service.UserService;
+import backend.chessmate.global.common.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
