@@ -28,11 +28,11 @@ public interface FirstMoveRepository extends JpaRepository<FirstMove, FirstMoveI
             @Param("top") int top
     );
 
-    @Modifying
-    @Query(value = """
-    INSERT INTO first_move (user_id, first_move, count)
-    VALUES (:userId, :firstMove, 1)
-    ON DUPLICATE KEY UPDATE count = count + 1
-""", nativeQuery = true)
-    void upsertFirstMove(@Param("userId") Long userId, @Param("firstMove") String firstMove);
+//    @Modifying
+//    @Query(value = """
+//    INSERT INTO first_move (user_id, first_move, count)
+//    VALUES (:userId, :firstMove, 1)
+//    ON DUPLICATE KEY UPDATE count = count + 1
+//""", nativeQuery = true)
+//    void upsertFirstMove(@Param("userId") Long userId, @Param("firstMove") String firstMove);
 }
