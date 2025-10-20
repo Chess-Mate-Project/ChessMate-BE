@@ -86,7 +86,7 @@ public class AuthService {
         redisService.save(oauthKey, oauthToken, oauthTokenResponse.getExpiresIn());
         redisService.save(refreshKey, refreshToken, REFRESH_TOKEN_EXPIRATION);
 
-        statService.saveInitStreaks(newUser);
+        statService.initGames(newUser);
     }
 
     public void logout(User user, HttpServletResponse res) {
