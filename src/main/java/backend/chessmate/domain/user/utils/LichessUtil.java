@@ -110,7 +110,7 @@ public class LichessUtil {
     }
 
 
-    public UserStatsDto initUserGameStreaks(User u) {
+    public UserStatsDto getUserGamesApi(User u, Long since, Long until) {
 
         Map<LocalDate, Status> statusByDate = new HashMap<>();
         Map<String, Long> countByOpening = new HashMap<>();
@@ -132,7 +132,8 @@ public class LichessUtil {
         wc.get()
                 .uri(ub -> ub
                         .path("/api/games/user/{username}")
-                        .queryParam("since", 0L)
+                        .queryParam("since", since)
+                        .queryParam("until", until)
                         .queryParam("opening", "true")
                         .queryParam("moves", "true")
                         .queryParam("perfType", "bullet,blitz,rapid,classical")

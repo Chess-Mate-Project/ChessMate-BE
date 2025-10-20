@@ -26,11 +26,11 @@ public interface OpeningRepository extends JpaRepository<Opening, OpeningId> {
             @Param("user") User user,
             @Param("top") int top
     );
-    @Modifying
-    @Query(value = """
-    INSERT INTO opening (user_id, opening, count)
-    VALUES (:userId, :opening, 1)
-    ON DUPLICATE KEY UPDATE count = count + 1
-""", nativeQuery = true)
-    void upsertOpening(@Param("userId") Long userId, @Param("opening") String opening);
+//    @Modifying
+//    @Query(value = """
+//    INSERT INTO opening (user_id, opening, count)
+//    VALUES (:userId, :opening, 1)
+//    ON DUPLICATE KEY UPDATE count = count + 1
+//""", nativeQuery = true)
+//    void upsertOpening(@Param("userId") Long userId, @Param("opening") String opening);
 }
