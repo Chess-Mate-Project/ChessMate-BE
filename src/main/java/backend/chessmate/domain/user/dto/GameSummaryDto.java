@@ -1,12 +1,12 @@
 package backend.chessmate.domain.user.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
+@Builder
 public class GameSummaryDto {
     private int classical;
     private int rapid;

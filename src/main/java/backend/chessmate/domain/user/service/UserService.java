@@ -2,18 +2,20 @@ package backend.chessmate.domain.user.service;
 
 
 import backend.chessmate.domain.auth.entity.User;
+import backend.chessmate.domain.auth.repository.UserRepository;
 import backend.chessmate.domain.user.dto.*;
-import backend.chessmate.domain.user.dto.api.UserAccount;
-import backend.chessmate.domain.user.dto.response.streak.UserStreak;
-import backend.chessmate.domain.user.dto.response.streak.UserStreaksResponse;
 import backend.chessmate.domain.user.entity.FirstMove;
 import backend.chessmate.domain.user.entity.Opening;
 import backend.chessmate.domain.user.entity.Streak;
+import backend.chessmate.domain.user.entity.type.GameType;
 import backend.chessmate.domain.user.repository.FirstMoveRepository;
 import backend.chessmate.domain.user.repository.OpeningRepository;
 import backend.chessmate.domain.user.repository.StreakRepository;
+import backend.chessmate.domain.user.utils.JsonNodeUtil;
 import backend.chessmate.domain.user.utils.LichessUtil;
+import backend.chessmate.domain.user.utils.TierUtil;
 import backend.chessmate.global.config.redis.RedisService;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +31,7 @@ public class UserService {
     private final StreakRepository streakRepository;
     private final OpeningRepository openingRepository;
     private final FirstMoveRepository firstMoveRepository;
+    private final UserRepository userRepository;
     private final RedisService redisService;
     private final LichessUtil lichessUtil;
 
@@ -41,6 +44,12 @@ public class UserService {
 
     @Value("${spring.data.redis.key.game_summary_base}")
     private String GAME_SUMMARY_KEY;
+
+    @Value("${spring.data.redis.key.user_profile_base}")
+    private String USER_PROFILE_KEY;
+
+    @Value("${spring.data.redis.key.user_tiers_base}")
+    private String USER_TIERS_KEY;
 
     public List<StreakDto> getStreak(User u, int year) {
         List<Streak> streaks = streakRepository.findAllByUserAndYear(u, year);
@@ -77,19 +86,14 @@ public class UserService {
         String oauthKey = OAUTH_KEY + ":" + u.getId();
         String oauthToken = redisService.get(oauthKey, String.class); // 유저 고유 lichess oauth api key
 
-        UserAccount userAccount = lichessUtil.getUserAccount(oauthToken); // lichess api (account) 조회
-
         var key = PLAY_COUNT_KEY + ":" + u.getId(); // 레디스 저장 및 조회용 playCount Key
 
         if (redisService.get(key, UserPlayCountDto.class) != null) { // 레디스에 playCount가 존재하면
             return redisService.get(key, UserPlayCountDto.class); // 바로 꺼내서 반환
         }
-        UserPlayCountDto userPlayCountDto = new UserPlayCountDto( //존재하지 않으면 새로운 객체 생성
-                userAccount.getCount().getAll(),
-                userAccount.getCount().getWin(),
-                userAccount.getCount().getDraw(),
-                userAccount.getCount().getLoss()
-        );
+
+        JsonNode userAccount = lichessUtil.getUserAccount(oauthToken);
+        UserPlayCountDto userPlayCountDto = JsonNodeUtil.mapToUserPlayCountDto(userAccount);  // lichess api (account) 조회
         redisService.save(key, userPlayCountDto, 3600); // 1시간 레디스 저장 후
         return userPlayCountDto; // 반환
 
@@ -99,22 +103,79 @@ public class UserService {
         String oauthKey = OAUTH_KEY + ":" + u.getId();
         String oauthToken = redisService.get(oauthKey, String.class); // 유저 고유 lichess oauth api key
 
-        UserAccount userAccount = lichessUtil.getUserAccount(oauthToken); // lichess api (account) 조회
 
         var key = GAME_SUMMARY_KEY + ":" + u.getId(); // 레디스 저장 및 조회용 playCount Key
 
         if (redisService.get(key, GameSummaryDto.class) != null) { // 레디스에 playCount가 존재하면
             return redisService.get(key, GameSummaryDto.class); // 바로 꺼내서 반환
         }
-        GameSummaryDto gameSummaryDto = new GameSummaryDto( //존재하지 않으면 새로운 객체 생성
-                userAccount.getPerfs().getClassical().getGames(),
-                userAccount.getPerfs().getRapid().getGames(),
-                userAccount.getPerfs().getBullet().getGames(),
-                userAccount.getPerfs().getBlitz().getGames()
-        );
+
+        JsonNode userAccount = lichessUtil.getUserAccount(oauthToken);
+        GameSummaryDto gameSummaryDto = JsonNodeUtil.mapToGameSummaryDto(userAccount); // lichess api (account) 조회
         redisService.save(key, gameSummaryDto, 3600); // 1시간 레디스 저장 후
         return gameSummaryDto; // 반환
 
+    }
+
+    public TierInfoDto getTierInfo(User u) {
+        String oauthKey = OAUTH_KEY + ":" + u.getId();
+        String oauthToken = redisService.get(oauthKey, String.class); // 유저 고유 lichess oauth api key
+
+
+        var key = USER_TIERS_KEY + ":" + u.getId(); // 레디스 저장 및 조회용 playCount Key
+
+        if (redisService.get(key, TierInfoDto.class) != null) { // 레디스에 playCount가 존재하면
+            return redisService.get(key, TierInfoDto.class); // 바로 꺼내서 반환
+        }
+
+        JsonNode userAccount = lichessUtil.getUserAccount(oauthToken);
+        UserRatingByGameTypesMapper mapper = JsonNodeUtil.mapToUserRatingByGameTypesDto(userAccount); // lichess api (account) 조회
+
+        TierInfoDto tierinfoDto = TierInfoDto.builder()
+                .classical(TierUtil.calculateTier(mapper.getClassicalRating()))
+                .rapid(TierUtil.calculateTier(mapper.getRapidRating()))
+                .bullet(TierUtil.calculateTier(mapper.getBulletRating()))
+                .blitz(TierUtil.calculateTier(mapper.getBlitzRating()))
+                .build();
+
+
+        redisService.save(key, tierinfoDto, 3600); // 1시간 레디스 저장 후
+        return tierinfoDto; // 반환
+    }
+
+    public UserProfileDto getUserProfile(User u) {
+        String oauthKey = OAUTH_KEY + ":" + u.getId();
+        String oauthToken = redisService.get(oauthKey, String.class);
+
+        var key = USER_PROFILE_KEY + ":" + u.getId();
+
+
+        if (redisService.get(key, UserProfileMapper.class) != null) {
+            UserProfileMapper userProfileMapper = redisService.get(key, UserProfileMapper.class);
+
+            return UserProfileDto.builder()
+                    .name(u.getName())
+                    .createAt(u.getCreatedAt())
+                    .bio(userProfileMapper.getBio())
+                    .flag(userProfileMapper.getFlag())
+                    .link(userProfileMapper.getLink())
+                    .playTime(userProfileMapper.getPlayTime())
+                    .build();
+        }
+
+        JsonNode userAccount = lichessUtil.getUserAccount(oauthToken);
+        UserProfileMapper userProfileMapper = JsonNodeUtil.mapToUserProfileDto(userAccount);
+
+        redisService.save(key, userProfileMapper, 3600);
+
+
+        return UserProfileDto.builder()
+                .name(u.getName())
+                .createAt(u.getCreatedAt())
+                .bio(userProfileMapper.getBio())
+                .flag(userProfileMapper.getFlag())
+                .playTime(userProfileMapper.getPlayTime())
+                .build();
     }
 
 }

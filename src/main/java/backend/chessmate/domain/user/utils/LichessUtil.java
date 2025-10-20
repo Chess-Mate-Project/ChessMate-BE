@@ -3,7 +3,6 @@ package backend.chessmate.domain.user.utils;
 import backend.chessmate.domain.auth.dto.request.OAuthValueRequest;
 import backend.chessmate.domain.auth.dto.response.OAuthAccessTokenResponse;
 
-import backend.chessmate.domain.user.dto.api.UserAccount;
 import backend.chessmate.domain.auth.entity.User;
 
 import backend.chessmate.global.common.code.ApiErrorCode;
@@ -93,7 +92,7 @@ public class LichessUtil {
     }
 
 
-    public UserAccount getUserAccount(String token) {
+    public JsonNode getUserAccount(String token) {
 
         WebClient webClient = WebClient.builder()
                 .baseUrl(BASE_URL)
@@ -103,7 +102,7 @@ public class LichessUtil {
                 .uri("/api/account")
                 .headers(headers -> headers.setBearerAuth(token))
                 .retrieve()
-                .bodyToMono(UserAccount.class)
+                .bodyToMono(JsonNode.class)
                 .doOnError(e -> {
                     throw new UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT);
                 }).block();
