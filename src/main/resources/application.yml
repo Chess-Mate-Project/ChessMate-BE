@@ -14,6 +14,9 @@ spring:
 
         play_count_base : "PLAY_COUNT"
         game_summary_base : "GAME_SUMMARY"
+        user_profile_base : "USER_PROFILE"
+        user_tiers_base : "USER_TIERS"
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/chess_mate?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true

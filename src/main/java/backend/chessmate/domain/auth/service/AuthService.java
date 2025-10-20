@@ -7,10 +7,12 @@ import backend.chessmate.domain.auth.dto.response.OAuthAccessTokenResponse;
 import backend.chessmate.domain.auth.entity.Role;
 import backend.chessmate.domain.auth.entity.User;
 import backend.chessmate.domain.auth.repository.UserRepository;
+import backend.chessmate.domain.user.dto.UserBasicMapper;
 import backend.chessmate.domain.user.service.StatService;
+import backend.chessmate.domain.user.utils.JsonNodeUtil;
 import backend.chessmate.global.config.redis.RedisService;
-import backend.chessmate.domain.user.dto.api.UserAccount;
 import backend.chessmate.domain.user.utils.LichessUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,12 +50,14 @@ public class AuthService {
 
 
         //우선 UserAccount 호출 후 LichessId로 레디스 키 구성
-        UserAccount userAccount = lichessutil.getUserAccount(oauthToken);
 
-        Optional<User> userOptional = userRepository.findByLichessId(userAccount.getId());
+        JsonNode userAccount = lichessutil.getUserAccount(oauthToken);
+        UserBasicMapper userBasicInfo = JsonNodeUtil.mapToUserBasicInfo(userAccount);
+
+        Optional<User> userOptional = userRepository.findByLichessId(userBasicInfo.getLichessId());
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            log.info("이미 존재하는 사용자입니다. Lichess ID: {}", userAccount.getId());
+            log.info("이미 존재하는 사용자입니다. Lichess ID: {}", userBasicInfo.getLichessId());
             String accessToken = jwtService.generateAccessToken(res, user);
             String refreshToken = jwtService.generateRefreshToken(res, user);
             String oauthKey = REDIS_OAUTH_KEY + ":" + user.getId();
@@ -65,8 +69,9 @@ public class AuthService {
         }
 
         User newUser = User.builder()
-                .lichessId(userAccount.getId())
-                .name(userAccount.getUsername())
+                .lichessId(userBasicInfo.getLichessId())
+                .name(userBasicInfo.getName())
+                .createdAt(userBasicInfo.getCreatedAt())
                 .role(Role.USER)
                 .build();
         userRepository.save(newUser);

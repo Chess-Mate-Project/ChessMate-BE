@@ -4,6 +4,7 @@ import backend.chessmate.domain.user.entity.type.BannerType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -26,11 +27,8 @@ public class User {
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @Column(name = "intro")
-    private String intro;
-
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -39,15 +37,11 @@ public class User {
     @Column(nullable = false)
     private Long lastSyncedAt; //update 전용 동기화 시간
 
-    @Column(nullable = false)
-    private Long lastStreakSyncedAt; //streak 전용 동기화 시간
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
         this.role = Role.USER; // 기본 역할은 USER로 설정
         this.lastSyncedAt =  System.currentTimeMillis();
-        this.lastStreakSyncedAt =  System.currentTimeMillis();
     }
 
 

@@ -2,6 +2,7 @@ package backend.chessmate.domain.user.controller;
 
 import backend.chessmate.domain.auth.config.UserPrincipal;
 import backend.chessmate.domain.user.dto.*;
+import backend.chessmate.domain.user.entity.type.GameType;
 import backend.chessmate.domain.user.service.UserService;
 import backend.chessmate.global.common.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +75,7 @@ public class UserController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<SuccessResponse<?>> getSummaryByGameType(
+    public ResponseEntity<SuccessResponse<GameSummaryDto>> getSummaryByGameType(
             @AuthenticationPrincipal UserPrincipal u
     ) {
 
@@ -85,14 +86,29 @@ public class UserController {
         );
     }
 
+    @GetMapping("/tier")
+    public ResponseEntity<SuccessResponse<TierInfoDto>> getTierInfo(
+            @AuthenticationPrincipal UserPrincipal u
+    ) {
 
+        TierInfoDto response = userService.getTierInfo(u.getUser());
 
+        return ResponseEntity.ok(
+                new SuccessResponse<>("사용자 티어 정보 조회 성공", response)
+        );
+    }
 
+    @GetMapping("/profile")
+    public ResponseEntity<SuccessResponse<UserProfileDto>> getUserProfile(
+            @AuthenticationPrincipal UserPrincipal u
+    ) {
 
+        UserProfileDto response = userService.getUserProfile(u.getUser());
 
-
-
-
+        return ResponseEntity.ok(
+                new SuccessResponse<>("사용자 정보 조회 성공", response)
+        );
+    }
 
 
 
