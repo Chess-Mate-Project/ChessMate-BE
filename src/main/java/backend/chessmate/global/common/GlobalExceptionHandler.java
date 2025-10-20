@@ -15,6 +15,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
         ex.printStackTrace();  // 로그 남기기
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("서버 에러 발생" + ex.getMessage()));
+                .body(new ErrorResponse(null, "서버 에러 발생" + ex.getMessage()));
     }
 }

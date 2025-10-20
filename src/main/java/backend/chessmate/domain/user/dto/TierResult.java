@@ -1,4 +1,4 @@
-package backend.chessmate.domain.user.dto.response.tier;
+package backend.chessmate.domain.user.dto;
 
 import backend.chessmate.domain.user.entity.type.SubTierType;
 import backend.chessmate.domain.user.entity.type.TierType;

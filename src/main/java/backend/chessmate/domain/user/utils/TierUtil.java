@@ -1,6 +1,6 @@
 package backend.chessmate.domain.user.utils;
 
-import backend.chessmate.domain.user.dto.response.tier.TierResult;
+import backend.chessmate.domain.user.dto.TierResult;
 import backend.chessmate.domain.user.entity.type.SubTierType;
 import backend.chessmate.domain.user.entity.type.TierType;
 import org.springframework.stereotype.Component;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TierUtil {
 
-    public TierResult calculateTier(int rating) {
+    public static TierResult calculateTier(int rating) {
         if (rating < 400) {
             return new TierResult(TierType.UNRATED, SubTierType.UNRATED, rating);
         }
@@ -28,7 +28,7 @@ public class TierUtil {
         }
     }
 
-    public SubTierType getSubTier(int rating, int min, int max) {
+    public static SubTierType getSubTier(int rating, int min, int max) {
         int range = max - min + 1;
         int step = range / 5;
 
