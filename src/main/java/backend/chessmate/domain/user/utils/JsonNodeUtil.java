@@ -1,9 +1,13 @@
 package backend.chessmate.domain.user.utils;
 
 import backend.chessmate.domain.user.dto.*;
+import backend.chessmate.domain.user.dto.history.TierPointDto;
+import backend.chessmate.domain.user.dto.history.UserTierHistoryDto;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.time.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JsonNodeUtil {
 
@@ -24,8 +28,8 @@ public class JsonNodeUtil {
     }
 
     public static UserPlayCountDto mapToUserPlayCountDto(JsonNode jsonNode) {
-        int all  = jsonNode.path("count").path("all").asInt(0);
-        int win  = jsonNode.path("count").path("win").asInt(0);
+        int all = jsonNode.path("count").path("all").asInt(0);
+        int win = jsonNode.path("count").path("win").asInt(0);
         int lose = jsonNode.path("count").path("loss").asInt(0);
         int draw = jsonNode.path("count").path("draw").asInt(0);
 
@@ -39,9 +43,9 @@ public class JsonNodeUtil {
 
     public static GameSummaryDto mapToGameSummaryDto(JsonNode jsonNode) {
         int classical = jsonNode.path("perfs").path("classical").path("games").asInt(0);
-        int rapid     = jsonNode.path("perfs").path("rapid").path("games").asInt(0);
-        int bullet    = jsonNode.path("perfs").path("bullet").path("games").asInt(0);
-        int blitz     = jsonNode.path("perfs").path("blitz").path("games").asInt(0);
+        int rapid = jsonNode.path("perfs").path("rapid").path("games").asInt(0);
+        int bullet = jsonNode.path("perfs").path("bullet").path("games").asInt(0);
+        int blitz = jsonNode.path("perfs").path("blitz").path("games").asInt(0);
 
         return GameSummaryDto.builder()
                 .classical(classical)
@@ -68,9 +72,9 @@ public class JsonNodeUtil {
 
     public static UserRatingByGameTypesMapper mapToUserRatingByGameTypesDto(JsonNode jsonNode) {
         int classical = jsonNode.path("perfs").path("classical").path("rating").asInt(0);
-        int rapid     = jsonNode.path("perfs").path("rapid").path("rating").asInt(0);
-        int bullet    = jsonNode.path("perfs").path("bullet").path("rating").asInt(0);
-        int blitz     = jsonNode.path("perfs").path("blitz").path("rating").asInt(0);
+        int rapid = jsonNode.path("perfs").path("rapid").path("rating").asInt(0);
+        int bullet = jsonNode.path("perfs").path("bullet").path("rating").asInt(0);
+        int blitz = jsonNode.path("perfs").path("blitz").path("rating").asInt(0);
 
         return UserRatingByGameTypesMapper.builder()
                 .classicalRating(classical)
@@ -78,5 +82,33 @@ public class JsonNodeUtil {
                 .bulletRating(bullet)
                 .blitzRating(blitz)
                 .build();
+    }
+
+    public static List<TierPointDto> mapToUserRatingHistoryByTierHistoryDto(JsonNode jsonNode, String name) {
+
+        for (JsonNode type : jsonNode) {
+            if (type.get("name").asText().equals(name)) {
+                List<TierPointDto> points = new ArrayList<>();
+
+                for (JsonNode pointNode : type.path("points")) {
+                    int year = pointNode.get(0).asInt();
+                    int month = pointNode.get(1).asInt() + 1;
+                    int day = pointNode.get(2).asInt();
+                    int rating = pointNode.get(3).asInt();
+
+                    LocalDate date = LocalDate.of(year, month, day);
+                    TierResult tierResult = TierUtil.calculateTier(rating);
+
+                    TierPointDto tierPointDto = TierPointDto.builder()
+                            .date(date)
+                            .tier(tierResult)
+                            .build();
+
+                    points.add(tierPointDto);
+                }
+                return points;
+            }
+        }
+        return List.of(); // 빈 리스트 반환
     }
 }

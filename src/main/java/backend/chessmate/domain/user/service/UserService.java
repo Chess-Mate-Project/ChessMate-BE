@@ -4,6 +4,7 @@ package backend.chessmate.domain.user.service;
 import backend.chessmate.domain.auth.entity.User;
 import backend.chessmate.domain.auth.repository.UserRepository;
 import backend.chessmate.domain.user.dto.*;
+import backend.chessmate.domain.user.dto.history.UserTierHistoryDto;
 import backend.chessmate.domain.user.entity.FirstMove;
 import backend.chessmate.domain.user.entity.Opening;
 import backend.chessmate.domain.user.entity.Streak;
@@ -50,6 +51,9 @@ public class UserService {
 
     @Value("${spring.data.redis.key.user_tiers_base}")
     private String USER_TIERS_KEY;
+
+    @Value("${spring.data.redis.key.user_tier_history_base}")
+    private String USER_TIER_HISTORY_KEY;
 
     public List<StreakDto> getStreak(User u, int year) {
         List<Streak> streaks = streakRepository.findAllByUserAndYear(u, year);
@@ -176,6 +180,29 @@ public class UserService {
                 .flag(userProfileMapper.getFlag())
                 .playTime(userProfileMapper.getPlayTime())
                 .build();
+    }
+
+    public UserTierHistoryDto getUserRatingHistory(User u) {
+
+        JsonNode userRatingHistory = lichessUtil.getUserRatingHistoryApi(u);
+
+
+        var key = USER_TIER_HISTORY_KEY + ":" + u.getId();
+
+        if (redisService.get(key, UserTierHistoryDto.class) != null) {
+            return redisService.get(key, UserTierHistoryDto.class);
+        }
+
+        UserTierHistoryDto userTierHistoryDto = UserTierHistoryDto.builder()
+                .blitzHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Blitz"))
+                .bulletHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Bullet"))
+                .classicalHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Classical"))
+                .rapidHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Rapid"))
+                .build();
+
+        redisService.save(key, userTierHistoryDto, 604800); // 일주일
+
+        return userTierHistoryDto;
     }
 
 }

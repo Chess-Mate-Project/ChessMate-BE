@@ -16,6 +16,7 @@ spring:
         game_summary_base : "GAME_SUMMARY"
         user_profile_base : "USER_PROFILE"
         user_tiers_base : "USER_TIERS"
+        user_tier_history_base : "USER_TIER_HISTORY"
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
