@@ -225,9 +225,21 @@ public class LichessUtil {
 
             countByOpening.merge(o, 1L, Long::sum);
 
-            String fm = node.at("/moves").asText("Unknown");
-            if (!fm.equals("Unknown") && !fm.isEmpty()) {
-                fm = fm.split(" ")[0];
+            String movesStr = node.at("/moves").asText("");
+            String[] moves = movesStr.split(" ");
+
+            String myColor = null;
+            String whiteName = node.at("/players/white/user/name").asText("");
+            String blackName = node.at("/players/black/user/name").asText("");
+
+            if (u.getName().equals(whiteName)) myColor = "white";
+            else if (u.getName().equals(blackName)) myColor = "black";
+
+            String fm = "Unknown";
+            if (moves.length > 0) {
+                fm = "white".equals(myColor)
+                        ? moves[0]                             // 내가 백일 때: 첫 수
+                        : (moves.length > 1 ? moves[1] : "Unknown"); // 내가 흑일 때: 두 번째 수 (내 응수)
             }
 
             countByFirstMove.merge(fm, 1L, Long::sum);
@@ -240,39 +252,7 @@ public class LichessUtil {
 
     }
 
-//    public Map<LocalDate, Status> updateUserGameStreaks(User u, long since, long until) {
-//
-//        String oauthKey = OAUTH_KEY + ":" + u.getId();
-//        String oauthToken = redisService.get(oauthKey, String.class);
-//
-//        WebClient wc = WebClient.builder()
-//                .baseUrl(BASE_URL)
-//                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + oauthToken)
-//                .defaultHeader(HttpHeaders.ACCEPT, "application/x-ndjson")
-//                .build();
-//
-//        List<String> lines = wc.get()
-//                .uri(ub -> ub
-//                        .path("/api/games/user/{username}")
-//                        .queryParam("since", since)
-//                        .queryParam("until", until)
-//                        .queryParam("opening", "true")
-//                        .queryParam("perfType", "bullet,blitz,rapid,classical")
-//                        .build("chansoo1123"))//u.getName();
-//                .retrieve()
-//                .bodyToFlux(String.class)
-//                .retryWhen(Retry.backoff(5, Duration.ofSeconds(2)))
-//                .collectList()
-//                .block();
-//
-//        if (lines != null) {
-//            for (String line : lines) {
-//                aggregateLine(statusByDate, line, u);
-//            }
-//        }
-//
-//        return statusByDate;
-//    }
+
 
 
 }
