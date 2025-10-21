@@ -219,9 +219,6 @@ public class LichessUtil {
                     .add(win, lose, draw, lastMoveAt);
 
             String o = node.at("/opening/name").asText("Unknown");
-            if (!o.equals("Unknown") && o.contains(":")) {
-                o = StringUtils.substringBefore(o, ":"); // 오프닝 필드 형식 ~~: ~~ 예) Vienna Game: Stanley Variation, Three Knights Variation 여기서 앞부분만 가져오기
-            }
 
             countByOpening.merge(o, 1L, Long::sum);
 
