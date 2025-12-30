@@ -137,7 +137,7 @@ public class LichessUtil {
                         .queryParam("opening", "true")
                         .queryParam("moves", "true")
                         .queryParam("perfType", "bullet,blitz,rapid,classical")
-                        .build("chansoo1123")) // 임시로 데이터 많은 유저로 설정 //u.getName();
+                        .build("teem1")) // 임시로 데이터 많은 유저로 설정 //u.getName();
                 .retrieve()
                 .onStatus(s -> s.is4xxClientError(), res -> { // 에러 제어하기
                     if (res.statusCode().value() == 429) { // api limit (api 호출 제한)
@@ -275,6 +275,8 @@ public class LichessUtil {
                     throw new UserException(UserErrorCode.FAILD_GET_USER_RATING_HISTORY);
                 }).block();
     }
+
+
 
 
 

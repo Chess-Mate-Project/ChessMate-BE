@@ -5,6 +5,8 @@ import backend.chessmate.domain.auth.entity.User;
 import backend.chessmate.domain.auth.repository.UserRepository;
 import backend.chessmate.domain.user.dto.*;
 import backend.chessmate.domain.user.dto.history.UserTierHistoryDto;
+import backend.chessmate.domain.user.dto.mapper.UserProfileMapper;
+import backend.chessmate.domain.user.dto.mapper.UserRatingHistoryMapper;
 import backend.chessmate.domain.user.entity.FirstMove;
 import backend.chessmate.domain.user.entity.Opening;
 import backend.chessmate.domain.user.entity.Streak;
@@ -52,8 +54,8 @@ public class UserService {
     @Value("${spring.data.redis.key.user_tiers_base}")
     private String USER_TIERS_KEY;
 
-    @Value("${spring.data.redis.key.user_tier_history_base}")
-    private String USER_TIER_HISTORY_KEY;
+    @Value("${spring.data.redis.key.user_rating_history_base}")
+    private String USER_RATING_HISTORY_KEY;
 
     public List<StreakDto> getStreak(User u, int year) {
         List<Streak> streaks = streakRepository.findAllByUserAndYear(u, year);
@@ -182,25 +184,34 @@ public class UserService {
                 .build();
     }
 
-    public UserTierHistoryDto getUserRatingHistory(User u) {
+    public UserTierHistoryDto getUserRatingHistory(User u, GameType gameType) {
+        var key = USER_RATING_HISTORY_KEY + ":" + u.getId();
 
-        JsonNode userRatingHistory = lichessUtil.getUserRatingHistoryApi(u);
-
-
-        var key = USER_TIER_HISTORY_KEY + ":" + u.getId();
-
-        if (redisService.get(key, UserTierHistoryDto.class) != null) {
-            return redisService.get(key, UserTierHistoryDto.class);
+        UserRatingHistoryMapper mapper = null;
+        if (redisService.get(key, UserRatingHistoryMapper.class) != null) {
+            mapper = redisService.get(key, UserRatingHistoryMapper.class);
+        } else  {
+            JsonNode jsonNode = lichessUtil.getUserRatingHistoryApi(u);
+            mapper = JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(jsonNode);
+            redisService.save(key, mapper, 604800); // 일주일
         }
 
+        if (mapper == null) {
+            throw new RuntimeException("사용자 티어 변동 이력 조회 중 오류 발생 mapper = null");
+        }
+
+
         UserTierHistoryDto userTierHistoryDto = UserTierHistoryDto.builder()
-                .blitzHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Blitz"))
-                .bulletHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Bullet"))
-                .classicalHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Classical"))
-                .rapidHistory(JsonNodeUtil.mapToUserRatingHistoryByTierHistoryDto(userRatingHistory, "Rapid"))
+                .gameType(gameType)
                 .build();
 
-        redisService.save(key, userTierHistoryDto, 604800); // 일주일
+        switch (gameType) {
+            case BULLET -> userTierHistoryDto.setHistory(mapper.getBulletHistory());
+            case BLITZ -> userTierHistoryDto.setHistory(mapper.getBlitzHistory());
+            case RAPID -> userTierHistoryDto.setHistory(mapper.getRapidHistory());
+            case CLASSICAL -> userTierHistoryDto.setHistory(mapper.getClassicalHistory());
+        }
+
 
         return userTierHistoryDto;
     }

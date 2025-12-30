@@ -111,12 +111,13 @@ public class UserController {
         );
     }
 
-    @GetMapping("/rating-history")
+    @GetMapping("/tier-history")
     public ResponseEntity<SuccessResponse<UserTierHistoryDto>> getUserRatingHistory(
-            @AuthenticationPrincipal UserPrincipal u
+            @AuthenticationPrincipal UserPrincipal u,
+            @RequestParam(name = "gameType") GameType gameType
     ) {
 
-        UserTierHistoryDto response = userService.getUserRatingHistory(u.getUser());
+        UserTierHistoryDto response = userService.getUserRatingHistory(u.getUser(), gameType);
 
         return ResponseEntity.ok(
                 new SuccessResponse<>("사용자 게임 타입별 티어 변동 이력 조회 성공", response)

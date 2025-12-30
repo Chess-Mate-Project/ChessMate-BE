@@ -25,26 +25,29 @@ public class RedisConfig {
         return new LettuceConnectionFactory(host, port);
     }
 
-
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory cf) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(cf);
-
+    public ObjectMapper redisObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        GenericJackson2JsonRedisSerializer serializer =
-                new GenericJackson2JsonRedisSerializer(mapper);
-
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.setHashValueSerializer(serializer);
-
-        template.afterPropertiesSet();
-        return template;
+        return mapper;
     }
 
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory,
+                                                       ObjectMapper redisObjectMapper) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+
+        GenericJackson2JsonRedisSerializer serializer =
+                new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+        template.afterPropertiesSet();
+
+        return template;
+    }
 }

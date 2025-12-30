@@ -1,4 +1,4 @@
-package backend.chessmate.domain.user.dto;
+package backend.chessmate.domain.user.dto.mapper;
 
 import lombok.*;
 

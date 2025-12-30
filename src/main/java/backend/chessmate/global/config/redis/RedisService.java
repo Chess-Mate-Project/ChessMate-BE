@@ -1,18 +1,19 @@
 package backend.chessmate.global.config.redis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 public class RedisService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
-    public RedisService(RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
 
     /**
      * DTO 객체를 그대로 Redis에 저장합니다.
@@ -26,9 +27,6 @@ public class RedisService {
                 .set(key, value, expirationSeconds, TimeUnit.SECONDS);
     }
 
-    public void savePermanent(String key, Object value) {
-        redisTemplate.opsForValue().set(key, value);
-    }
 
     /**
      * Redis에서 꺼내올 때는 호출자가 원하는 타입으로 캐스팅합니다.
@@ -40,8 +38,11 @@ public class RedisService {
      */
     public <T> T get(String key, Class<T> type) {
         Object obj = redisTemplate.opsForValue().get(key);
-        return (obj == null) ? null : type.cast(obj);
+
+        if (obj == null) return null;
+        return objectMapper.convertValue(obj, type);
     }
+
 
     /**
      * 키 삭제

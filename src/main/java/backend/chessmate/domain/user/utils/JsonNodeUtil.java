@@ -2,7 +2,10 @@ package backend.chessmate.domain.user.utils;
 
 import backend.chessmate.domain.user.dto.*;
 import backend.chessmate.domain.user.dto.history.TierPointDto;
-import backend.chessmate.domain.user.dto.history.UserTierHistoryDto;
+import backend.chessmate.domain.user.dto.mapper.UserBasicMapper;
+import backend.chessmate.domain.user.dto.mapper.UserProfileMapper;
+import backend.chessmate.domain.user.dto.mapper.UserRatingHistoryMapper;
+import backend.chessmate.domain.user.entity.type.GameType;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.time.*;
@@ -84,31 +87,39 @@ public class JsonNodeUtil {
                 .build();
     }
 
-    public static List<TierPointDto> mapToUserRatingHistoryByTierHistoryDto(JsonNode jsonNode, String name) {
+    public static UserRatingHistoryMapper mapToUserRatingHistoryByTierHistoryDto(JsonNode jsonNode) {
+        UserRatingHistoryMapper mapper = new UserRatingHistoryMapper();
 
         for (JsonNode type : jsonNode) {
-            if (type.get("name").asText().equals(name)) {
-                List<TierPointDto> points = new ArrayList<>();
+            List<TierPointDto> points = new ArrayList<>();
 
-                for (JsonNode pointNode : type.path("points")) {
-                    int year = pointNode.get(0).asInt();
-                    int month = pointNode.get(1).asInt() + 1;
-                    int day = pointNode.get(2).asInt();
-                    int rating = pointNode.get(3).asInt();
+            for (JsonNode pointNode : type.path("points")) {
+                int year = pointNode.get(0).asInt();
+                int month = pointNode.get(1).asInt() + 1;
+                int day = pointNode.get(2).asInt();
+                int rating = pointNode.get(3).asInt();
 
-                    LocalDate date = LocalDate.of(year, month, day);
-                    TierResult tierResult = TierUtil.calculateTier(rating);
+                LocalDate date = LocalDate.of(year, month, day);
+                TierResult tierResult = TierUtil.calculateTier(rating);
 
-                    TierPointDto tierPointDto = TierPointDto.builder()
-                            .date(date)
-                            .tier(tierResult)
-                            .build();
+                TierPointDto tierPointDto = TierPointDto.builder()
+                        .date(date)
+                        .tier(tierResult)
+                        .build();
 
-                    points.add(tierPointDto);
-                }
-                return points;
+                points.add(tierPointDto);
             }
+            switch (type.get("name").asText()) {
+                case "Classical" -> mapper.setClassicalHistory(points);
+
+                case "Rapid" -> mapper.setRapidHistory(points);
+
+                case "Bullet" -> mapper.setBulletHistory(points);
+
+                case "Blitz" -> mapper.setBlitzHistory(points);
+            }
+
         }
-        return List.of(); // 빈 리스트 반환
+        return mapper;
     }
 }

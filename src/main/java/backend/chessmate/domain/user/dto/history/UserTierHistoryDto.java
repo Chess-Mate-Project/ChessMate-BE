@@ -1,5 +1,6 @@
 package backend.chessmate.domain.user.dto.history;
 
+import backend.chessmate.domain.user.entity.type.GameType;
 import lombok.*;
 
 import java.util.List;
@@ -10,8 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserTierHistoryDto {
-    List<TierPointDto> classicalHistory;
-    List<TierPointDto> rapidHistory;
-    List<TierPointDto> bulletHistory;
-    List<TierPointDto> blitzHistory;
+    private GameType gameType;
+    private List<TierPointDto> history;
 }
