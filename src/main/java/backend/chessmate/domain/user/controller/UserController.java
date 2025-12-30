@@ -2,6 +2,7 @@ package backend.chessmate.domain.user.controller;
 
 import backend.chessmate.domain.auth.config.UserPrincipal;
 import backend.chessmate.domain.user.dto.*;
+import backend.chessmate.domain.user.dto.history.UserTierHistoryDto;
 import backend.chessmate.domain.user.entity.type.GameType;
 import backend.chessmate.domain.user.service.UserService;
 import backend.chessmate.global.common.response.SuccessResponse;
@@ -107,6 +108,19 @@ public class UserController {
 
         return ResponseEntity.ok(
                 new SuccessResponse<>("사용자 정보 조회 성공", response)
+        );
+    }
+
+    @GetMapping("/tier-history")
+    public ResponseEntity<SuccessResponse<UserTierHistoryDto>> getUserRatingHistory(
+            @AuthenticationPrincipal UserPrincipal u,
+            @RequestParam(name = "gameType") GameType gameType
+    ) {
+
+        UserTierHistoryDto response = userService.getUserRatingHistory(u.getUser(), gameType);
+
+        return ResponseEntity.ok(
+                new SuccessResponse<>("사용자 게임 타입별 티어 변동 이력 조회 성공", response)
         );
     }
 

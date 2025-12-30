@@ -13,8 +13,8 @@ public enum UserErrorCode implements ErrorCode {
     NOT_FOUND_USER_OAUTH(HttpStatus.NOT_FOUND, "OAuth 사용자 정보를 찾을 수 없습니다."),
     FAILD_GET_USER_PERF(HttpStatus.INTERNAL_SERVER_ERROR, "사용자의 퍼포먼스를 가져오는 데 실패했습니다."),
     FAILD_GET_USER_GAMES(HttpStatus.INTERNAL_SERVER_ERROR, "사용자의 게임 정보를 가져오는 데 실패했습니다."),
-    FAILD_GET_USER_ACCOUNT(HttpStatus.INTERNAL_SERVER_ERROR, "사용자의 계정 정보를 가져오는 데 실패했습니다.");
-
+    FAILD_GET_USER_ACCOUNT(HttpStatus.INTERNAL_SERVER_ERROR, "사용자의 계정 정보를 가져오는 데 실패했습니다."),
+    FAILD_GET_USER_RATING_HISTORY(HttpStatus.INTERNAL_SERVER_ERROR, "사용자의 레이팅 히스토리를 가져오는 데 실패했습니다.");
     private final HttpStatus httpStatus;
     private final String message;
 }

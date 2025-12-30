@@ -45,6 +45,7 @@ public class StatService {
 
         }
     }
+
     /**
      * writer 단계
      * lichessUtils 에서 받아온 UserStatDto 정보를 전부 upsert

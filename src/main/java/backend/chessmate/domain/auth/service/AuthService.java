@@ -7,7 +7,7 @@ import backend.chessmate.domain.auth.dto.response.OAuthAccessTokenResponse;
 import backend.chessmate.domain.auth.entity.Role;
 import backend.chessmate.domain.auth.entity.User;
 import backend.chessmate.domain.auth.repository.UserRepository;
-import backend.chessmate.domain.user.dto.UserBasicMapper;
+import backend.chessmate.domain.user.dto.mapper.UserBasicMapper;
 import backend.chessmate.domain.user.service.StatService;
 import backend.chessmate.domain.user.utils.JsonNodeUtil;
 import backend.chessmate.global.config.redis.RedisService;

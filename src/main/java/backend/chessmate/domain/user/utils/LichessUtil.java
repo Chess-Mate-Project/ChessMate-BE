@@ -137,7 +137,7 @@ public class LichessUtil {
                         .queryParam("opening", "true")
                         .queryParam("moves", "true")
                         .queryParam("perfType", "bullet,blitz,rapid,classical")
-                        .build("chansoo1123")) // 임시로 데이터 많은 유저로 설정 //u.getName();
+                        .build("teem1")) // 임시로 데이터 많은 유저로 설정 //u.getName();
                 .retrieve()
                 .onStatus(s -> s.is4xxClientError(), res -> { // 에러 제어하기
                     if (res.statusCode().value() == 429) { // api limit (api 호출 제한)
@@ -245,9 +245,41 @@ public class LichessUtil {
             log.error("init 파싱 실패 {}", e.getMessage());
             throw new RuntimeException("init 파싱 실패 error", e);
         }
-
-
     }
+
+    public JsonNode getUserRatingHistoryApi(User u) {
+
+        WebClient wc = WebClient.builder()
+                .baseUrl(BASE_URL)
+                .defaultHeader(HttpHeaders.ACCEPT, "application/x-ndjson")
+                .clientConnector(new ReactorClientHttpConnector(HttpClient.create().responseTimeout(Duration.ofSeconds(60)))) // 타임아웃 설정
+                .build();
+
+        return wc.get()
+                .uri(ub -> ub
+                        .path("/api/user/{username}/rating-history")
+                        .build("chansoo1123")) // 임시로 데이터 많은 유저로 설정 //u.getName();
+                .retrieve()
+                .onStatus(s -> s.is4xxClientError(), res -> { // 에러 제어하기
+                    if (res.statusCode().value() == 429) { // api limit (api 호출 제한)
+                        log.error("Lichess API 호출 제한에 걸렸습니다. 잠시 후 다시 시도해주세요.");
+                        return Mono.error(new ApiException(ApiErrorCode.API_RATE_LIMIT));
+                    } else { // 그 외 4xx 에러
+                        return res.bodyToMono(String.class)
+                                .doOnNext(errorBody -> log.error("initUserGamesStreaks Method Error : {}", errorBody))
+                                .then(Mono.error(new UserException(UserErrorCode.FAILD_GET_USER_GAMES)));
+                    }
+                })
+                .bodyToMono(JsonNode.class)
+                .doOnError(e -> {
+                    throw new UserException(UserErrorCode.FAILD_GET_USER_RATING_HISTORY);
+                }).block();
+    }
+
+
+
+
+
 
 
 
