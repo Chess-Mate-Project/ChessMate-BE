@@ -3,20 +3,33 @@ spring:
     property-naming-strategy: SNAKE_CASE
   data:
     redis:
-      host: localhost
-      port: 6379
-      key:
-        refresh_token_base : "AUTH_REFRESH"
-        account_key_base: "LICHESS_ACCOUNT"
-        oauth_key_base: "LICHESS_OAUTH"
-        perf_key_base: "LICHESS_PERF"
-        games_key_base: "LICHESS_GAMES"
+        host: localhost
+        port: 6379
+        key:
+          oauth:
+            pkce: oauth:pkce
+            lichess-token: oauth:lichess:token
 
-        play_count_base : "PLAY_COUNT"
-        game_summary_base : "GAME_SUMMARY"
-        user_profile_base : "USER_PROFILE"
-        user_tiers_base : "USER_TIERS"
-        user_rating_history_base : "USER_RATING_HISTORY"
+          user:
+            playtime: user:playtime
+            perfs: user:perfs
+            playcount: user:playcount
+
+          auth:
+            refresh-token: auth:refresh
+
+
+          refresh_token_base : "AUTH_REFRESH"
+          account_key_base: "LICHESS_ACCOUNT"
+          oauth_key_base: "LICHESS_OAUTH"
+          perf_key_base: "LICHESS_PERF"
+          games_key_base: "LICHESS_GAMES"
+
+          play_count_base : "PLAY_COUNT"
+          game_summary_base : "GAME_SUMMARY"
+          user_profile_base : "USER_PROFILE"
+          user_tiers_base : "USER_TIERS"
+          user_rating_history_base : "USER_RATING_HISTORY"
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -43,10 +56,15 @@ spring:
 application:
   name: ChessMate
 
-lichess:
-  base-url: https://lichess.org
-  client-id: chessmate9@8y612
-  redirect-url: http://localhost:5173/auth/callback
+oauth:
+  lichess:
+    client-id: "ChessMate"
+    oauth-url: https://lichess.org/oauth
+    token-url: https://lichess.org/api/token
+    redirect-url: http://localhost:8080/api/oauth/callback
+    base-api-url: https://lichess.org/api
+
+
   ttl:
     account: 36000
     perf: 36000
