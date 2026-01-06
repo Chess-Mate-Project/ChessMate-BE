@@ -1,12 +1,17 @@
 package backend.chessmate.api.user.controller;
 
+import backend.chessmate.api.auth.UserPrincipal;
 import backend.chessmate.api.user.dto.TotalUserCountResponse;
+import backend.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import backend.chessmate.api.user.service.UserService;
 import backend.chessmate.global.common.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -49,6 +54,17 @@ public class UserController {
 
     return ResponseEntity.ok(
         new SuccessResponse<>("총 사용자 수 조회 성공", response)
+    );
+  }
+
+  @PutMapping("/description")
+  public ResponseEntity<SuccessResponse<Void>> updateUserDescription(
+      @AuthenticationPrincipal UserPrincipal u,
+      @RequestBody UpdateUserDescriptionRequest request
+  ) {
+    userService.updateUserDescription(u.getUser(), request);
+    return ResponseEntity.ok(
+        new SuccessResponse<>("사용자 소개글 수정 성공", null)
     );
   }
 

@@ -2,6 +2,8 @@ package backend.chessmate.api.user.service;
 
 import backend.chessmate.api.oauth.repository.UserRepository;
 import backend.chessmate.api.user.dto.TotalUserCountResponse;
+import backend.chessmate.api.user.dto.UpdateUserDescriptionRequest;
+import backend.chessmate.api.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +52,19 @@ public class UserService {
     return new TotalUserCountResponse((int) totalUsers);
   }
 
+  /**
+   * - 사용자 자기소개 업데이트
+   * - @param user 현재 사용자
+   * - @param updateUserDescriptionRequest 사용자 자기소개 업데이트 요청 DTO
+   * - @return void
+   * */
+
+  public void updateUserDescription(User user, UpdateUserDescriptionRequest updateUserDescriptionRequest) {
+    userRepository.findById(user.getId()).ifPresent(u -> {
+      u.setDescription(updateUserDescriptionRequest.description());
+      userRepository.save(u);
+    });
+  }
 
 
 //

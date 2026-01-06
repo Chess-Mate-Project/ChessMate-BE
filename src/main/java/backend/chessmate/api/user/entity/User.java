@@ -13,6 +13,7 @@ import org.springframework.data.annotation.CreatedDate;
 @NoArgsConstructor
 @Builder
 @Getter
+@Setter
 public class User {
 
     @Id
@@ -24,6 +25,9 @@ public class User {
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
+
+    @Column(name = "description")
+    private String description;
 
     @CreatedDate
     @Column(updatable = false)
