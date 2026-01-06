@@ -3,7 +3,7 @@ package backend.chessmate.api.auth.service;
 import backend.chessmate.api.auth.jwt.JwtRule;
 import backend.chessmate.api.auth.jwt.JwtService;
 import backend.chessmate.api.user.entity.User;
-import backend.chessmate.api.oauth.repository.UserRepository;
+import backend.chessmate.api.user.repository.UserRepository;
 import backend.chessmate.global.CacheService;
 import backend.chessmate.global.common.code.AuthErrorCode;
 import backend.chessmate.global.common.exception.AuthException;

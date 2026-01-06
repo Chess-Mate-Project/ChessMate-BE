@@ -1,6 +1,6 @@
     package backend.chessmate.api.auth.jwt;
 
-    import backend.chessmate.api.oauth.repository.UserRepository;
+    import backend.chessmate.api.user.repository.UserRepository;
     import jakarta.servlet.FilterChain;
     import jakarta.servlet.ServletException;
     import jakarta.servlet.http.HttpServletRequest;

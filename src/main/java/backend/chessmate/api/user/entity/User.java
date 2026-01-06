@@ -29,6 +29,9 @@ public class User {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "title")
+    private String title;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;

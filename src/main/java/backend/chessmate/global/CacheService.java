@@ -1,8 +1,8 @@
 package backend.chessmate.global;
 
-import backend.chessmate.api.external.dto.account.PerfsDto;
-import backend.chessmate.api.external.dto.account.PlayTimeDto;
-import backend.chessmate.api.external.dto.account.UserCountDto;
+import backend.chessmate.global.external.dto.account.PerfsDto;
+import backend.chessmate.global.external.dto.account.PlayTimeDto;
+import backend.chessmate.global.external.dto.account.UserCountDto;
 import backend.chessmate.global.config.RedisKeyProperties;
 import backend.chessmate.global.config.redis.RedisService;
 import lombok.RequiredArgsConstructor;

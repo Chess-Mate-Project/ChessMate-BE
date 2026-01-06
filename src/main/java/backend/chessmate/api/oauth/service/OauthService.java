@@ -1,20 +1,21 @@
 package backend.chessmate.api.oauth.service;
 
 
-import static backend.chessmate.api.external.util.LichessUtil.generateCodeChallenge;
-import static backend.chessmate.api.external.util.LichessUtil.generateRandomCodeVerifier;
-import static backend.chessmate.api.external.util.LichessUtil.generateRandomState;
+import static backend.chessmate.global.external.util.LichessUtil.generateCodeChallenge;
+import static backend.chessmate.global.external.util.LichessUtil.generateRandomCodeVerifier;
+import static backend.chessmate.global.external.util.LichessUtil.generateRandomState;
 
-import backend.chessmate.api.external.config.LichessConfig;
-import backend.chessmate.api.external.dto.account.LichessAccountDto;
-import backend.chessmate.api.external.service.LichessApiService;
+import backend.chessmate.global.external.config.LichessConfig;
+import backend.chessmate.global.external.dto.account.LichessAccountDto;
+import backend.chessmate.global.external.service.LichessApiService;
 import backend.chessmate.api.auth.jwt.JwtService;
 import backend.chessmate.api.oauth.dto.OauthAccessTokenDto;
 import backend.chessmate.api.oauth.dto.request.OAuthValueRequest;
 import backend.chessmate.api.oauth.dto.response.OauthUrlResponse;
 import backend.chessmate.api.user.entity.User;
-import backend.chessmate.api.oauth.repository.UserRepository;
+import backend.chessmate.api.user.repository.UserRepository;
 import backend.chessmate.global.CacheService;
+import backend.chessmate.worker.batch.service.UserBatchService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.util.Map;
@@ -35,7 +36,14 @@ public class OauthService {
 
     private final LichessApiService lichessApiService;
     private final CacheService cacheService;
+    private final UserBatchService batchService;
 
+
+  /**
+     * - [ Lichess OAuth URL 생성 ]
+     * - 설명: Lichess OAuth 인증을 위한 URL을 생성하여 반환
+     * - @return OauthUrlResponse Lichess OAuth 인증 URL
+     * */
     public OauthUrlResponse getOauthUrl() {
       String code_verifier = generateRandomCodeVerifier();
 
@@ -76,7 +84,7 @@ public class OauthService {
 
     }
 
-    /*
+    /**
     * - [ Lichess OAuth Callback 처리 ]
     * - 설명: Lichess OAuth 서버로부터 전달받은 Authorization Code와
     *  State를 처리하여 OAuth Access Token을 발급받고,
@@ -96,14 +104,9 @@ public class OauthService {
       cacheService.deletePkce(state);
 
       // OAuth Access Token 발급 요청
-      log.info("code: " + code);
-      log.info("codeVerifier: " + codeVerifier);
       OauthAccessTokenDto dto = lichessApiService.getOAuthAccessToken(
           new OAuthValueRequest(code, codeVerifier)
       );
-      log.info("accessToken: " + dto.accessToken());
-      log.info("tokenType: " + dto.tokenType());
-      log.info("expiresIn: " + dto.expiresIn());
 
       // 사용자 정보 조회
       LichessAccountDto accountDto = lichessApiService.getUserAccount(dto.accessToken());
@@ -113,6 +116,7 @@ public class OauthService {
         User newUser = User.builder()
             .lichessId(accountDto.id())
             .username(accountDto.username())
+            .title(accountDto.title())
             .build();
 
         userRepository.save(newUser);
@@ -137,6 +141,8 @@ public class OauthService {
 
       cacheService.saveRefreshToken(user.getId(), refreshToken);
 
+      // 배치 작업 트리거
+      batchService.runUserBatch(user, dto.accessToken());
     }
 
 

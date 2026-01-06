@@ -1,7 +1,7 @@
 package backend.chessmate.api.auth;
 
 import backend.chessmate.api.user.entity.User;
-import backend.chessmate.api.oauth.repository.UserRepository;
+import backend.chessmate.api.user.repository.UserRepository;
 import backend.chessmate.global.common.code.UserErrorCode;
 import backend.chessmate.global.common.exception.UserException;
 import lombok.RequiredArgsConstructor;

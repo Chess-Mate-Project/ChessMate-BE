@@ -1,45 +1,14 @@
 package backend.chessmate.api.user.service;
 
-import backend.chessmate.api.oauth.repository.UserRepository;
 import backend.chessmate.api.user.dto.TotalUserCountResponse;
 import backend.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import backend.chessmate.api.user.entity.User;
+import backend.chessmate.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-//
-//
-//import backend.chessmate.api.user.entity.User;
-//import backend.chessmate.api.oauth.repository.UserRepository;
-//import backend.chessmate.api.user.dto.FirstMoveDto;
-//import backend.chessmate.api.user.dto.GameSummaryDto;
-//import backend.chessmate.api.user.dto.OpeningDto;
-//import backend.chessmate.api.user.dto.StreakDto;
-//import backend.chessmate.api.user.dto.TierInfoDto;
-//import backend.chessmate.api.user.dto.UserPlayCountDto;
-//import backend.chessmate.api.user.dto.UserProfileDto;
-//import backend.chessmate.api.user.dto.UserRatingByGameTypesMapper;
-//import backend.chessmate.api.user.dto.history.UserTierHistoryDto;
-//import backend.chessmate.api.user.dto.mapper.UserProfileMapper;
-//import backend.chessmate.api.user.dto.mapper.UserRatingHistoryMapper;
-//import backend.chessmate.api.user.entity.FirstMove;
-//import backend.chessmate.api.user.entity.Opening;
-//import backend.chessmate.api.user.entity.Streak;
-//import backend.chessmate.api.user.entity.type.GameType;
-//import backend.chessmate.api.user.repository.FirstMoveRepository;
-//import backend.chessmate.api.user.repository.OpeningRepository;
-//import backend.chessmate.api.user.repository.StreakRepository;
-//import backend.chessmate.api.user.utils.JsonNodeUtil;
-//import backend.chessmate.api.user.utils.TierUtil;
-//import backend.chessmate.domain.user.dto.*;
-//import backend.chessmate.global.config.redis.RedisService;
-//import com.fasterxml.jackson.databind.JsonNode;
-//import java.util.List;
-//import lombok.RequiredArgsConstructor;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.stereotype.Service;
-//
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
