@@ -1,0 +1,40 @@
+package com.chessmate.worker.batch.service;
+
+
+import com.chessmate.common.service.UserBatchService;
+import com.chessmate.domain.user.User;
+import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
+import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class UserBatchServiceImpl implements UserBatchService {
+
+  private final JobLauncher jobLauncher;
+  private final Job lichessJob;
+  private final UserRepositoryImpl userRepository;
+
+  @Override
+  public void triggerUserUpdate(Long userId, String lichessToken) {
+
+    User user = userRepository.findById(userId).orElseThrow();
+
+    try {
+      JobParameters params = new JobParametersBuilder()
+          .addString("username","matteorf2b")
+          .addString("token", lichessToken)
+          .addLong("time", System.currentTimeMillis()) // 항상 새로운 Job 실행을 위해
+          .toJobParameters();
+
+      jobLauncher.run(lichessJob, params);
+
+    } catch (Exception e) {
+      throw new RuntimeException("Batch 실행 실패", e);
+    }
+  }
+}

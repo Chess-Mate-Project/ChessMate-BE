@@ -1,0 +1,69 @@
+package com.chessmate.domain.userColorStat;
+
+import com.chessmate.common.type.ChessColor;
+import com.chessmate.common.type.GameResult;
+
+public class UserColorStat {
+  private final Long id;
+  private final Long userId;
+  private final ChessColor color;
+  private final GameResult result;
+
+  private UserColorStat(Builder builder) {
+    this.id = builder.id;
+    this.userId = builder.userId;
+    this.color = builder.color;
+    this.result = builder.result;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public Long getUserId() {
+    return userId;
+  }
+
+  public ChessColor getColor() {
+    return color;
+  }
+
+  public GameResult getResult() {
+    return result;
+  }
+
+  public static class Builder {
+    private Long id;
+    private Long userId;
+    private ChessColor color;
+    private GameResult result;
+
+    public Builder id(Long id) {
+      this.id = id;
+      return this;
+    }
+
+    public Builder userId(Long userId) {
+      this.userId = userId;
+      return this;
+    }
+
+    public Builder color(ChessColor color) {
+      this.color = color;
+      return this;
+    }
+
+    public Builder result(GameResult result) {
+      this.result = result;
+      return this;
+    }
+
+    public UserColorStat build() {
+      return new UserColorStat(this);
+    }
+  }
+}

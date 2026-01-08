@@ -1,6 +1,11 @@
-pluginManagement {
-    plugins {
-        id 'org.jetbrains.kotlin.jvm' version '2.2.20'
-    }
-}
 rootProject.name = 'ChessMate'
+
+include(
+        "chessmate-worker",
+        "chessmate-common",
+        "chessmate-api",
+        "chessmate-domain",
+        "chessmate-infra-persistence",
+        "chessmate-external",
+        "chessmate-infra-redis"
+)

@@ -1,0 +1,136 @@
+package com.chessmate.domain.userDailyStreak;
+
+import java.time.LocalDate;
+
+public class UserDailyStreak {
+  private Long id;
+  private Long userId;
+  private LocalDate date;
+  private int win;
+  private int lose;
+  private int draw;
+  private Long lastGameAt;
+
+  // 무인자 생성자(프레임워크/직렬화용)
+  public UserDailyStreak() {}
+
+  private UserDailyStreak(Builder builder) {
+    this.id = builder.id;
+    this.userId = builder.userId;
+    this.date = builder.date;
+    this.win = builder.win;
+    this.lose = builder.lose;
+    this.draw = builder.draw;
+    this.lastGameAt = builder.lastGameAt;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public Long getUserId() {
+    return userId;
+  }
+
+  public LocalDate getDate() {
+    return date;
+  }
+
+  public int getWin() {
+    return win;
+  }
+
+  public int getLose() {
+    return lose;
+  }
+
+  public int getDraw() {
+    return draw;
+  }
+
+  public Long getLastGameAt() {
+    return lastGameAt;
+  }
+
+  // 추가된 Setter들
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public void setUserId(Long userId) {
+    this.userId = userId;
+  }
+
+  public void setDate(LocalDate date) {
+    this.date = date;
+  }
+
+  public void setWin(int win) {
+    this.win = win;
+  }
+
+  public void setLose(int lose) {
+    this.lose = lose;
+  }
+
+  public void setDraw(int draw) {
+    this.draw = draw;
+  }
+
+  public void setLastGameAt(Long lastGameAt) {
+    this.lastGameAt = lastGameAt;
+  }
+
+  public static class Builder {
+    private Long id;
+    private Long userId;
+    private LocalDate date;
+    private int win;
+    private int lose;
+    private int draw;
+    private Long lastGameAt;
+
+    public Builder id(Long id) {
+      this.id = id;
+      return this;
+    }
+
+    public Builder userId(Long userId) {
+      this.userId = userId;
+      return this;
+    }
+
+    public Builder date(LocalDate date) {
+      this.date = date;
+      return this;
+    }
+
+    public Builder win(int win) {
+      this.win = win;
+      return this;
+    }
+
+    public Builder lose(int lose) {
+      this.lose = lose;
+      return this;
+    }
+
+    public Builder draw(int draw) {
+      this.draw = draw;
+      return this;
+    }
+
+    public Builder lastGameAt(Long lastGameAt) {
+      this.lastGameAt = lastGameAt;
+      return this;
+    }
+
+    public UserDailyStreak build() {
+      return new UserDailyStreak(this);
+    }
+  }
+}
