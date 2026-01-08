@@ -3,7 +3,9 @@ package com.chessmate.worker.batch.service;
 
 import com.chessmate.common.service.UserBatchService;
 import com.chessmate.domain.user.User;
+import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
@@ -18,17 +20,20 @@ public class UserBatchServiceImpl implements UserBatchService {
   private final JobLauncher jobLauncher;
   private final Job lichessJob;
   private final UserRepositoryImpl userRepository;
+  private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
 
   @Override
   public void triggerUserUpdate(Long userId, String lichessToken) {
 
     User user = userRepository.findById(userId).orElseThrow();
+    Long until = userDailyStreakRepository.findLastGameAtByUserId(1L);
+
 
     try {
       JobParameters params = new JobParametersBuilder()
           .addString("username","matteorf2b")
           .addString("token", lichessToken)
-          .addLong("time", System.currentTimeMillis()) // 항상 새로운 Job 실행을 위해
+          .addLong("until", until)
           .toJobParameters();
 
       jobLauncher.run(lichessJob, params);

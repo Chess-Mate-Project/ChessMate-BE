@@ -24,10 +24,9 @@ public class UserEventConsumer
       UserEvent event =
           objectMapper.convertValue(message.getValue(), UserEvent.class);
 
-      log.info("🔥 Redis Event 수신: {}", event.type());
+      log.info("Redis Event 수신: {}", event.type());
 
       if ("USER_CREATED".equals(event.type())) {
-        // 여기서 batch 트리거 or 서비스 호출
         log.info("유저 처리 시작 userId={}", event.
       userId());
         userBatchService.triggerUserUpdate(event.userId(), event.lichessToken());

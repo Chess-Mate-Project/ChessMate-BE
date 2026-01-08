@@ -87,6 +87,7 @@ public class JwtService {
                 .build();
         res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());
 
+        redisService.save(REFRESH_TOKEN_KEY + u.getId(), rt, REFRESH_EXP);
         return rt;
     }
 

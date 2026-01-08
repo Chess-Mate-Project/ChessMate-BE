@@ -115,7 +115,8 @@ public class OauthService {
       // 사용자 정보 조회
       LichessAccountDto accountDto = lichessApiService.getUserAccount(dto.accessToken());
       // 신규 사용자면 DB에 저장
-      if (!userRepository.existsByLichessId(accountDto.id())) {
+      boolean isUser = userRepository.existsByLichessId(accountDto.id());
+      if (!isUser) {
 
         User newUser = User.builder()
             .lichessId(accountDto.id())
@@ -124,6 +125,10 @@ public class OauthService {
             .build();
 
         userRepository.save(newUser);
+
+        // 배치 작업 트리거 (첫 로그인 사용자만 정보 전체 조회)
+        userEventProducer.publishUserCreated(newUser.getId(), dto.accessToken());
+        log.info("배치 작업 트리거 시작 - OauthService / + " + newUser.getId() + "//" + dto.accessToken());
       }
 
       // 변동성이 있는 데이터 캐싱
@@ -145,9 +150,7 @@ public class OauthService {
 
       cacheService.saveRefreshToken(user.getId(), refreshToken);
 
-      // 배치 작업 트리거
-      userEventProducer.publishUserCreated(user.getId(), dto.accessToken());
-      log.info("배치 작업 트리거 시작 - OauthService / + " + user.getId() + "//" + dto.accessToken());
+
     }
 
 

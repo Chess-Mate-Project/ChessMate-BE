@@ -39,5 +39,6 @@ out/
 
 
 
-### yml ###
-src/main/resources/application.yml
+# application config
+**/application*.yml
+**/application*.yaml

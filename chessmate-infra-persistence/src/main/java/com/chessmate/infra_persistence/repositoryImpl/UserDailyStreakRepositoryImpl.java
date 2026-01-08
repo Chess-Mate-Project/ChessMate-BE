@@ -5,6 +5,7 @@ import com.chessmate.domain.userDailyStreak.UserDailyStreakRepository;
 import com.chessmate.infra_persistence.entity.UserDailyStreakEntity;
 import com.chessmate.infra_persistence.jpaRepository.UserDailyStreakJpaRepository;
 import com.chessmate.infra_persistence.mapper.UserDailyStreakMapper;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,13 @@ public class UserDailyStreakRepositoryImpl implements UserDailyStreakRepository 
 
   @Override
   public Optional<UserDailyStreak> findByUserIdAndDate(Long userId, LocalDate date) {
-    return Optional.empty();
+    return jpaRepository.findByUserIdAndDate(userId, date)
+        .map(UserDailyStreakMapper::toDomain);
   }
+
+  @Override
+  public Long findLastGameAtByUserId(Long userId) {
+    return jpaRepository.findLastGameAtByUserId(userId).orElse(0L);
+  }
+
 }

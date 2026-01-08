@@ -2,6 +2,7 @@ package com.chessmate.worker.batch.reader;
 
 import com.chessmate.external.dto.game.LichessGamesDto;
 import com.chessmate.external.service.LichessApiService;
+import java.time.Instant;
 import java.util.Iterator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -21,6 +22,9 @@ public class LichessNdjsonItemReader implements ItemReader<LichessGamesDto> {
 
   @Value("#{jobParameters['username']}")
   private String username;
+
+  @Value("#{jobParameters['until']}")
+  private Long until;
 
   private Iterator<LichessGamesDto> iterator;
 
