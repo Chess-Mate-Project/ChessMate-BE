@@ -90,13 +90,13 @@ public class LichessApiService {
    * - Throws: UserException - 사용자 게임 기록 조회 실패 시 발생
    * */
   public Flux<LichessGamesDto> getUserGamesReactive(String token, String username) {
-    log.info("username = " + "matteorf2b");
+    log.info("username = " + username);
     return webClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/games/user/{username}")
             .queryParam("perf", "rapid,bullet,classical,blitz")
             .queryParam("opening", "true")
-            .build("matteorf2b"))
+            .build(username))
         .accept(MediaType.parseMediaType("application/x-ndjson"))
         .headers(h -> h.setBearerAuth(token))
         .retrieve()

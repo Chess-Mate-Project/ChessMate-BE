@@ -3,6 +3,7 @@ package com.chessmate.infra_persistence.jpaRepository;
 import com.chessmate.infra_persistence.entity.UserDailyStreakEntity;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +22,6 @@ public interface UserDailyStreakJpaRepository extends
   Optional<Long> findLastGameAtByUserId(@Param("userId") Long userId);
 
   Optional<UserDailyStreakEntity> findByUserIdAndDate(Long userId, LocalDate date);
+
+  List<UserDailyStreakEntity> findByUserIdAndDateBetween(Long userId, LocalDate start, LocalDate end);
 }

@@ -149,8 +149,6 @@ public class OauthService {
       var refreshToken = jwtService.generateAccessToken(res, user);
 
       cacheService.saveRefreshToken(user.getId(), refreshToken);
-
-
     }
 
 
