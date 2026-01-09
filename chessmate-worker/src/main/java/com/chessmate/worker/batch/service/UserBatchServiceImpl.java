@@ -26,14 +26,11 @@ public class UserBatchServiceImpl implements UserBatchService {
   public void triggerUserUpdate(Long userId, String lichessToken) {
 
     User user = userRepository.findById(userId).orElseThrow();
-    Long until = userDailyStreakRepository.findLastGameAtByUserId(1L);
-
 
     try {
       JobParameters params = new JobParametersBuilder()
-          .addString("username","matteorf2b")
+          .addString("lichess_id", user.getLichessId())
           .addString("token", lichessToken)
-          .addLong("until", until)
           .toJobParameters();
 
       jobLauncher.run(lichessJob, params);

@@ -57,7 +57,6 @@ public class OauthService {
         String response_type = "code";
         String client_id = lichessConfig.getClientId();
         String redirect_uri = lichessConfig.getRedirectUrl();
-        String scope = "email:read";
         String state = generateRandomState();
 
       cacheService.savePkce(state, code_verifier);
@@ -70,7 +69,6 @@ public class OauthService {
           "response_type", response_type,
           "client_id", client_id,
           "redirect_uri", redirect_uri,
-          "scope", scope,
           "state", state
       );
 
@@ -149,8 +147,6 @@ public class OauthService {
       var refreshToken = jwtService.generateAccessToken(res, user);
 
       cacheService.saveRefreshToken(user.getId(), refreshToken);
-
-
     }
 
 
