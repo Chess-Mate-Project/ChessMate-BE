@@ -72,7 +72,7 @@ public class ImageService {
       UserImageType type
   ) {
     User u = userRepository.findById(user.getId())
-        .orElseThrow();
+        .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + user.getId()));
 
     String key = type == UserImageType.PROFILE
         ? u.getProfileImage()
