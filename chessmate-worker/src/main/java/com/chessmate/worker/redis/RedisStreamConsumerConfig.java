@@ -26,7 +26,6 @@ public class RedisStreamConsumerConfig {
   @Bean
   public StreamMessageListenerContainer<String, MapRecord<String, String, String>> streamContainer() {
 
-    // 🔥 이게 없어서 니가 하루 종일 처맞은 거다
     redisStreamService.createGroupIfAbsent(STREAM, GROUP);
 
     var options =

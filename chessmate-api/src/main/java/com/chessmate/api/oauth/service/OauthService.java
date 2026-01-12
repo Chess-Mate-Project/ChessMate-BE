@@ -7,7 +7,8 @@ import static com.chessmate.external.util.LichessUtil.generateRandomState;
 
 import com.chessmate.api.auth.jwt.JwtService;
 import com.chessmate.api.oauth.dto.OauthUrlResponse;
-import com.chessmate.common.service.UserBatchService;
+import com.chessmate.common.code.UserErrorCode;
+import com.chessmate.common.exception.UserException;
 import com.chessmate.domain.user.User;
 import com.chessmate.domain.user.UserRepository;
 import com.chessmate.external.config.LichessConfig;
@@ -19,10 +20,12 @@ import com.chessmate.external.dto.oauth.OAuthValueRequest;
 import com.chessmate.external.dto.oauth.OauthAccessTokenDto;
 import com.chessmate.external.service.LichessApiService;
 import com.chessmate.infra_redis.redis.CacheService;
-import com.chessmate.infra_redis.redis.RedisService;
 import com.chessmate.redis.UserEventProducer;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URI;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -92,7 +95,7 @@ public class OauthService {
     *  State를 처리하여 OAuth Access Token을 발급받고,
     *  사용자 정보를 조회하여 데이터베이스에 저장하고, 변동성이 있는 데이터는 캐싱
     * */
-    public void   callback(String code, String state, HttpServletResponse res) {
+    public void  callback(String code, String state, HttpServletResponse res) {
 
       // State에 대응하는 Code Verifier 조회
       String codeVerifier = cacheService.getPkce(state);
@@ -120,12 +123,23 @@ public class OauthService {
             .lichessId(accountDto.id())
             .username(accountDto.username())
             .title(accountDto.title())
+            .lichessCreatedAt(
+                LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(accountDto.createdAt()),
+                    ZoneId.systemDefault()
+                )
+            )
+            .createdAt(LocalDateTime.now())
             .build();
 
         userRepository.save(newUser);
 
+        User user = userRepository.findByUsername(accountDto.username()).orElseThrow(
+            () -> new UserException(UserErrorCode.NOT_FOUND_USER)
+        );
+
         // 배치 작업 트리거 (첫 로그인 사용자만 정보 전체 조회)
-        userEventProducer.publishUserCreated(newUser.getId(), dto.accessToken());
+        userEventProducer.publishUserCreated(user.getId(), dto.accessToken());
         log.info("배치 작업 트리거 시작 - OauthService / + " + newUser.getId() + "//" + dto.accessToken());
       }
 
