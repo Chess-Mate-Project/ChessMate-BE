@@ -49,4 +49,24 @@ public class UserRepositoryImpl implements UserRepository {
   public int count() {
     return Math.toIntExact(jpaRepository.count());
   }
+
+  @Override
+  public void updateProfileImage(Long userId, String profileImageUrl) {
+    UserEntity user = jpaRepository.findById(userId)
+        .orElseThrow();
+
+    user.setProfileImage(profileImageUrl);
+
+    jpaRepository.save(user);
+  }
+
+  @Override
+  public void updateBannerImage(Long userId, String bannerImageUrl) {
+    UserEntity user = jpaRepository.findById(userId)
+        .orElseThrow();
+
+    user.setBannerImage(bannerImageUrl);
+
+    jpaRepository.save(user);
+  }
 }
