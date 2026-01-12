@@ -32,7 +32,8 @@ public class CloudflareR2Config {
                 )
             )
         )
-        .region(Region.US_EAST_1) // 아무거나 가능
+        .region(Region.US_EAST_1)
+        .httpClient(ApacheHttpClient.builder().build())
         .build();
   }
 
@@ -48,7 +49,7 @@ public class CloudflareR2Config {
                 )
             )
         )
-        .region(Region.US_EAST_1) // ⭐ 필수
+        .region(Region.US_EAST_1)
         .build();
   }
 

@@ -56,6 +56,8 @@ public class UserRepositoryImpl implements UserRepository {
         .orElseThrow();
 
     user.setProfileImage(profileImageUrl);
+
+    jpaRepository.save(user);
   }
 
   @Override
@@ -64,5 +66,7 @@ public class UserRepositoryImpl implements UserRepository {
         .orElseThrow();
 
     user.setBannerImage(bannerImageUrl);
+
+    jpaRepository.save(user);
   }
 }

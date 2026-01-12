@@ -7,7 +7,7 @@ public class User {
   private String lichessId;
   private String username;
   private String description;
-  private String BannerImage;
+  private String bannerImage;
   private String profileImage;
   private String title;
   private LocalDateTime createdAt;
@@ -22,6 +22,8 @@ public class User {
     this.description = builder.description;
     this.title = builder.title;
     this.createdAt = builder.createdAt;
+    this.bannerImage = builder.bannerImage;
+    this.profileImage = builder.profileImage;
   }
 
   public static Builder builder() {
@@ -52,6 +54,14 @@ public class User {
     return createdAt;
   }
 
+  public String getBannerImage() {
+    return bannerImage;
+  }
+
+  public String getProfileImage() {
+    return profileImage;
+  }
+
   // Setter들
   public void setId(Long id) {
     this.id = id;
@@ -77,16 +87,8 @@ public class User {
     this.createdAt = createdAt;
   }
 
-  public String getBannerImage() {
-    return BannerImage;
-  }
-
   public void setBannerImage(String bannerImage) {
-    BannerImage = bannerImage;
-  }
-
-  public String getProfileImage() {
-    return profileImage;
+    this.bannerImage = bannerImage;
   }
 
   public void setProfileImage(String profileImage) {
@@ -100,6 +102,8 @@ public class User {
     private String description;
     private String title;
     private LocalDateTime createdAt;
+    private String bannerImage;
+    private String profileImage;
 
     public Builder id(Long id) {
       this.id = id;
@@ -128,6 +132,16 @@ public class User {
 
     public Builder createdAt(LocalDateTime createdAt) {
       this.createdAt = createdAt;
+      return this;
+    }
+
+    public Builder bannerImage(String bannerImage) {
+      this.bannerImage = bannerImage;
+      return this;
+    }
+
+    public Builder profileImage(String profileImage) {
+      this.profileImage = profileImage;
       return this;
     }
 
