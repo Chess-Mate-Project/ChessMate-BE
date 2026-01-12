@@ -11,4 +11,7 @@ public interface UserRepository {
     User save(User user);
     int count();
 
+    void updateProfileImage(Long userId, String profileImageUrl);
+    void updateBannerImage(Long userId, String bannerImageUrl);
+
 }

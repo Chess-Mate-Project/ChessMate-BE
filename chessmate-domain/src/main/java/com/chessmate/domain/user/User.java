@@ -7,6 +7,8 @@ public class User {
   private String lichessId;
   private String username;
   private String description;
+  private String BannerImage;
+  private String profileImage;
   private String title;
   private LocalDateTime createdAt;
 
@@ -73,6 +75,22 @@ public class User {
 
   public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public String getBannerImage() {
+    return BannerImage;
+  }
+
+  public void setBannerImage(String bannerImage) {
+    BannerImage = bannerImage;
+  }
+
+  public String getProfileImage() {
+    return profileImage;
+  }
+
+  public void setProfileImage(String profileImage) {
+    this.profileImage = profileImage;
   }
 
   public static class Builder {
