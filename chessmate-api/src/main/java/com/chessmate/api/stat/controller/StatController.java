@@ -32,4 +32,17 @@ public class StatController {
         new SuccessResponse<>("Streak 조회 성공", statDto)
     );
   }
- }
+
+  @GetMapping("/color")
+  public ResponseEntity<SuccessResponse<Void>> getColorStats(
+      @AuthenticationPrincipal UserPrincipal userPrincipal
+  ) {
+
+    statService.getColorStats(userPrincipal.getUser());
+    return ResponseEntity.ok(
+        new SuccessResponse<>("Color Stats 조회 성공", null)
+    );
+  }
+}
+
+

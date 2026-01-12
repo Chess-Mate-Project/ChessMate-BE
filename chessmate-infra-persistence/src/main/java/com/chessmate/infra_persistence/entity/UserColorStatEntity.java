@@ -3,6 +3,7 @@ package com.chessmate.infra_persistence.entity;
 
 import com.chessmate.common.type.ChessColor;
 import com.chessmate.common.type.GameResult;
+import com.chessmate.common.type.GameType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -35,4 +36,7 @@ public class UserColorStatEntity {
 
   @Enumerated(EnumType.STRING)
   private GameResult result; // WIN / LOSE / DRAW
+
+  @Enumerated(EnumType.STRING)
+  private GameType gameType; // BULLET / BLITZ / RAPID / CLASSICAL
 }

@@ -1,10 +1,12 @@
 package com.chessmate.domain.userFirstMoveStat;
 
+import com.chessmate.common.type.GameType;
+
 public class UserFirstMoveStat {
   private Long id;
   private Long userId;
   private String firstMove;
-
+  private GameType gameType; // BULLET / BLITZ / RAPID / CLASSICAL
 
   public UserFirstMoveStat() {}
 
@@ -43,10 +45,19 @@ public class UserFirstMoveStat {
     this.firstMove = firstMove;
   }
 
+  public GameType getGameType() {
+    return gameType;
+  }
+
+  public void setGameType(GameType gameType) {
+    this.gameType = gameType;
+  }
+
   public static class Builder {
     private Long id;
     private Long userId;
     private String firstMove;
+    private GameType gameType; // BULLET / BLITZ / RAPID / CLASSICAL
 
     public Builder id(Long id) {
       this.id = id;
@@ -60,6 +71,11 @@ public class UserFirstMoveStat {
 
     public Builder firstMove(String firstMove) {
       this.firstMove = firstMove;
+      return this;
+    }
+
+    public Builder gameType(GameType gameType) {
+      this.gameType = gameType;
       return this;
     }
 

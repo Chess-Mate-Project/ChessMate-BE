@@ -12,6 +12,7 @@ public class UserFirstMoveStatMapper {
         .id(entity.getId())
         .userId(entity.getUserId())
         .firstMove(entity.getFirstMove())
+        .gameType(entity.getGameType())
         .build();
   }
 
@@ -22,6 +23,7 @@ public class UserFirstMoveStatMapper {
         .id(domain.getId())
         .userId(domain.getUserId())
         .firstMove(domain.getFirstMove())
+        .gameType(domain.getGameType())
         .build();
   }
 }

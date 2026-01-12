@@ -12,6 +12,7 @@ public class UserColorStatMapper {
         .userId(entity.getUserId())
         .color(entity.getColor())
         .result(entity.getResult())
+        .gameType(entity.getGameType())
         .build();
   }
 
@@ -22,6 +23,7 @@ public class UserColorStatMapper {
         .userId(domain.getUserId())
         .color(domain.getColor())
         .result(domain.getResult())
+        .gameType(domain.getGameType())
         .build();
   }
 }

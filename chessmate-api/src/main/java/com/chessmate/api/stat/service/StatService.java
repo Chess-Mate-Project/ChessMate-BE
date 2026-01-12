@@ -3,6 +3,7 @@ package com.chessmate.api.stat.service;
 import com.chessmate.api.stat.dto.DailyStreakDto;
 import com.chessmate.api.stat.dto.YearStreakDto;
 import com.chessmate.domain.user.User;
+import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
 import java.time.LocalDate;
 import java.time.Year;
@@ -17,7 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class StatService {
 
   private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
-
+  private final UserColorStatRepositoryImpl userColorStatRepository;
+    
   @Transactional(readOnly = true)
   public YearStreakDto getDailyStreaksByYear(User user, Year year) {
 
@@ -43,5 +45,10 @@ public class StatService {
         );
 
     return new YearStreakDto(year, dailyStreakDto);
+  }
+
+  @Transactional
+  public void getColorStats(User user) {
+
   }
 }
