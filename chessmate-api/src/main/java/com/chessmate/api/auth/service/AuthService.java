@@ -31,14 +31,19 @@ public class AuthService {
   public void refresh(HttpServletRequest req, HttpServletResponse res) {
     String refreshToken = jwtService.resolveToken(req, JwtRule.REFRESH_PREFIX);
     String userId = jwtService.getSubject(refreshToken);
+
+    if (refreshToken == null || !jwtService.validateRefreshToken(refreshToken, Long.valueOf(userId))) {
+      throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
     User user = userRepository.findById(Long.valueOf(userId))
         .orElseThrow(() -> new RuntimeException("유저 없음"));
 
-    if (!jwtService.validateRefreshToken(refreshToken, user.getId())) {
+
+    if (!cacheService.getRefreshToken(user.getId()).equals(refreshToken)) {
       throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
 
     jwtService.generateAccessToken(res, user);
-    jwtService.generateRefreshToken(res, user);
   }
 }

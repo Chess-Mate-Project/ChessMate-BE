@@ -28,7 +28,7 @@
         String[] excluded = {
             "/api/oauth/oauth-url",
             "/api/oauth/callback",
-            "/api/oauth/refresh",
+            "/api/auth/refresh",
             "/api/user/count"
         };
 

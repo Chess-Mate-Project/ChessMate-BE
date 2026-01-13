@@ -13,6 +13,12 @@ public class CacheService {
   private final RedisService redisService;
   private final RedisKeyProperties redisKeyProperties;
 
+  public String getRefreshToken(Long userId) {
+    return redisService.get(
+        redisKeyProperties.getAuth().refreshToken(userId),
+        String.class
+    );
+  }
   /**
   * - PKCE 저장: state 값을 키로 사용하여 code verifier를 Redis에 저장합니다. 유효 기간은 5분(300초)입니다.
   * - PKCE 조회: state 값을 사용하여 Redis에서 code verifier를 조회합니다.
@@ -123,6 +129,13 @@ public class CacheService {
         redisKeyProperties.getUser().perfs(lichessId),
         perfs,
         86400L
+    );
+  }
+
+  public PerfsDto getPerfs(String lichessId) {
+    return redisService.get(
+        redisKeyProperties.getUser().perfs(lichessId),
+        PerfsDto.class
     );
   }
 

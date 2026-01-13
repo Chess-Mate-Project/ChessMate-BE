@@ -2,14 +2,19 @@ package com.chessmate.api.stat.service;
 
 import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.DailyStreakDto;
+import com.chessmate.api.stat.dto.TierResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
+import com.chessmate.common.dto.TierResult;
 import com.chessmate.common.type.ChessColor;
 import com.chessmate.common.type.GameResult;
 import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
 import com.chessmate.domain.userColorStat.UserColorStat;
+import com.chessmate.external.dto.account.PerfsDto;
+import com.chessmate.external.service.LichessApiService;
 import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
+import com.chessmate.infra_redis.redis.CacheService;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.ArrayList;
@@ -24,6 +29,8 @@ public class StatService {
 
   private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
   private final UserColorStatRepositoryImpl userColorStatRepository;
+  private final CacheService cacheService;
+  private final LichessApiService lichessApiService;
     
   @Transactional(readOnly = true)
   public YearStreakDto getDailyStreaksByYear(User user, Year year) {
@@ -52,7 +59,7 @@ public class StatService {
     return new YearStreakDto(year, dailyStreakDto);
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public ColorStatsResponse getColorStats(User user, GameType gameType) {
     List<UserColorStat> userColorStats = userColorStatRepository.findByUserIdAndGameType(user.getId(), gameType);
 
@@ -94,5 +101,45 @@ public class StatService {
     });
 
     return response;
+  }
+
+  public TierResponse getTierStats(User user, GameType gameType) {
+    PerfsDto perfsDto = cacheService.getPerfs(user.getLichessId());
+//    if(perfsDto == null) { 캐싱된 정보 없을 떄 처리 일단 보류
+//    /      lichessApiService.getUserAccount(user.getLichessId());
+//    }
+
+    int rating;
+    TierResult tierResult;
+
+
+    switch (gameType) {
+      case BULLET -> {
+        rating = perfsDto.bullet().rating();
+        tierResult = new TierResult(rating);
+      }
+      case BLITZ -> {
+        rating = perfsDto.blitz().rating();
+        tierResult = new TierResult(rating);
+      }
+      case RAPID -> {
+        rating = perfsDto.rapid().rating();
+        tierResult = new TierResult(rating);
+      }
+      case CLASSICAL -> {
+        rating = perfsDto.classical().rating();
+        tierResult = new TierResult(rating);
+      }
+      default -> throw new IllegalArgumentException("Unsupported game type: " + gameType);
+    }
+
+
+    return TierResponse.builder()
+        .gameType(gameType)
+        .rating(rating)
+        .tierResult(tierResult)
+        .build();
+
+
   }
 }

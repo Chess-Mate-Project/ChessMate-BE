@@ -1,5 +1,6 @@
 package com.chessmate.external.dto.account;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
 
 /**
  * 게임 타입별 퍼포먼스 묶음 DTO

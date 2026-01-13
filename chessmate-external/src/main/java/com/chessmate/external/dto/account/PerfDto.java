@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * - 티어 계산 및 실력 판단의 핵심 데이터
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+
 public record PerfDto(
 
     /** 해당 게임 타입에서 둔 총 게임 수 */

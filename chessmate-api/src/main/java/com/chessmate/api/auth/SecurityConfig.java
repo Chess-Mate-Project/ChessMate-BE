@@ -30,7 +30,9 @@ public class SecurityConfig {
                         .requestMatchers(
                           "/api/oauth/oauth-url",
                           "/api/oauth/callback",
-                            "/api/user/count"
+                            "/api/user/count",
+                            "/api/auth/refresh",
+                            "api/auth/logout"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
