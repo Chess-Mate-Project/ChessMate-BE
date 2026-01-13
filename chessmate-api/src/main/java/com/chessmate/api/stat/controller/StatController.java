@@ -1,9 +1,11 @@
 package com.chessmate.api.stat.controller;
 
 import com.chessmate.api.auth.UserPrincipal;
+import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
 import com.chessmate.api.stat.service.StatService;
 import com.chessmate.common.response.SuccessResponse;
+import com.chessmate.common.type.GameType;
 import java.time.Year;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,13 +36,15 @@ public class StatController {
   }
 
   @GetMapping("/color")
-  public ResponseEntity<SuccessResponse<Void>> getColorStats(
-      @AuthenticationPrincipal UserPrincipal userPrincipal
+  public ResponseEntity<SuccessResponse<ColorStatsResponse>> getColorStats(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam(defaultValue = "RAPID") GameType gameType
   ) {
 
-    statService.getColorStats(userPrincipal.getUser());
+    ColorStatsResponse response = statService.getColorStats(userPrincipal.getUser(), gameType);
+
     return ResponseEntity.ok(
-        new SuccessResponse<>("Color Stats 조회 성공", null)
+        new SuccessResponse<>("Color Stats 조회 성공", response)
     );
   }
 }

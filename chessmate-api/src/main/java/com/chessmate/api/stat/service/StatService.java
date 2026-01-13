@@ -1,8 +1,13 @@
 package com.chessmate.api.stat.service;
 
+import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.DailyStreakDto;
 import com.chessmate.api.stat.dto.YearStreakDto;
+import com.chessmate.common.type.ChessColor;
+import com.chessmate.common.type.GameResult;
+import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
+import com.chessmate.domain.userColorStat.UserColorStat;
 import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
 import java.time.LocalDate;
@@ -48,7 +53,46 @@ public class StatService {
   }
 
   @Transactional
-  public void getColorStats(User user) {
+  public ColorStatsResponse getColorStats(User user, GameType gameType) {
+    List<UserColorStat> userColorStats = userColorStatRepository.findByUserIdAndGameType(user.getId(), gameType);
 
+    ColorStatsResponse response = new ColorStatsResponse(
+      gameType,0,0,0,0,0,0,0,0
+    );
+
+    userColorStats.forEach(stat -> {
+      switch (stat.getColor()) {
+        case WHITE -> {
+          response.setWhiteTotal(response.getWhiteTotal() + 1);
+          switch (stat.getResult()) {
+            case WIN:
+              response.setWhiteWins(response.getWhiteWins() + 1);
+              break;
+            case LOSE:
+              response.setWhiteLoses(response.getWhiteLoses() + 1);
+              break;
+            case DRAW:
+              response.setWhiteDraws(response.getWhiteDraws() + 1);
+              break;
+          }
+        }
+        case BLACK -> {
+          response.setBlackTotal(response.getBlackTotal() + 1);
+          switch (stat.getResult()) {
+            case WIN:
+              response.setBlackWins(response.getWhiteWins() + 1);
+              break;
+            case LOSE:
+              response.setBlackLoses(response.getWhiteLoses() + 1);
+              break;
+            case DRAW:
+              response.setBlackDraws(response.getWhiteDraws() + 1);
+              break;
+          }
+        }
+      }
+    });
+
+    return response;
   }
 }
