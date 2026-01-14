@@ -47,6 +47,14 @@ public class LichessGameProcessor
       return null;
     }
 
+    // GameType 검증: perf 필드가 지원되는 게임 타입이 아니면 건너뛰기
+    GameType gameType = getGameType(game.perf());
+    if (gameType == null) {
+      log.info("지원되지 않는 게임 타입입니다. perf='{}', username='{}', game.createdAt='{}' - 이 게임은 건너뜁니다.",
+          game.perf(), username, game.createdAt());
+      return null;
+    }
+
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> {
           log.error("사용자 조회 실패: username='{}' - 게임 처리 불가, game='{}'", username, game);
@@ -66,8 +74,8 @@ public class LichessGameProcessor
     }
 
     return GameStat.builder()
-        .colorStat(buildColorStat(user, myColor, result, getGameType(game.perf())))
-        .firstMoveStat(buildFirstMoveStat(game, user, myColor))
+        .colorStat(buildColorStat(user, myColor, result, gameType))
+        .firstMoveStat(buildFirstMoveStat(game, user, myColor, gameType))
         .dailyStreak(buildDailyStreak(game, user, result))
         .build();
   }
@@ -175,7 +183,8 @@ public class LichessGameProcessor
   private UserFirstMoveStat buildFirstMoveStat(
       LichessGamesDto game,
       User user,
-      ChessColor color
+      ChessColor color,
+      GameType gameType
   ) {
 
     if (game.moves() == null) {
@@ -201,7 +210,7 @@ public class LichessGameProcessor
         .userId(user.getId())
         .firstMove(firstMove)
         .color(color)
-        .gameType(getGameType(game.perf()))
+        .gameType(gameType)
         .build();
   }
 
@@ -229,7 +238,10 @@ public class LichessGameProcessor
   }
 
   public GameType getGameType(String perf) {
-    return switch (perf) {
+    if (perf == null) {
+      return null;
+    }
+    return switch (perf.toLowerCase()) {
       case "bullet" -> GameType.BULLET;
       case "blitz" -> GameType.BLITZ;
       case "rapid" -> GameType.RAPID;
