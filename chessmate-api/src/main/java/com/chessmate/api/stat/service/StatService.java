@@ -47,7 +47,7 @@ public class StatService {
     LocalDate start = LocalDate.of(year.getValue(), 1, 1);
     LocalDate end = LocalDate.of(year.getValue(), 12, 31);
 
-    userDailyStreakRepository.findByUserIdAndYearRange(1L, start, end)
+    userDailyStreakRepository.findByUserIdAndYearRange(user.getId(), start, end)
         .forEach(streak -> {
 
               DailyStreakDto dto = new DailyStreakDto(
