@@ -4,6 +4,7 @@ package com.chessmate.worker.batch.processer;
 
 import com.chessmate.common.type.ChessColor;
 import com.chessmate.common.type.GameResult;
+import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
 import com.chessmate.domain.userColorStat.UserColorStat;
 import com.chessmate.domain.userDailyStreak.UserDailyStreak;
@@ -65,7 +66,7 @@ public class LichessGameProcessor
     }
 
     return GameStat.builder()
-        .colorStat(buildColorStat(user, myColor, result))
+        .colorStat(buildColorStat(user, myColor, result, getGameType(game.perf())))
         .firstMoveStat(buildFirstMoveStat(game, user, myColor))
         .dailyStreak(buildDailyStreak(game, user, result))
         .build();
@@ -160,12 +161,14 @@ public class LichessGameProcessor
   private UserColorStat buildColorStat(
       User user,
       ChessColor color,
-      GameResult result
+      GameResult result,
+      GameType gameType
   ) {
     return UserColorStat.builder()
         .userId(user.getId())
         .color(color)
         .result(result)
+        .gameType(gameType)
         .build();
   }
 
@@ -197,6 +200,8 @@ public class LichessGameProcessor
     return UserFirstMoveStat.builder()
         .userId(user.getId())
         .firstMove(firstMove)
+        .color(color)
+        .gameType(getGameType(game.perf()))
         .build();
   }
 
@@ -221,5 +226,16 @@ public class LichessGameProcessor
         .draw(result == GameResult.DRAW ? 1 : 0)
         .lastGameAt(game.lastMoveAt())
         .build();
+  }
+
+  public GameType getGameType(String perf) {
+    return switch (perf) {
+      case "bullet" -> GameType.BULLET;
+      case "blitz" -> GameType.BLITZ;
+      case "rapid" -> GameType.RAPID;
+      case "classical" -> GameType.CLASSICAL;
+      default -> null;
+    };
+
   }
 }

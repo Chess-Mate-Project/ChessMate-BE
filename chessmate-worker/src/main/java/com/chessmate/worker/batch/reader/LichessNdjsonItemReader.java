@@ -23,9 +23,6 @@ public class LichessNdjsonItemReader implements ItemReader<LichessGamesDto> {
   @Value("#{jobParameters['username']}")
   private String username;
 
-  @Value("#{jobParameters['until']}")
-  private Long until;
-
   private Iterator<LichessGamesDto> iterator;
 
   @Override

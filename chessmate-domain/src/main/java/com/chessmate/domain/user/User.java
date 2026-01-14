@@ -11,6 +11,7 @@ public class User {
   private String profileImage;
   private String title;
   private LocalDateTime createdAt;
+  private LocalDateTime lichessCreatedAt;
 
   // 무인자 생성자(프레임워크/직렬화용)
   public User() {}
@@ -24,6 +25,7 @@ public class User {
     this.createdAt = builder.createdAt;
     this.bannerImage = builder.bannerImage;
     this.profileImage = builder.profileImage;
+    this.lichessCreatedAt = builder.lichessCreatedAt;
   }
 
   public static Builder builder() {
@@ -62,7 +64,9 @@ public class User {
     return profileImage;
   }
 
-  // Setter들
+  public LocalDateTime getLichessCreatedAt() {
+    return lichessCreatedAt;
+  }
   public void setId(Long id) {
     this.id = id;
   }
@@ -95,6 +99,10 @@ public class User {
     this.profileImage = profileImage;
   }
 
+  public void setLichessCreatedAt(LocalDateTime lichessCreatedAt) {
+    this.lichessCreatedAt = lichessCreatedAt;
+  }
+
   public static class Builder {
     private Long id;
     private String lichessId;
@@ -104,6 +112,7 @@ public class User {
     private LocalDateTime createdAt;
     private String bannerImage;
     private String profileImage;
+    private LocalDateTime lichessCreatedAt;
 
     public Builder id(Long id) {
       this.id = id;
@@ -142,6 +151,11 @@ public class User {
 
     public Builder profileImage(String profileImage) {
       this.profileImage = profileImage;
+      return this;
+    }
+
+    public Builder lichessCreatedAt(LocalDateTime lichessCreatedAt) {
+      this.lichessCreatedAt = lichessCreatedAt;
       return this;
     }
 

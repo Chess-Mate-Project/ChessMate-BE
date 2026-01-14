@@ -29,7 +29,7 @@ public class UserBatchServiceImpl implements UserBatchService {
 
     try {
       JobParameters params = new JobParametersBuilder()
-          .addString("lichess_id", user.getLichessId())
+          .addString("username", user.getUsername())
           .addString("token", lichessToken)
           .toJobParameters();
 

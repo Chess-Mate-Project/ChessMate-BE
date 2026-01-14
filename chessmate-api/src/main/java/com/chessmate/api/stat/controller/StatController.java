@@ -1,9 +1,14 @@
 package com.chessmate.api.stat.controller;
 
 import com.chessmate.api.auth.UserPrincipal;
+import com.chessmate.api.stat.dto.ColorStatsResponse;
+import com.chessmate.api.stat.dto.FirstMoveResponse;
+import com.chessmate.api.stat.dto.TierResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
 import com.chessmate.api.stat.service.StatService;
 import com.chessmate.common.response.SuccessResponse;
+import com.chessmate.common.type.GameType;
+import com.chessmate.infra_redis.redis.CacheService;
 import java.time.Year;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,4 +37,45 @@ public class StatController {
         new SuccessResponse<>("Streak 조회 성공", statDto)
     );
   }
- }
+
+  @GetMapping("/color")
+  public ResponseEntity<SuccessResponse<ColorStatsResponse>> getColorStats(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam(defaultValue = "RAPID") GameType gameType
+  ) {
+
+    ColorStatsResponse response = statService.getColorStats(userPrincipal.getUser(), gameType);
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("Color Stats 조회 성공", response)
+    );
+  }
+
+  @GetMapping("/tier")
+  public ResponseEntity<SuccessResponse<TierResponse>> getTierStats(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam(defaultValue = "RAPID") GameType gameType
+  ) {
+
+    TierResponse response = statService.getTierStats(userPrincipal.getUser(), gameType);
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("Tier Stats 조회 성공", response)
+    );
+  }
+
+  @GetMapping("/first-move")
+  public ResponseEntity<SuccessResponse<FirstMoveResponse>> getFirstMoveStats(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam(defaultValue = "RAPID") GameType gameType
+  ) {
+
+    FirstMoveResponse response = statService.getFirstMoveStats(userPrincipal.getUser(), gameType);
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("Tier Stats 조회 성공", response)
+    );
+  }
+}
+
+

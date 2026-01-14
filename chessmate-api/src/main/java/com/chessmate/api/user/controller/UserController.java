@@ -2,6 +2,7 @@ package com.chessmate.api.user.controller;
 
 
 import com.chessmate.api.auth.UserPrincipal;
+import com.chessmate.api.user.dto.ProfileResponse;
 import com.chessmate.api.user.dto.TotalUserCountResponse;
 import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import com.chessmate.api.user.service.UserService;
@@ -33,6 +34,17 @@ public class UserController {
     );
   }
 
+  @GetMapping("profile")
+  public ResponseEntity<SuccessResponse<ProfileResponse>> getUserProfile(
+      @AuthenticationPrincipal UserPrincipal u
+  ) {
+    ProfileResponse response = userService.getUserProfile(u.getUser());
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("사용자 프로필 조회 성공", response)
+    );
+  }
+
   @PutMapping("/description")
   public ResponseEntity<SuccessResponse<Void>> updateUserDescription(
       @AuthenticationPrincipal UserPrincipal u,
@@ -43,5 +55,7 @@ public class UserController {
         new SuccessResponse<>("사용자 소개글 수정 성공", null)
     );
   }
+
+
 
 }

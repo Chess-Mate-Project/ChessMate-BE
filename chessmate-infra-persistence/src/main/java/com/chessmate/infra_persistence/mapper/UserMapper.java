@@ -13,6 +13,8 @@ public class UserMapper {
         .lichessId(entity.getLichessId())
         .bannerImage(entity.getBannerImage())
         .profileImage(entity.getProfileImage())
+        .lichessCreatedAt(entity.getLichessCreatedAt())
+        .createdAt(entity.getCreatedAt())
         .build();
   }
 
@@ -24,6 +26,8 @@ public class UserMapper {
         .lichessId(domain.getLichessId())
         .bannerImage(domain.getBannerImage())
         .profileImage(domain.getProfileImage())
+        .lichessCreatedAt(domain.getLichessCreatedAt())
+        .createdAt(domain.getCreatedAt())
         .build();
   }
 }

@@ -48,4 +48,7 @@ public class UserEntity {
   @CreatedDate
   @Column(updatable = false)
   private LocalDateTime createdAt;
+
+  @Column(name = "lichess_created_at")
+  private LocalDateTime lichessCreatedAt;
 }

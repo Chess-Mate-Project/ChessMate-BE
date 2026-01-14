@@ -28,7 +28,7 @@
         String[] excluded = {
             "/api/oauth/oauth-url",
             "/api/oauth/callback",
-            "/api/oauth/refresh",
+            "/api/auth/refresh",
             "/api/user/count"
         };
 
@@ -37,7 +37,9 @@
             return true; // 이 경로들은 필터를 적용하지 않음
           }
         }
-
+        if (request.getMethod().equals("OPTIONS")) {
+          return true;
+        }
         return false; // 그 외는 필터 적용
       }
 
