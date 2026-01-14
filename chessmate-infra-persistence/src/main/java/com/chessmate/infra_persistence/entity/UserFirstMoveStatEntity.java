@@ -1,5 +1,6 @@
 package com.chessmate.infra_persistence.entity;
 
+import com.chessmate.common.type.ChessColor;
 import com.chessmate.common.type.GameType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -28,6 +29,9 @@ public class UserFirstMoveStatEntity {
   private Long userId;
 
   private String firstMove; // e4, d4 등
+
+  @Enumerated(EnumType.STRING)
+  private ChessColor color; // WHITE / BLACK
 
   @Enumerated(EnumType.STRING)
   private GameType gameType; // BULLET / BLITZ / RAPID / CLASSICAL

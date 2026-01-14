@@ -2,6 +2,7 @@ package com.chessmate.api.stat.service;
 
 import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.DailyStreakDto;
+import com.chessmate.api.stat.dto.FirstMoveResponse;
 import com.chessmate.api.stat.dto.TierResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
 import com.chessmate.common.dto.TierResult;
@@ -10,15 +11,19 @@ import com.chessmate.common.type.GameResult;
 import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
 import com.chessmate.domain.userColorStat.UserColorStat;
+import com.chessmate.domain.userFirstMoveStat.UserFirstMoveStat;
 import com.chessmate.external.dto.account.PerfsDto;
 import com.chessmate.external.service.LichessApiService;
 import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
+import com.chessmate.infra_persistence.repositoryImpl.UserFirstMoveStatRepositoryImpl;
 import com.chessmate.infra_redis.redis.CacheService;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +34,11 @@ public class StatService {
 
   private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
   private final UserColorStatRepositoryImpl userColorStatRepository;
+  private final UserFirstMoveStatRepositoryImpl userFirstMoveStatRepository;
+
   private final CacheService cacheService;
   private final LichessApiService lichessApiService;
-    
+
   @Transactional(readOnly = true)
   public YearStreakDto getDailyStreaksByYear(User user, Year year) {
 
@@ -61,10 +68,11 @@ public class StatService {
 
   @Transactional(readOnly = true)
   public ColorStatsResponse getColorStats(User user, GameType gameType) {
-    List<UserColorStat> userColorStats = userColorStatRepository.findByUserIdAndGameType(user.getId(), gameType);
+    List<UserColorStat> userColorStats = userColorStatRepository.findByUserIdAndGameType(
+        user.getId(), gameType);
 
     ColorStatsResponse response = new ColorStatsResponse(
-      gameType,0,0,0,0,0,0,0,0
+        gameType, 0, 0, 0, 0, 0, 0, 0, 0
     );
 
     userColorStats.forEach(stat -> {
@@ -103,15 +111,40 @@ public class StatService {
     return response;
   }
 
+  public FirstMoveResponse getFirstMoveStats(User user, GameType gameType) {
+    List<UserFirstMoveStat> whiteFirstMoves = userFirstMoveStatRepository.findByUserIdAndGameTypeAndColor(
+        user.getId(), gameType, ChessColor.WHITE
+    );
+
+    List<UserFirstMoveStat> blackFirstMoves = userFirstMoveStatRepository.findByUserIdAndGameTypeAndColor(
+        user.getId(), gameType, ChessColor.BLACK
+    );
+
+    Map<String, Integer> whiteMoves = new HashMap<>();
+    Map<String, Integer> blackMoves = new HashMap<>();
+
+    whiteFirstMoves.forEach(stat -> {
+      whiteMoves.put(stat.getFirstMove(),
+          whiteMoves.getOrDefault(stat.getFirstMove(), 0) + 1);
+    });
+
+    blackFirstMoves.forEach(stat -> {
+      blackMoves.put(stat.getFirstMove(),
+          blackMoves.getOrDefault(stat.getFirstMove(), 0) + 1);
+    });
+
+    return new FirstMoveResponse(gameType, whiteMoves, blackMoves);
+  }
+
   public TierResponse getTierStats(User user, GameType gameType) {
     PerfsDto perfsDto = cacheService.getPerfs(user.getLichessId());
+
 //    if(perfsDto == null) { 캐싱된 정보 없을 떄 처리 일단 보류
 //    /      lichessApiService.getUserAccount(user.getLichessId());
 //    }
 
     int rating;
     TierResult tierResult;
-
 
     switch (gameType) {
       case BULLET -> {
@@ -133,13 +166,10 @@ public class StatService {
       default -> throw new IllegalArgumentException("Unsupported game type: " + gameType);
     }
 
-
     return TierResponse.builder()
         .gameType(gameType)
         .rating(rating)
         .tierResult(tierResult)
         .build();
-
-
   }
 }

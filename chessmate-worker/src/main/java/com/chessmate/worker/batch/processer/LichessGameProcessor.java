@@ -200,6 +200,7 @@ public class LichessGameProcessor
     return UserFirstMoveStat.builder()
         .userId(user.getId())
         .firstMove(firstMove)
+        .color(color)
         .gameType(getGameType(game.perf()))
         .build();
   }

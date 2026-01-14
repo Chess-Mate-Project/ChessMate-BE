@@ -2,6 +2,7 @@ package com.chessmate.api.stat.controller;
 
 import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.stat.dto.ColorStatsResponse;
+import com.chessmate.api.stat.dto.FirstMoveResponse;
 import com.chessmate.api.stat.dto.TierResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
 import com.chessmate.api.stat.service.StatService;
@@ -57,6 +58,19 @@ public class StatController {
   ) {
 
     TierResponse response = statService.getTierStats(userPrincipal.getUser(), gameType);
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("Tier Stats 조회 성공", response)
+    );
+  }
+
+  @GetMapping("/first-move")
+  public ResponseEntity<SuccessResponse<FirstMoveResponse>> getFirstMoveStats(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam(defaultValue = "RAPID") GameType gameType
+  ) {
+
+    FirstMoveResponse response = statService.getFirstMoveStats(userPrincipal.getUser(), gameType);
 
     return ResponseEntity.ok(
         new SuccessResponse<>("Tier Stats 조회 성공", response)

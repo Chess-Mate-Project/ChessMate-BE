@@ -1,11 +1,13 @@
 package com.chessmate.domain.userFirstMoveStat;
 
+import com.chessmate.common.type.ChessColor;
 import com.chessmate.common.type.GameType;
 
 public class UserFirstMoveStat {
   private Long id;
   private Long userId;
   private String firstMove;
+  private ChessColor color; // WHITE / BLACK
   private GameType gameType; // BULLET / BLITZ / RAPID / CLASSICAL
 
   public UserFirstMoveStat() {}
@@ -14,6 +16,8 @@ public class UserFirstMoveStat {
     this.id = builder.id;
     this.userId = builder.userId;
     this.firstMove = builder.firstMove;
+    this.color = builder.color;
+    this.gameType = builder.gameType;
   }
 
   public static Builder builder() {
@@ -32,6 +36,10 @@ public class UserFirstMoveStat {
     return firstMove;
   }
 
+  public ChessColor getColor() {
+    return color;
+  }
+
   // 추가된 Setter들
   public void setId(Long id) {
     this.id = id;
@@ -43,6 +51,10 @@ public class UserFirstMoveStat {
 
   public void setFirstMove(String firstMove) {
     this.firstMove = firstMove;
+  }
+
+  public void setColor(ChessColor color) {
+    this.color = color;
   }
 
   public GameType getGameType() {
@@ -57,6 +69,7 @@ public class UserFirstMoveStat {
     private Long id;
     private Long userId;
     private String firstMove;
+    private ChessColor color;
     private GameType gameType; // BULLET / BLITZ / RAPID / CLASSICAL
 
     public Builder id(Long id) {
@@ -71,6 +84,11 @@ public class UserFirstMoveStat {
 
     public Builder firstMove(String firstMove) {
       this.firstMove = firstMove;
+      return this;
+    }
+
+    public Builder color(ChessColor color) {
+      this.color = color;
       return this;
     }
 
