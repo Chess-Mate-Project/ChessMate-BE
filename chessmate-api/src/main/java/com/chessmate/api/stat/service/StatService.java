@@ -95,13 +95,13 @@ public class StatService {
           response.setBlackTotal(response.getBlackTotal() + 1);
           switch (stat.getResult()) {
             case WIN:
-              response.setBlackWins(response.getWhiteWins() + 1);
+              response.setBlackWins(response.getBlackWins() + 1);
               break;
             case LOSE:
-              response.setBlackLoses(response.getWhiteLoses() + 1);
+              response.setBlackLoses(response.getBlackLoses() + 1);
               break;
             case DRAW:
-              response.setBlackDraws(response.getWhiteDraws() + 1);
+              response.setBlackDraws(response.getBlackDraws() + 1);
               break;
           }
         }
