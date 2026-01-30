@@ -4,6 +4,7 @@ import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.DailyStreakDto;
 import com.chessmate.api.stat.dto.FirstMoveResponse;
 import com.chessmate.api.stat.dto.TierResponse;
+import com.chessmate.api.stat.dto.UserPerfResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
 import com.chessmate.common.dto.TierResult;
 import com.chessmate.common.type.ChessColor;
@@ -12,6 +13,8 @@ import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
 import com.chessmate.domain.userColorStat.UserColorStat;
 import com.chessmate.domain.userFirstMoveStat.UserFirstMoveStat;
+import com.chessmate.domain.userPerf.UserPerf;
+import com.chessmate.domain.userPerf.UserPerfRepository;
 import com.chessmate.external.dto.account.PerfsDto;
 import com.chessmate.external.service.LichessApiService;
 import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
@@ -25,16 +28,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StatService {
 
   private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
   private final UserColorStatRepositoryImpl userColorStatRepository;
   private final UserFirstMoveStatRepositoryImpl userFirstMoveStatRepository;
+  private final UserPerfRepository userPerfRepository;
 
   private final CacheService cacheService;
   private final LichessApiService lichessApiService;
@@ -139,9 +145,9 @@ public class StatService {
   public TierResponse getTierStats(User user, GameType gameType) {
     PerfsDto perfsDto = cacheService.getPerfs(user.getLichessId());
 
-//    if(perfsDto == null) { 캐싱된 정보 없을 떄 처리 일단 보류
-//    /      lichessApiService.getUserAccount(user.getLichessId());
-//    }
+    if(perfsDto == null) {
+
+    }
 
     int rating;
     TierResult tierResult;
@@ -172,4 +178,39 @@ public class StatService {
         .tierResult(tierResult)
         .build();
   }
+
+  /**
+   * 게임 타입별 상세 퍼포먼스 정보 조회
+   * - UserPerf에서 게임 타입별 모든 통계 정보 반환
+   * @param user 사용자
+   * @param gameType 게임 타입
+   * @return UserPerfResponse 게임 타입별 상세 퍼포먼스 정보
+   */
+  @Transactional(readOnly = true)
+  public UserPerfResponse getUserPerf(User user, GameType gameType) {
+
+    return userPerfRepository.findByUserIdAndGameType(user.getId(), gameType)
+        .map(userPerf -> new UserPerfResponse(
+            userPerf.getRating(),
+            userPerf.getGamesPlayed(),
+            userPerf.isProv(),
+            userPerf.getAll(),
+            userPerf.getRated(),
+            userPerf.getWins(),
+            userPerf.getLosses(),
+            userPerf.getDraws(),
+            userPerf.getTour(),
+            userPerf.getBerserk(),
+            userPerf.getOpAvg(),
+            userPerf.getSeconds(),
+            userPerf.getDisconnects(),
+            userPerf.getHighestRating(),
+            userPerf.getLowestRating(),
+            userPerf.getMaxStreak(),
+            userPerf.getMaxLossStreak(),
+            userPerf.getRated() < 50 // 불확실성 판단
+        ))
+        .orElse(null);  // UserPerf 데이터 없으면 null 반환
+  }
+
 }

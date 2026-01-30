@@ -51,4 +51,22 @@ public class UserEntity {
 
   @Column(name = "lichess_created_at")
   private LocalDateTime lichessCreatedAt;
+
+  @Column(name = "all_games", nullable = false)
+  private int allGames;
+
+  @Column(name = "rated_games", nullable = false)
+  private int ratedGames;
+
+  @Column(name = "wins", nullable = false)
+  private int wins;
+
+  @Column(name = "losses", nullable = false)
+  private int losses;
+
+  @Column(name = "draws", nullable = false)
+  private int draws;
+
+  @Column(name = "total_seconds", nullable = false)
+  private int totalSeconds;
 }

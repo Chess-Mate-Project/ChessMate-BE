@@ -3,11 +3,13 @@ package com.chessmate.external.service;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.code.UserErrorCode;
 import com.chessmate.common.exception.AuthException;
+import com.chessmate.common.type.GameType;
 import com.chessmate.external.config.LichessConfig;
 import com.chessmate.external.dto.account.LichessAccountDto;
 import com.chessmate.external.dto.game.LichessGamesDto;
 import com.chessmate.external.dto.oauth.OAuthValueRequest;
 import com.chessmate.external.dto.oauth.OauthAccessTokenDto;
+import com.chessmate.external.dto.perf.UserPerfDto;
 import java.time.Instant;
 import jdk.jshell.spi.ExecutionControl.UserException;
 import lombok.RequiredArgsConstructor;
@@ -81,6 +83,8 @@ public class LichessApiService {
         }).block();
   }
 
+
+
   /**
    * - [ Lichess 사용자 게임 기록 조회 (Reactive) ]
    * - 설명: Lichess API를 통해 특정 사용자의 게임 기록을 Reactive 방식으로 조회
@@ -108,6 +112,53 @@ public class LichessApiService {
         .bodyToFlux(LichessGamesDto.class);
   }
 
+  /**
+   * - [ Lichess 사용자 게임 통계 조회 ]
+   * - 설명: Lichess API를 통해 특정 사용자의 게임 타입별 통계를 조회
+   * - 엔드포인트: GET /api/user/{username}/perf/{perfType}
+   * - @param username 조회할 Lichess 사용자 이름
+   * @param gameType 게임 타입 (bullet, blitz, rapid, classical, ultraBullet 등)
+   * - @return UserPerfDto 사용자 게임 통계 정보
+   * - Throws: UserException - 사용자 게임 통계 조회 실패 시 발생
+   * */
+  public UserPerfDto getUserPerf(String username, GameType gameType) {
+    log.info("[LichessAPI] 게임 통계 조회 시작 - username={}, gameType={}", username, gameType);
 
+    try {
+      UserPerfDto result = webClient.get()
+          .uri(uriBuilder -> uriBuilder
+              .path("/user/{username}/perf/{perfType}")
+              .build(username, gameType.name().toLowerCase()))
+          .retrieve()
+          .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
+            return clientResponse.bodyToMono(String.class)
+                .doOnNext(errorBody -> log.error("[LichessAPI] 4xx 오류 응답 - username={}, gameType={}, body={}",
+                    username, gameType, errorBody))
+                .then(Mono.error(new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)));
+          })
+          .onStatus(HttpStatusCode::is5xxServerError, serverResponse -> {
+            return serverResponse.bodyToMono(String.class)
+                .doOnNext(errorBody -> log.error("[LichessAPI] 5xx 오류 응답 - username={}, gameType={}, body={}",
+                    username, gameType, errorBody))
+                .then(Mono.error(new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)));
+          })
+          .bodyToMono(UserPerfDto.class)
+          .doOnNext(result2 -> log.info("[LichessAPI] 게임 통계 조회 완료 - username={}, gameType={}, rating={}, all={}",
+              username, gameType, result2.perf().glicko().rating(), result2.stat().count().all()))
+          .block();
+
+      if (result == null) {
+        log.error("[LichessAPI] UserPerfDto가 null - username={}, gameType={}", username, gameType);
+        throw new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT);
+      }
+
+      return result;
+
+    } catch (Exception e) {
+      log.error("[LichessAPI] 게임 통계 조회 실패 - username={}, gameType={}, error={}",
+          username, gameType, e.getMessage(), e);
+      throw e;
+    }
+  }
 
 }

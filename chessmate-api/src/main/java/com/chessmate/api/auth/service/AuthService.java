@@ -25,7 +25,7 @@ public class AuthService {
     jwtService.logout(res); //쿠키 만료
     cacheService.deleteRefreshToken(user.getId());
 
-    cacheService.deleteLichessToken(user.getLichessId());
+    cacheService.deleteLichessToken(user.getId());
   }
 
   public void refresh(HttpServletRequest req, HttpServletResponse res) {

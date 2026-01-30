@@ -5,10 +5,8 @@ import com.chessmate.api.user.dto.ProfileResponse;
 import com.chessmate.api.user.dto.TotalUserCountResponse;
 import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import com.chessmate.common.code.UserErrorCode;
-import com.chessmate.common.exception.AuthException;
 import com.chessmate.common.exception.UserException;
 import com.chessmate.domain.user.User;
-import com.chessmate.infra_persistence.entity.UserEntity;
 import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,12 +45,23 @@ public class UserService {
     );
 
     return new ProfileResponse(
+        u.getId(),
         u.getUsername(),
+        u.getLichessId(),
+        u.getTitle(),
         u.getDescription(),
+        u.getProfileImage(),
+        u.getBannerImage(),
         u.getCreatedAt(),
         u.getLichessCreatedAt(),
-        "https://lichess.org/@/" + u.getLichessId()
+        u.getAllGames(),
+        u.getRatedGames(),
+        u.getWins(),
+        u.getLosses(),
+        u.getDraws(),
+        u.getTotalSeconds()
     );
+
   }
 
 }

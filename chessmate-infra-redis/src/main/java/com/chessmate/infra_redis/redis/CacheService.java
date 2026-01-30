@@ -47,28 +47,28 @@ public class CacheService {
 
 
   /**
-  * - Lichess OAuth 토큰 저장: lichessId 값을 키로 사용하여 OAuth 토큰을 Redis에 저장합니다. 유효 기간은 24시간(86400초)입니다.
-  * - Lichess OAuth 토큰 조회: lichessId 값을 사용하여 Redis에서
-  * - Lichess OAuth 토큰 삭제: lichessId 값을 사용하여 Redis에서 OAuth 토큰을 삭제합니다.
+  * - Lichess OAuth 토큰 저장: id 값을 키로 사용하여 OAuth 토큰을 Redis에 저장합니다. 유효 기간은 24시간(86400초)입니다.
+  * - Lichess OAuth 토큰 조회: id 값을 사용하여 Redis에서
+  * - Lichess OAuth 토큰 삭제: id 값을 사용하여 Redis에서 OAuth 토큰을 삭제합니다.
   * */
-  public void saveLichessToken(String lichessId, String oauthToken) {
+  public void saveLichessToken(Long id, String oauthToken) {
     redisService.save(
-        redisKeyProperties.getOauth().lichessToken(lichessId),
+        redisKeyProperties.getOauth().lichessToken(id),
         oauthToken,
         86400L
     );
   }
 
-  public String getLichessToken(String lichessId) {
+  public String getLichessToken(Long id) {
     return redisService.get(
-        redisKeyProperties.getOauth().lichessToken(lichessId),
+        redisKeyProperties.getOauth().lichessToken(id),
         String.class
     );
   }
 
-  public void deleteLichessToken(String lichessId) {
+  public void deleteLichessToken(Long id) {
     redisService.delete(
-        redisKeyProperties.getOauth().lichessToken(lichessId)
+        redisKeyProperties.getOauth().lichessToken(id)
     );
   }
 

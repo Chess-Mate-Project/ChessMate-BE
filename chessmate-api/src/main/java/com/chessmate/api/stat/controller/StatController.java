@@ -4,6 +4,7 @@ import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.FirstMoveResponse;
 import com.chessmate.api.stat.dto.TierResponse;
+import com.chessmate.api.stat.dto.UserPerfResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
 import com.chessmate.api.stat.service.StatService;
 import com.chessmate.common.response.SuccessResponse;
@@ -51,16 +52,22 @@ public class StatController {
     );
   }
 
-  @GetMapping("/tier")
-  public ResponseEntity<SuccessResponse<TierResponse>> getTierStats(
+  @GetMapping("/perf")
+  public ResponseEntity<SuccessResponse<UserPerfResponse>> getUserPerf(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
       @RequestParam(defaultValue = "RAPID") GameType gameType
   ) {
 
-    TierResponse response = statService.getTierStats(userPrincipal.getUser(), gameType);
+    UserPerfResponse response = statService.getUserPerf(userPrincipal.getUser(), gameType);
+
+    if (response == null) {
+      return ResponseEntity.ok(
+          new SuccessResponse<>("UserPerf 데이터 없음", null)
+      );
+    }
 
     return ResponseEntity.ok(
-        new SuccessResponse<>("Tier Stats 조회 성공", response)
+        new SuccessResponse<>("UserPerf 정보 조회 성공", response)
     );
   }
 
