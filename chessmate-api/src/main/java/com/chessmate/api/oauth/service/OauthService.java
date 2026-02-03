@@ -231,6 +231,12 @@ public class OauthService {
       // JWT 토큰 발급
       User user = userRepository.findByLichessId(lichessId)
           .orElseThrow(() -> new IllegalStateException("User not found"));
+
+      // 마지막 접속 시간 갱신
+      user.setLastLoginAt(LocalDateTime.now());
+      userRepository.save(user);
+      log.info("lastLoginAt 갱신 완료 - userId={}, lastLoginAt={}", user.getId(), user.getLastLoginAt());
+
       jwtService.generateRefreshToken(res, user);
       var refreshToken = jwtService.generateAccessToken(res, user);
 

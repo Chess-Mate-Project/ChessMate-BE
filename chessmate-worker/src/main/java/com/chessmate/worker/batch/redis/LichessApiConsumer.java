@@ -21,6 +21,8 @@ public class LichessApiConsumer implements CommandLineRunner {
       log.info("Lichess Worker Consumer 시작됨...");
 
       while (!Thread.currentThread().isInterrupted()) {
+        long startTime = System.currentTimeMillis();
+
         try {
           // CacheService에 추가한 brPopMultiple 활용 (high 큐 먼저 확인)
           LichessApiTask task = lichessApiService.popGameTask();
@@ -29,13 +31,24 @@ public class LichessApiConsumer implements CommandLineRunner {
             lichessApiTaskHandler.handle(task);
           }
         } catch (Exception e) {
+
+
           log.error("Worker Consumer 루프 에러: {}", e.getMessage());
           try {
-            Thread.sleep(5000); // 에러 발생 시 5초 대기 후 재시도
+
+            long duration = System.currentTimeMillis() - startTime;
+            long sleepTime = Math.max(0, 5000 - duration);
+
+
+            Thread.sleep(sleepTime);
           } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
           }
+
+
+
         }
+
       }
     });
 

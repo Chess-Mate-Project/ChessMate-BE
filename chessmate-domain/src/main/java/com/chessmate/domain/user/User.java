@@ -13,6 +13,7 @@ public class User {
   private String title;
   private LocalDateTime createdAt;
   private LocalDateTime lichessCreatedAt;
+  private LocalDateTime lastLoginAt;
 
   // 게임 통계
   private int allGames;        // 전체 게임 수
@@ -35,6 +36,7 @@ public class User {
     this.bannerImage = builder.bannerImage;
     this.profileImage = builder.profileImage;
     this.lichessCreatedAt = builder.lichessCreatedAt;
+    this.lastLoginAt = builder.lastLoginAt;
     this.allGames = builder.allGames;
     this.ratedGames = builder.ratedGames;
     this.wins = builder.wins;
@@ -81,6 +83,10 @@ public class User {
 
   public LocalDateTime getLichessCreatedAt() {
     return lichessCreatedAt;
+  }
+
+  public LocalDateTime getLastLoginAt() {
+    return lastLoginAt;
   }
 
   public int getAllGames() {
@@ -143,6 +149,10 @@ public class User {
     this.lichessCreatedAt = lichessCreatedAt;
   }
 
+  public void setLastLoginAt(LocalDateTime lastLoginAt) {
+    this.lastLoginAt = lastLoginAt;
+  }
+
   public void setAllGames(int allGames) {
     this.allGames = allGames;
   }
@@ -177,6 +187,7 @@ public class User {
     private String bannerImage;
     private String profileImage;
     private LocalDateTime lichessCreatedAt;
+    private LocalDateTime lastLoginAt;
     private int allGames;
     private int ratedGames;
     private int wins;
@@ -226,6 +237,11 @@ public class User {
 
     public Builder lichessCreatedAt(LocalDateTime lichessCreatedAt) {
       this.lichessCreatedAt = lichessCreatedAt;
+      return this;
+    }
+
+    public Builder lastLoginAt(LocalDateTime lastLoginAt) {
+      this.lastLoginAt = lastLoginAt;
       return this;
     }
 

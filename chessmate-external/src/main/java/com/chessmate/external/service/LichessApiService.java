@@ -100,7 +100,7 @@ public class LichessApiService {
             .queryParam("opening", "true")
             .build(username))
         .accept(MediaType.parseMediaType("application/x-ndjson"))
-        .headers(h -> h.setBearerAuth(token))
+//        .headers(h -> h.setBearerAuth(token))
         .retrieve()
         .onStatus(HttpStatusCode::is4xxClientError, resp ->
             resp.bodyToMono(String.class)
