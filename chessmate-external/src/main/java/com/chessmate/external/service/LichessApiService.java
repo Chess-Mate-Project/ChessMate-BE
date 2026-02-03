@@ -10,8 +10,6 @@ import com.chessmate.external.dto.game.LichessGamesDto;
 import com.chessmate.external.dto.oauth.OAuthValueRequest;
 import com.chessmate.external.dto.oauth.OauthAccessTokenDto;
 import com.chessmate.external.dto.perf.UserPerfDto;
-import java.time.Instant;
-import jdk.jshell.spi.ExecutionControl.UserException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
