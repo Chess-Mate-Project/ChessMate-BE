@@ -33,6 +33,12 @@ public class LichessGameProcessor
 
   @Value("#{jobParameters['username']}")
   private String username;
+  
+  @Value("#{jobParameters['since']}")
+  private Long since;
+
+  @Value("#{jobParameters['until']}")
+  private Long until;
 
   @Override
   public GameStat process(LichessGamesDto game) {

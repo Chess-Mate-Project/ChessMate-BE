@@ -9,21 +9,20 @@ public class User {
   private String description;
   private String bannerImage;
   private String profileImage;
-
   private String title;
   private LocalDateTime createdAt;
   private LocalDateTime lichessCreatedAt;
   private LocalDateTime lastLoginAt;
 
   // 게임 통계
-  private int allGames;        // 전체 게임 수
-  private int ratedGames;      // 레이티드 게임 수
-  private int wins;            // 승리 횟수
-  private int losses;          // 패배 횟수
-  private int draws;           // 무승부 횟수
-  private int totalSeconds;    // 총 게임 시간 (초)
+  private int allGames;
+  private int ratedGames;
+  private int wins;
+  private int losses;
+  private int draws;
+  private int totalSeconds;
 
-  // 무인자 생성자(프레임워크/직렬화용)
+  // 무인자 생성자
   public User() {}
 
   private User(Builder builder) {
@@ -280,3 +279,4 @@ public class User {
     }
   }
 }
+

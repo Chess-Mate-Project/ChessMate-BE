@@ -10,25 +10,25 @@ public class UserPerf {
   private boolean prov;
 
   // 게임 통계
-  private int all;              // 전체 게임 수
-  private int rated;            // 레이티드 게임 수
-  private int wins;             // 승리 횟수
-  private int losses;           // 패배 횟수
-  private int draws;            // 무승부 횟수
-  private int tour;             // 토너먼트 게임 수
-  private int berserk;          // 광폭 모드 사용 수
-  private double opAvg;         // 상대방 평균 레이팅
-  private int seconds;          // 총 게임 시간 (초)
-  private int disconnects;      // 연결 끊김 수
+  private int all;
+  private int rated;
+  private int wins;
+  private int losses;
+  private int draws;
+  private int tour;
+  private int berserk;
+  private double opAvg;
+  private int seconds;
+  private int disconnects;
 
   // 레이팅 관련
-  private int highestRating;    // 최고 레이팅
-  private int lowestRating;     // 최저 레이팅
-  private int maxStreak;        // 최대 연승
-  private int maxLossStreak;    // 최대 연패
-  private boolean uncertain;    // 티어 불확실성 (rated < 50이면 true)
+  private int highestRating;
+  private int lowestRating;
+  private int maxStreak;
+  private int maxLossStreak;
+  private boolean uncertain;
 
-  // 무인자 생성자(프레임워크/직렬화용)
+  // 무인자 생성자
   public UserPerf() {}
 
   private UserPerf(Builder builder) {
@@ -220,7 +220,6 @@ public class UserPerf {
     this.uncertain = uncertain;
   }
 
-  // Builder
   public static class Builder {
     private Long userId;
     private GameType gameType;
@@ -348,3 +347,4 @@ public class UserPerf {
     }
   }
 }
+

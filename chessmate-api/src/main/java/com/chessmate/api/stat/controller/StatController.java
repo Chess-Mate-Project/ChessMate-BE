@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -81,6 +82,17 @@ public class StatController {
 
     return ResponseEntity.ok(
         new SuccessResponse<>("Tier Stats 조회 성공", response)
+    );
+  }
+
+  @PutMapping("force-refresh")
+  public ResponseEntity<SuccessResponse<TierResponse>> forceRefresh(
+      @AuthenticationPrincipal UserPrincipal userPrincipal
+  ) {
+    statService.forceUpdateUserData(userPrincipal.getUser());
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("사용자 데이터 강제 갱신 요청 성공", null)
     );
   }
 }

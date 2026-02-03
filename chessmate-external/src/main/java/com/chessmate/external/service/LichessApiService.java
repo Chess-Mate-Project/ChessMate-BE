@@ -91,16 +91,26 @@ public class LichessApiService {
    * - @return Flux<LichessGamesDto> Lichess 사용자 게임 기록 DTO의 Flux 스트림
    * - Throws: UserException - 사용자 게임 기록 조회 실패 시 발생
    * */
-  public Flux<LichessGamesDto> getUserGamesReactive(String token, String username) {
+  public Flux<LichessGamesDto> getUserGamesReactive(String token, String username, Long since) {
     log.info("username = " + username);
+    
     return webClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/games/user/{username}")
-            .queryParam("perf", "rapid,bullet,classical,blitz")
-            .queryParam("opening", "true")
-            .build(username))
+        .uri(uriBuilder -> {
+          var builder = uriBuilder
+              .path("/games/user/{username}")
+              .queryParam("perf", "rapid,bullet,classical,blitz")
+              .queryParam("opening", "true");
+          
+          // since값이 있음 -> 증분 추가
+          // since 값이 없음 -> 초기 가입 전체 동기화함
+          // until -> 생략 가능 어짜피 가장 최근 시점으로 맞춰짐
+          if (since != null) {
+            builder.queryParam("since", since);
+          }
+          return builder.build(username);
+        })
         .accept(MediaType.parseMediaType("application/x-ndjson"))
-//        .headers(h -> h.setBearerAuth(token))
+        .headers(h -> h.setBearerAuth(token))
         .retrieve()
         .onStatus(HttpStatusCode::is4xxClientError, resp ->
             resp.bodyToMono(String.class)

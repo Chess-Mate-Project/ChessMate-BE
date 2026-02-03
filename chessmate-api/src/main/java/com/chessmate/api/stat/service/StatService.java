@@ -1,5 +1,6 @@
 package com.chessmate.api.stat.service;
 
+import com.chessmate.api.redis.LichessApiProducer;
 import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.DailyStreakDto;
 import com.chessmate.api.stat.dto.FirstMoveResponse;
@@ -21,6 +22,7 @@ import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImp
 import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserFirstMoveStatRepositoryImpl;
 import com.chessmate.infra_redis.redis.CacheService;
+import com.chessmate.infra_redis.redis.dto.TaskType;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.ArrayList;
@@ -41,9 +43,13 @@ public class StatService {
   private final UserColorStatRepositoryImpl userColorStatRepository;
   private final UserFirstMoveStatRepositoryImpl userFirstMoveStatRepository;
   private final UserPerfRepository userPerfRepository;
+  private final LichessApiProducer lichessApiProducer;
 
   private final CacheService cacheService;
-  private final LichessApiService lichessApiService;
+
+  public void forceUpdateUserData(User user) {
+    lichessApiProducer.sendSyncTask(user, user.getUsername(), cacheService.getLichessToken(user.getId()), TaskType.FORCE_UPDATE, false);
+  }
 
   @Transactional(readOnly = true)
   public YearStreakDto getDailyStreaksByYear(User user, Year year) {

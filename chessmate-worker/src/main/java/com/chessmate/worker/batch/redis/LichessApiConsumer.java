@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LichessApiConsumer implements CommandLineRunner {
 
-  private final LichessApiRedisService lichessApiService;
+  private final LichessApiRedisService lichessApiRedisService;
   private final LichessApiTaskHandler lichessApiTaskHandler;
 
   @Override
@@ -25,7 +25,7 @@ public class LichessApiConsumer implements CommandLineRunner {
 
         try {
           // CacheService에 추가한 brPopMultiple 활용 (high 큐 먼저 확인)
-          LichessApiTask task = lichessApiService.popGameTask();
+          LichessApiTask task = lichessApiRedisService.popGameTask();
 
           if (task != null) {
             lichessApiTaskHandler.handle(task);
@@ -53,7 +53,7 @@ public class LichessApiConsumer implements CommandLineRunner {
     });
 
     workerThread.setName("Worker-Consumer-1");
-    workerThread.setDaemon(true); // 애플리케이션 종료 시 함께 종료
+    workerThread.setDaemon(true);
     workerThread.start();
   }
 }

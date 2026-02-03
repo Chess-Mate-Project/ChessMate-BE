@@ -5,6 +5,8 @@ import com.chessmate.domain.user.UserRepository;
 import com.chessmate.infra_persistence.entity.UserEntity;
 import com.chessmate.infra_persistence.jpaRepository.UserJpaRepository;
 import com.chessmate.infra_persistence.mapper.UserMapper;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -68,5 +70,19 @@ public class UserRepositoryImpl implements UserRepository {
     user.setBannerImage(bannerImageUrl);
 
     jpaRepository.save(user);
+  }
+
+  @Override
+  public List<User> findRecentLoginUsersWithin3Days() {
+    // 현재 시간으로부터 3일 전의 시간 계산
+    LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
+
+    // JpaRepository 메서드 호출
+    List<UserEntity> entities = jpaRepository.findRecentLoginUsersWithin3Days(threeDaysAgo);
+
+    // 엔티티를 도메인으로 변환하여 반환
+    return entities.stream()
+        .map(UserMapper::toDomain)
+        .toList();
   }
 }
