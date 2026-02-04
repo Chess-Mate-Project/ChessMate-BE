@@ -48,18 +48,20 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-api:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-worker:latest
 
-            # 기존 컨테이너 청소
+            # 1. 기존 컨테이너 및 찌꺼기 완전 삭제 (볼륨 제외)
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
             docker rm -f chessladder_redis chessmate-mysql chessmate-api chessmate-worker || true
             
-            # 새 컨테이너 실행 (DOCKER_USERNAME 변수 추가됨)
+            # 2. 새 컨테이너 실행 (MYSQL_ROOT_PASSWORD 추가됨)
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
             DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}" \
             REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             LICHESS_CLIENT_ID="${{ secrets.LICHESS_CLIENT_ID }}" \
             REDIS_HOST="chessladder_redis" \
             docker compose -f docker-compose.prod.yml up -d
 
+            # 오래된 이미지 삭제
             docker image prune -f
