@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -16,9 +15,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
 @Entity
-@Table(name = "users", indexes = {
-    @Index(name = "idx_last_login", columnList = "last_login_at")
-})
+@Table(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -54,25 +51,4 @@ public class UserEntity {
 
   @Column(name = "lichess_created_at")
   private LocalDateTime lichessCreatedAt;
-
-  @Column(name = "last_login_at")
-  private LocalDateTime lastLoginAt;
-
-  @Column(name = "all_games", nullable = false)
-  private int allGames;
-
-  @Column(name = "rated_games", nullable = false)
-  private int ratedGames;
-
-  @Column(name = "wins", nullable = false)
-  private int wins;
-
-  @Column(name = "losses", nullable = false)
-  private int losses;
-
-  @Column(name = "draws", nullable = false)
-  private int draws;
-
-  @Column(name = "total_seconds", nullable = false)
-  private int totalSeconds;
 }

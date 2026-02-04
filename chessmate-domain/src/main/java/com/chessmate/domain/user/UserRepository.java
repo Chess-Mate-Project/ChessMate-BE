@@ -1,7 +1,6 @@
 package com.chessmate.domain.user;
 
 
-import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
@@ -14,7 +13,5 @@ public interface UserRepository {
 
     void updateProfileImage(Long userId, String profileImageUrl);
     void updateBannerImage(Long userId, String bannerImageUrl);
-
-    List<User> findRecentLoginUsersWithin3Days();
 
 }

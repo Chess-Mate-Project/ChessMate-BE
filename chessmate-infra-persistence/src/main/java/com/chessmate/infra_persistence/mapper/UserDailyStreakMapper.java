@@ -15,7 +15,6 @@ public class UserDailyStreakMapper {
         .lose(entity.getLose())
         .draw(entity.getDraw())
         .lastGameAt(entity.getLastGameAt())
-        .lastRating(entity.getLastRating())
         .build();
   }
 
@@ -30,7 +29,6 @@ public class UserDailyStreakMapper {
         .lose(domain.getLose())
         .draw(domain.getDraw())
         .lastGameAt(domain.getLastGameAt())
-        .lastRating(domain.getLastRating())
         .build();
   }
 }

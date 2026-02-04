@@ -10,7 +10,6 @@ public class UserDailyStreak {
   private int lose;
   private int draw;
   private Long lastGameAt;
-  private int lastRating; // 마지막 게임 후 정산된 레이팅
 
   // 무인자 생성자(프레임워크/직렬화용)
   public UserDailyStreak() {}
@@ -23,7 +22,6 @@ public class UserDailyStreak {
     this.lose = builder.lose;
     this.draw = builder.draw;
     this.lastGameAt = builder.lastGameAt;
-    this.lastRating = builder.lastRating;
   }
 
   public static Builder builder() {
@@ -58,10 +56,6 @@ public class UserDailyStreak {
     return lastGameAt;
   }
 
-  public int getLastRating() {
-    return lastRating;
-  }
-
   // 추가된 Setter들
   public void setId(Long id) {
     this.id = id;
@@ -91,10 +85,6 @@ public class UserDailyStreak {
     this.lastGameAt = lastGameAt;
   }
 
-  public void setLastRating(int lastRating) {
-    this.lastRating = lastRating;
-  }
-
   public static class Builder {
     private Long id;
     private Long userId;
@@ -103,7 +93,6 @@ public class UserDailyStreak {
     private int lose;
     private int draw;
     private Long lastGameAt;
-    private int lastRating;
 
     public Builder id(Long id) {
       this.id = id;
@@ -137,11 +126,6 @@ public class UserDailyStreak {
 
     public Builder lastGameAt(Long lastGameAt) {
       this.lastGameAt = lastGameAt;
-      return this;
-    }
-
-    public Builder lastRating(int lastRating) {
-      this.lastRating = lastRating;
       return this;
     }
 

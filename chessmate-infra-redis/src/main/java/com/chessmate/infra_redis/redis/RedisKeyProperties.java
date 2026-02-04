@@ -26,8 +26,8 @@ public class RedisKeyProperties {
       return pkce + ":" + state;
     }
 
-    public String lichessToken(Long id) {
-      return lichessToken + ":" + id;
+    public String lichessToken(String lichessId) {
+      return lichessToken + ":" + lichessId;
     }
   }
 

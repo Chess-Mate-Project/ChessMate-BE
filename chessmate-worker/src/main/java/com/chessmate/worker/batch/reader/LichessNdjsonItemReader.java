@@ -23,17 +23,13 @@ public class LichessNdjsonItemReader implements ItemReader<LichessGamesDto> {
   @Value("#{jobParameters['username']}")
   private String username;
 
-  @Value("#{jobParameters['since']}")
-  private Long since;
-
-
   private Iterator<LichessGamesDto> iterator;
 
   @Override
   public LichessGamesDto read() {
     if (iterator == null) {
       iterator = lichessApiService
-          .getUserGamesReactive(token, username, since)
+          .getUserGamesReactive(token, username)
           .toIterable()
           .iterator();
     }

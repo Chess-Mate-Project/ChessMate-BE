@@ -2,7 +2,6 @@ package com.chessmate.infra_redis.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -58,50 +57,4 @@ public class RedisService {
     public boolean hasKey(String key) {
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
-
-
-
-    /// ///
-
-
-  /**
-   * 큐의 왼쪽(Head)에 데이터를 넣습니다. (Producer)
-   */
-  public void leftPush(String key, Object value) {
-    redisTemplate.opsForList().leftPush(key, value);
-  }
-
-  /**
-   * 큐의 오른쪽(Tail)에서 데이터를 꺼내옵니다. (Consumer - Blocking)
-   * 데이터가 없으면 timeout 동안 대기합니다.
-   */
-  public <T> T brPop(String key, long timeoutSeconds, Class<T> type) {
-    // bRPop은 리스트 형식으로 [Key, Value]를 반환하므로 index 1을 가져옵니다.
-    Object obj = redisTemplate.execute((RedisCallback<Object>) connection -> {
-      java.util.List<byte[]> result = connection.bRPop((int) timeoutSeconds, key.getBytes());
-      if (result == null || result.isEmpty()) return null;
-      return redisTemplate.getValueSerializer().deserialize(result.get(1));
-    });
-
-    if (obj == null) return null;
-    return objectMapper.convertValue(obj, type);
-  }
-
-  /**
-   * 여러 큐를 동시에 감시하다가 데이터가 들어오는 쪽에서 꺼내옵니다. (우선순위 큐용)
-   */
-  public <T> T brPopMultiple(long timeoutSeconds, Class<T> type, String... keys) {
-    Object obj = redisTemplate.execute((RedisCallback<Object>) connection -> {
-      byte[][] byteKeys = java.util.Arrays.stream(keys)
-          .map(String::getBytes)
-          .toArray(byte[][]::new);
-
-      java.util.List<byte[]> result = connection.bRPop((int) timeoutSeconds, byteKeys);
-      if (result == null || result.isEmpty()) return null;
-      return redisTemplate.getValueSerializer().deserialize(result.get(1));
-    });
-
-    if (obj == null) return null;
-    return objectMapper.convertValue(obj, type);
-  }
 }

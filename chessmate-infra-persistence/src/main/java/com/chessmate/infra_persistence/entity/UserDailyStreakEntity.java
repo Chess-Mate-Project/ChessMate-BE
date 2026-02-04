@@ -33,5 +33,4 @@ public class UserDailyStreakEntity {
   private int draw;
 
   private Long lastGameAt; // 증분 처리용
-  private int lastRating; // 마지막 게임 후 정산된 레이팅
 }

@@ -7,6 +7,5 @@ public record DailyStreakDto (
   int win,
   int lose,
   int draw,
-  int total,
-  int lastRating // 마지막 게임 후 정산된 레이팅
+  int total
 ) {}
