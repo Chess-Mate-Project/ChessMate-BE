@@ -39,7 +39,13 @@ public class LichessApiConsumer implements CommandLineRunner {
           if (consecutiveFailures.get() >= MAX_CONSECUTIVE_FAILURES) {
             log.warn("Circuit breaker opened after {} consecutive failures. Waiting {} ms before retry...",
                 consecutiveFailures.get(), CIRCUIT_BREAKER_WAIT_MS);
-            Thread.sleep(CIRCUIT_BREAKER_WAIT_MS);
+            try {
+              Thread.sleep(CIRCUIT_BREAKER_WAIT_MS);
+            } catch (InterruptedException ie) {
+              Thread.currentThread().interrupt();
+              log.info("Worker Consumer interrupted during circuit breaker wait, shutting down...");
+              break;
+            }
             consecutiveFailures.set(0); // Reset after circuit breaker wait
             currentBackoffMs.set(INITIAL_BACKOFF_MS); // Reset backoff
             continue;
@@ -54,10 +60,6 @@ public class LichessApiConsumer implements CommandLineRunner {
             consecutiveFailures.set(0);
             currentBackoffMs.set(INITIAL_BACKOFF_MS);
           }
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          log.info("Worker Consumer interrupted, shutting down...");
-          break;
         } catch (Exception e) {
           consecutiveFailures.incrementAndGet();
           log.error("Worker Consumer 루프 에러 (consecutive failures: {}): {}",
