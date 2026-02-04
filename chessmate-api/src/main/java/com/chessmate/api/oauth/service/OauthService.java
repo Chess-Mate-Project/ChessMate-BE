@@ -146,6 +146,9 @@ public class OauthService {
     userRepository.save(user);
     log.info("lastLoginAt 갱신 완료 - userId={}, lastLoginAt={}", user.getId(), user.getLastLoginAt());
 
+    // Lichess OAuth 토큰 캐싱 (기존 사용자)
+    cacheService.saveLichessToken(user.getId(), dto.accessToken());
+
     jwtService.generateRefreshToken(res, user);
     var refreshToken = jwtService.generateAccessToken(res, user);
 
