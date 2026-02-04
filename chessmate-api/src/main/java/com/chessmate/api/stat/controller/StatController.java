@@ -105,7 +105,7 @@ public class StatController {
     );
   }
 
-  @PutMapping("force-refresh")
+  @PutMapping("/force-refresh")
   public ResponseEntity<SuccessResponse<TierResponse>> forceRefresh(
       @AuthenticationPrincipal UserPrincipal userPrincipal
   ) {
