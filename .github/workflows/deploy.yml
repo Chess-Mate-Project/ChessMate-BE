@@ -60,4 +60,4 @@ jobs:
             DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
             REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             LICHESS_CLIENT_ID="${{ secrets.LICHESS_CLIENT_ID }}" \
-            docker compose -f docker compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d
