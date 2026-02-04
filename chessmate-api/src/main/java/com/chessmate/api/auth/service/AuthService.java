@@ -25,7 +25,7 @@ public class AuthService {
     jwtService.logout(res); //쿠키 만료
     cacheService.deleteRefreshToken(user.getId());
 
-    cacheService.deleteLichessToken(user.getLichessId());
+    cacheService.deleteLichessToken(user.getId());
   }
 
   public void refresh(HttpServletRequest req, HttpServletResponse res) {
@@ -43,6 +43,10 @@ public class AuthService {
     if (!cacheService.getRefreshToken(user.getId()).equals(refreshToken)) {
       throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
+
+    // 마지막 접속 시간 갱신
+    user.setLastLoginAt(java.time.LocalDateTime.now());
+    userRepository.save(user);
 
     jwtService.generateAccessToken(res, user);
   }

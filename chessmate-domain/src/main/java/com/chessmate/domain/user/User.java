@@ -12,8 +12,17 @@ public class User {
   private String title;
   private LocalDateTime createdAt;
   private LocalDateTime lichessCreatedAt;
+  private LocalDateTime lastLoginAt;
 
-  // 무인자 생성자(프레임워크/직렬화용)
+  // 게임 통계
+  private int allGames;
+  private int ratedGames;
+  private int wins;
+  private int losses;
+  private int draws;
+  private int totalSeconds;
+
+  // 무인자 생성자
   public User() {}
 
   private User(Builder builder) {
@@ -26,6 +35,13 @@ public class User {
     this.bannerImage = builder.bannerImage;
     this.profileImage = builder.profileImage;
     this.lichessCreatedAt = builder.lichessCreatedAt;
+    this.lastLoginAt = builder.lastLoginAt;
+    this.allGames = builder.allGames;
+    this.ratedGames = builder.ratedGames;
+    this.wins = builder.wins;
+    this.losses = builder.losses;
+    this.draws = builder.draws;
+    this.totalSeconds = builder.totalSeconds;
   }
 
   public static Builder builder() {
@@ -67,6 +83,35 @@ public class User {
   public LocalDateTime getLichessCreatedAt() {
     return lichessCreatedAt;
   }
+
+  public LocalDateTime getLastLoginAt() {
+    return lastLoginAt;
+  }
+
+  public int getAllGames() {
+    return allGames;
+  }
+
+  public int getRatedGames() {
+    return ratedGames;
+  }
+
+  public int getWins() {
+    return wins;
+  }
+
+  public int getLosses() {
+    return losses;
+  }
+
+  public int getDraws() {
+    return draws;
+  }
+
+  public int getTotalSeconds() {
+    return totalSeconds;
+  }
+
   public void setId(Long id) {
     this.id = id;
   }
@@ -103,6 +148,34 @@ public class User {
     this.lichessCreatedAt = lichessCreatedAt;
   }
 
+  public void setLastLoginAt(LocalDateTime lastLoginAt) {
+    this.lastLoginAt = lastLoginAt;
+  }
+
+  public void setAllGames(int allGames) {
+    this.allGames = allGames;
+  }
+
+  public void setRatedGames(int ratedGames) {
+    this.ratedGames = ratedGames;
+  }
+
+  public void setWins(int wins) {
+    this.wins = wins;
+  }
+
+  public void setLosses(int losses) {
+    this.losses = losses;
+  }
+
+  public void setDraws(int draws) {
+    this.draws = draws;
+  }
+
+  public void setTotalSeconds(int totalSeconds) {
+    this.totalSeconds = totalSeconds;
+  }
+
   public static class Builder {
     private Long id;
     private String lichessId;
@@ -113,6 +186,13 @@ public class User {
     private String bannerImage;
     private String profileImage;
     private LocalDateTime lichessCreatedAt;
+    private LocalDateTime lastLoginAt;
+    private int allGames;
+    private int ratedGames;
+    private int wins;
+    private int losses;
+    private int draws;
+    private int totalSeconds;
 
     public Builder id(Long id) {
       this.id = id;
@@ -159,8 +239,44 @@ public class User {
       return this;
     }
 
+    public Builder lastLoginAt(LocalDateTime lastLoginAt) {
+      this.lastLoginAt = lastLoginAt;
+      return this;
+    }
+
+    public Builder allGames(int allGames) {
+      this.allGames = allGames;
+      return this;
+    }
+
+    public Builder ratedGames(int ratedGames) {
+      this.ratedGames = ratedGames;
+      return this;
+    }
+
+    public Builder wins(int wins) {
+      this.wins = wins;
+      return this;
+    }
+
+    public Builder losses(int losses) {
+      this.losses = losses;
+      return this;
+    }
+
+    public Builder draws(int draws) {
+      this.draws = draws;
+      return this;
+    }
+
+    public Builder totalSeconds(int totalSeconds) {
+      this.totalSeconds = totalSeconds;
+      return this;
+    }
+
     public User build() {
       return new User(this);
     }
   }
 }
+

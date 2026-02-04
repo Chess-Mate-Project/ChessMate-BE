@@ -15,14 +15,14 @@ public record PerfsDto(
     PerfDto blitz,           // 블리츠 (3~5분)
     PerfDto rapid,           // 래피드 (10~15분)
     PerfDto classical,       // 클래시컬
-    PerfDto correspondence,  // 우편 체스
-    PerfDto chess960,        // 체스960
-    PerfDto kingOfTheHill,   // King of the Hill
-    PerfDto threeCheck,      // Three-Check
-    PerfDto antichess,       // 안티체스
-    PerfDto atomic,          // 아토믹
-    PerfDto horde,           // 호드
-    PerfDto crazyhouse,      // 크레이지하우스
+//    PerfDto correspondence,  // 우편 체스
+//    PerfDto chess960,        // 체스960
+//    PerfDto kingOfTheHill,   // King of the Hill
+//    PerfDto threeCheck,      // Three-Check
+//    PerfDto antichess,       // 안티체스
+//    PerfDto atomic,          // 아토믹
+//    PerfDto horde,           // 호드
+//    PerfDto crazyhouse,      // 크레이지하우스
     PerfDto puzzle           // 퍼즐 레이팅
 ) {
 }

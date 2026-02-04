@@ -14,7 +14,14 @@ public class UserMapper {
         .bannerImage(entity.getBannerImage())
         .profileImage(entity.getProfileImage())
         .lichessCreatedAt(entity.getLichessCreatedAt())
+        .lastLoginAt(entity.getLastLoginAt())
         .createdAt(entity.getCreatedAt())
+        .allGames(entity.getAllGames())
+        .ratedGames(entity.getRatedGames())
+        .wins(entity.getWins())
+        .losses(entity.getLosses())
+        .draws(entity.getDraws())
+        .totalSeconds(entity.getTotalSeconds())
         .build();
   }
 
@@ -27,7 +34,14 @@ public class UserMapper {
         .bannerImage(domain.getBannerImage())
         .profileImage(domain.getProfileImage())
         .lichessCreatedAt(domain.getLichessCreatedAt())
+        .lastLoginAt(domain.getLastLoginAt())
         .createdAt(domain.getCreatedAt())
+        .allGames(domain.getAllGames())
+        .ratedGames(domain.getRatedGames())
+        .wins(domain.getWins())
+        .losses(domain.getLosses())
+        .draws(domain.getDraws())
+        .totalSeconds(domain.getTotalSeconds())
         .build();
   }
 }

@@ -4,7 +4,9 @@ package com.chessmate.infra_redis.redis;
 import com.chessmate.external.dto.account.PerfsDto;
 import com.chessmate.external.dto.account.PlayTimeDto;
 import com.chessmate.external.dto.account.UserCountDto;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class CacheService {
   private final RedisService redisService;
   private final RedisKeyProperties redisKeyProperties;
+  private final RedisTemplate<String, Object> redisTemplate;
 
   public String getRefreshToken(Long userId) {
     return redisService.get(
@@ -47,28 +50,28 @@ public class CacheService {
 
 
   /**
-  * - Lichess OAuth 토큰 저장: lichessId 값을 키로 사용하여 OAuth 토큰을 Redis에 저장합니다. 유효 기간은 24시간(86400초)입니다.
-  * - Lichess OAuth 토큰 조회: lichessId 값을 사용하여 Redis에서
-  * - Lichess OAuth 토큰 삭제: lichessId 값을 사용하여 Redis에서 OAuth 토큰을 삭제합니다.
+  * - Lichess OAuth 토큰 저장: id 값을 키로 사용하여 OAuth 토큰을 Redis에 저장합니다. 유효 기간은 24시간(86400초)입니다.
+  * - Lichess OAuth 토큰 조회: id 값을 사용하여 Redis에서
+  * - Lichess OAuth 토큰 삭제: id 값을 사용하여 Redis에서 OAuth 토큰을 삭제합니다.
   * */
-  public void saveLichessToken(String lichessId, String oauthToken) {
+  public void saveLichessToken(Long id, String oauthToken) {
     redisService.save(
-        redisKeyProperties.getOauth().lichessToken(lichessId),
+        redisKeyProperties.getOauth().lichessToken(id),
         oauthToken,
         86400L
     );
   }
 
-  public String getLichessToken(String lichessId) {
+  public String getLichessToken(Long id) {
     return redisService.get(
-        redisKeyProperties.getOauth().lichessToken(lichessId),
+        redisKeyProperties.getOauth().lichessToken(id),
         String.class
     );
   }
 
-  public void deleteLichessToken(String lichessId) {
+  public void deleteLichessToken(Long id) {
     redisService.delete(
-        redisKeyProperties.getOauth().lichessToken(lichessId)
+        redisKeyProperties.getOauth().lichessToken(id)
     );
   }
 
@@ -157,6 +160,60 @@ public class CacheService {
     redisService.delete(
         redisKeyProperties.getUser().playCount(lichessId)
     );
+  }
+
+  /**
+   * ====================================
+   * Generic Cache Methods (Stat Service)
+   * ====================================
+   */
+
+  /**
+   * 제너릭 캐시 저장
+   * @param key Redis 키
+   * @param value 저장할 객체
+   * @param expirationSeconds TTL (초)
+   */
+  public <T> void saveCache(String key, T value, long expirationSeconds) {
+    redisService.save(key, value, expirationSeconds);
+  }
+
+  /**
+   * 제너릭 캐시 조회
+   * @param key Redis 키
+   * @param type 조회할 클래스 타입
+   * @return 저장된 객체 (없으면 null)
+   */
+  public <T> T getCache(String key, Class<T> type) {
+    return redisService.get(key, type);
+  }
+
+  /**
+   * 캐시 삭제
+   * @param key Redis 키
+   */
+  public void deleteCache(String key) {
+    redisService.delete(key);
+  }
+
+  /**
+   * List 타입 캐시 저장 (RatingHistory 등)
+   * @param key Redis 키
+   * @param value 저장할 List 객체
+   * @param expirationSeconds TTL (초)
+   */
+  public <T> void saveListCache(String key, List<T> value, long expirationSeconds) {
+    redisTemplate.opsForValue().set(key, value, expirationSeconds, java.util.concurrent.TimeUnit.SECONDS);
+  }
+
+  /**
+   * List 타입 캐시 조회 (RatingHistory 등)
+   * @param key Redis 키
+   * @return 저장된 List 객체 (없으면 null)
+   */
+  @SuppressWarnings("unchecked")
+  public <T> List<T> getListCache(String key) {
+    return (List<T>) redisTemplate.opsForValue().get(key);
   }
 
 }

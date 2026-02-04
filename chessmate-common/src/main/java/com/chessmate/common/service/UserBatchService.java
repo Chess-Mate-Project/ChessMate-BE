@@ -1,5 +1,5 @@
 package com.chessmate.common.service;
 
 public interface UserBatchService {
-  void triggerUserUpdate(Long userId, String lichessToken);
+  void triggerUserUpdate(Long userId, String lichessToken, boolean isFirstTime);
 }
