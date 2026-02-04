@@ -1,0 +1,19 @@
+oauth:
+  lichess:
+    client-id: ChessMate
+    oauth-url: https://lichess.org/oauth
+    token-url: https://lichess.org/api/token
+    base-api-url: https://lichess.org/api
+
+  ttl:
+    account: 36000
+    perf: 36000
+    games: 36000
+
+spring:
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  config:
+    activate:
+      on-profile: external
+

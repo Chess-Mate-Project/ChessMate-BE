@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      key:
+        refresh_token_base: refresh_token
+        oauth:
+          pkce: oauth:pkce
+          lichess-token: oauth:lichess:token
+
+        user:
+          playtime: user:playtime
+          perfs: user:perfs
+          playcount: user:playcount
+
+        auth:
+          refresh-token: auth:refresh

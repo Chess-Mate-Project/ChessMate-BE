@@ -24,7 +24,6 @@ tasks.register("prepareKotlinBuildScriptModel"){}
 bootJar {
     enabled = false
 }
-
 jar {
     enabled = true
 }
