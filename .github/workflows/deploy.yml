@@ -50,6 +50,8 @@ jobs:
             # 최신 이미지 가져오기
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-api:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-worker:latest
+
+            docker compose -f docker-compose.prod.yml down || true
             
             # 기존 컨테이너 중지 및 삭제 (docker-compose.prod.yml 기준)
             # 파일이 없다면 미리 생성하거나 scp로 보내야 합니다.
