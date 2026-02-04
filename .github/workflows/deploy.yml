@@ -48,11 +48,11 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-api:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-worker:latest
 
-            # 1. 기존 컨테이너 및 찌꺼기 완전 삭제 (볼륨 제외)
+            # 1. 기존 컨테이너 깔끔하게 정리 (이름 충돌 방지)
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
             docker rm -f chessladder_redis chessmate-mysql chessmate-api chessmate-worker || true
             
-            # 2. 새 컨테이너 실행 (MYSQL_ROOT_PASSWORD 추가됨)
+            # 2. 모든 환경변수를 주입하며 실행 (유저명을 바꿨으니 DB_USERNAME이 중요!)
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
@@ -63,5 +63,5 @@ jobs:
             REDIS_HOST="chessladder_redis" \
             docker compose -f docker-compose.prod.yml up -d
 
-            # 오래된 이미지 삭제
+            # 안 쓰는 이미지 정리
             docker image prune -f
