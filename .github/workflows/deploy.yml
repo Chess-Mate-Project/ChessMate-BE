@@ -1,4 +1,4 @@
-name: ChessMate Simplified Deploy
+name: ChessLadder Simplified Deploy
 
 on:
   push:
@@ -29,10 +29,10 @@ jobs:
 
       - name: Build and Push Images
         run: |
-          docker build -f dockerfile-api -t ${{ secrets.DOCKER_USERNAME }}/chessmate-api:latest .
-          docker build -f dockerfile-worker -t ${{ secrets.DOCKER_USERNAME }}/chessmate-worker:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/chessmate-api:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/chessmate-worker:latest
+          docker build -f dockerfile-api -t ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest .
+          docker build -f dockerfile-worker -t ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -45,14 +45,14 @@ jobs:
             
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             
-            docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-api:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-worker:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest
 
-            # 1. 기존 컨테이너 깔끔하게 정리 (이름 충돌 방지)
+            # 기존 컨테이너 및 찌꺼기 완전 삭제
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            docker rm -f chessladder_redis chessmate-mysql chessmate-api chessmate-worker || true
+            docker rm -f chessladder-api chessladder-worker chessladder-mysql chessladder-redis || true
             
-            # 2. 모든 환경변수를 주입하며 실행 (유저명을 바꿨으니 DB_USERNAME이 중요!)
+            # 새 컨테이너 실행
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
@@ -60,8 +60,6 @@ jobs:
             MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}" \
             REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             LICHESS_CLIENT_ID="${{ secrets.LICHESS_CLIENT_ID }}" \
-            REDIS_HOST="chessladder_redis" \
             docker compose -f docker-compose.prod.yml up -d
 
-            # 안 쓰는 이미지 정리
             docker image prune -f
