@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+
+
+# application config
+**/application*.yml
+**/application*.yaml
