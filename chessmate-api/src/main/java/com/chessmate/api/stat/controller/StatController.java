@@ -3,6 +3,7 @@ package com.chessmate.api.stat.controller;
 import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.stat.dto.ColorStatsResponse;
 import com.chessmate.api.stat.dto.FirstMoveResponse;
+import com.chessmate.api.stat.dto.RatingHistoryDto;
 import com.chessmate.api.stat.dto.TierResponse;
 import com.chessmate.api.stat.dto.UserPerfResponse;
 import com.chessmate.api.stat.dto.YearStreakDto;
@@ -37,6 +38,25 @@ public class StatController {
 
     return ResponseEntity.ok(
         new SuccessResponse<>("Streak 조회 성공", statDto)
+    );
+  }
+
+  /**
+   * 년도별 레이팅 히스토리 조회
+   * @param userPrincipal 사용자 정보
+   * @param year 조회할 년도 (예: 2025)
+   * @return List<RatingHistoryDto> 일별 lastRating 목록
+   */
+  @GetMapping("/rating-history")
+  public ResponseEntity<SuccessResponse<Object>> getRatingHistory(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam Year year
+  ) {
+
+    var ratingHistory = statService.getRatingHistory(userPrincipal.getUser(), year);
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("레이팅 히스토리 조회 성공", ratingHistory)
     );
   }
 
@@ -96,5 +116,4 @@ public class StatController {
     );
   }
 }
-
 

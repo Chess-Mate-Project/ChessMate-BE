@@ -4,7 +4,9 @@ package com.chessmate.infra_redis.redis;
 import com.chessmate.external.dto.account.PerfsDto;
 import com.chessmate.external.dto.account.PlayTimeDto;
 import com.chessmate.external.dto.account.UserCountDto;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class CacheService {
   private final RedisService redisService;
   private final RedisKeyProperties redisKeyProperties;
+  private final RedisTemplate<String, Object> redisTemplate;
 
   public String getRefreshToken(Long userId) {
     return redisService.get(
@@ -157,6 +160,60 @@ public class CacheService {
     redisService.delete(
         redisKeyProperties.getUser().playCount(lichessId)
     );
+  }
+
+  /**
+   * ====================================
+   * Generic Cache Methods (Stat Service)
+   * ====================================
+   */
+
+  /**
+   * 제너릭 캐시 저장
+   * @param key Redis 키
+   * @param value 저장할 객체
+   * @param expirationSeconds TTL (초)
+   */
+  public <T> void saveCache(String key, T value, long expirationSeconds) {
+    redisService.save(key, value, expirationSeconds);
+  }
+
+  /**
+   * 제너릭 캐시 조회
+   * @param key Redis 키
+   * @param type 조회할 클래스 타입
+   * @return 저장된 객체 (없으면 null)
+   */
+  public <T> T getCache(String key, Class<T> type) {
+    return redisService.get(key, type);
+  }
+
+  /**
+   * 캐시 삭제
+   * @param key Redis 키
+   */
+  public void deleteCache(String key) {
+    redisService.delete(key);
+  }
+
+  /**
+   * List 타입 캐시 저장 (RatingHistory 등)
+   * @param key Redis 키
+   * @param value 저장할 List 객체
+   * @param expirationSeconds TTL (초)
+   */
+  public <T> void saveListCache(String key, List<T> value, long expirationSeconds) {
+    redisTemplate.opsForValue().set(key, value, expirationSeconds, java.util.concurrent.TimeUnit.SECONDS);
+  }
+
+  /**
+   * List 타입 캐시 조회 (RatingHistory 등)
+   * @param key Redis 키
+   * @return 저장된 List 객체 (없으면 null)
+   */
+  @SuppressWarnings("unchecked")
+  public <T> List<T> getListCache(String key) {
+    return (List<T>) redisTemplate.opsForValue().get(key);
   }
 
 }

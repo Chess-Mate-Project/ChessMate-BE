@@ -33,7 +33,7 @@ public class LichessGameProcessor
 
   @Value("#{jobParameters['username']}")
   private String username;
-  
+
   @Value("#{jobParameters['since']}")
   private Long since;
 
@@ -221,8 +221,11 @@ public class LichessGameProcessor
         .atZone(ZoneId.systemDefault())
         .toLocalDate();
 
-    log.debug("daily streak 빌드: username='{}', date='{}', result='{}', lastMoveAt='{}'", username,
-        date, result, game.lastMoveAt());
+    // 마지막 게임 후 정산된 레이팅 조회
+    int lastRating = getLastRating(game, user);
+
+    log.debug("daily streak 빌드: username='{}', date='{}', result='{}', lastMoveAt='{}', lastRating='{}'",
+        username, date, result, game.lastMoveAt(), lastRating);
 
     return UserDailyStreak.builder()
         .userId(user.getId())
@@ -231,7 +234,51 @@ public class LichessGameProcessor
         .lose(result == GameResult.LOSE ? 1 : 0)
         .draw(result == GameResult.DRAW ? 1 : 0)
         .lastGameAt(game.lastMoveAt())
+        .lastRating(lastRating)
         .build();
+  }
+
+  /**
+   * 게임 후 정산된 레이팅 조회
+   * @return 사용자의 최종 레이팅 (rating + ratingDiff)
+   */
+  private int getLastRating(LichessGamesDto game, User user) {
+    try {
+      ChessColor myColor = resolveMyColor(game, user);
+      if (myColor == null) {
+        log.warn("사용자 색상 정보 없음: username='{}', game='{}' - lastRating 기본값 0 반환", username, game.id());
+        return 0;
+      }
+
+      var players = game.players();
+      if (players == null) {
+        log.warn("players 정보 없음: username='{}', game='{}' - lastRating 기본값 0 반환", username, game.id());
+        return 0;
+      }
+
+      var player = myColor == ChessColor.WHITE ? players.white() : players.black();
+      if (player == null) {
+        log.warn("플레이어 정보 없음: username='{}', color='{}', game='{}' - lastRating 기본값 0 반환",
+            username, myColor, game.id());
+        return 0;
+      }
+
+      if (player.rating() == null) {
+        log.warn("레이팅 정보 없음: username='{}', color='{}', game='{}' - lastRating 기본값 0 반환",
+            username, myColor, game.id());
+        return 0;
+      }
+
+      int finalRating = player.rating() + (player.ratingDiff() != null ? player.ratingDiff() : 0);
+      log.debug("lastRating 계산: username='{}', color='{}', rating='{}', ratingDiff='{}', finalRating='{}'",
+          username, myColor, player.rating(), player.ratingDiff(), finalRating);
+
+      return finalRating;
+    } catch (Exception e) {
+      log.error("lastRating 조회 중 예외: username='{}', game='{}', error='{}'",
+          username, game.id(), e.getMessage());
+      return 0;
+    }
   }
 
   public GameType getGameType(String perf) {
