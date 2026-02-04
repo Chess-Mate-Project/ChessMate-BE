@@ -51,15 +51,21 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-api:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessmate-worker:latest
 
-            docker compose -f docker-compose.prod.yml down || true
+            # 1. 기존 컨테이너 및 관련 리소스 정리 (설계도 기준)
+            # --remove-orphans: 설계도에 없지만 현재 돌아가는 찌꺼기 컨테이너까지 삭제
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
             
-            # 기존 컨테이너 중지 및 삭제 (docker-compose.prod.yml 기준)
-            # 파일이 없다면 미리 생성하거나 scp로 보내야 합니다.
-            # 지금은 수동으로 만든 docker-compose.prod.yml이 서버에 있다고 가정합니다.
+            # 2. 이름 충돌 강제 방지를 위해 명시적으로 삭제 (안전장치)
+            docker rm -f chessladder_redis chessmate-mysql chessmate-api chessmate-worker || true
             
+            # 3. 새 환경변수와 함께 컨테이너 다시 실행
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
             DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
             REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             LICHESS_CLIENT_ID="${{ secrets.LICHESS_CLIENT_ID }}" \
+            REDIS_HOST="chessladder_redis" \
             docker compose -f docker-compose.prod.yml up -d
+
+            # 사용하지 않는 오래된 이미지 정리
+            docker image prune -f
