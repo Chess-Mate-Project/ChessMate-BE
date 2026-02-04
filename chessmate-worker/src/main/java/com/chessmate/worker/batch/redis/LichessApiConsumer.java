@@ -2,6 +2,8 @@ package com.chessmate.worker.batch.redis;
 
 import com.chessmate.infra_redis.redis.LichessApiRedisService;
 import com.chessmate.infra_redis.redis.dto.LichessApiTask;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -21,8 +23,8 @@ public class LichessApiConsumer implements CommandLineRunner {
   private static final int MAX_CONSECUTIVE_FAILURES = 10;
   private static final long CIRCUIT_BREAKER_WAIT_MS = 300000; // 5 minutes
 
-  private int consecutiveFailures = 0;
-  private long currentBackoffMs = INITIAL_BACKOFF_MS;
+  private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
+  private final AtomicLong currentBackoffMs = new AtomicLong(INITIAL_BACKOFF_MS);
 
   @Override
   public void run(String... args) {
@@ -34,12 +36,12 @@ public class LichessApiConsumer implements CommandLineRunner {
 
         try {
           // Check if circuit breaker is open (too many consecutive failures)
-          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+          if (consecutiveFailures.get() >= MAX_CONSECUTIVE_FAILURES) {
             log.warn("Circuit breaker opened after {} consecutive failures. Waiting {} ms before retry...",
-                consecutiveFailures, CIRCUIT_BREAKER_WAIT_MS);
+                consecutiveFailures.get(), CIRCUIT_BREAKER_WAIT_MS);
             Thread.sleep(CIRCUIT_BREAKER_WAIT_MS);
-            consecutiveFailures = 0; // Reset after circuit breaker wait
-            currentBackoffMs = INITIAL_BACKOFF_MS; // Reset backoff
+            consecutiveFailures.set(0); // Reset after circuit breaker wait
+            currentBackoffMs.set(INITIAL_BACKOFF_MS); // Reset backoff
             continue;
           }
 
@@ -49,31 +51,32 @@ public class LichessApiConsumer implements CommandLineRunner {
           if (task != null) {
             lichessApiTaskHandler.handle(task);
             // Reset failure counters on successful processing
-            consecutiveFailures = 0;
-            currentBackoffMs = INITIAL_BACKOFF_MS;
+            consecutiveFailures.set(0);
+            currentBackoffMs.set(INITIAL_BACKOFF_MS);
           }
         } catch (InterruptedException ie) {
           Thread.currentThread().interrupt();
           log.info("Worker Consumer interrupted, shutting down...");
           break;
         } catch (Exception e) {
-          consecutiveFailures++;
+          consecutiveFailures.incrementAndGet();
           log.error("Worker Consumer 루프 에러 (consecutive failures: {}): {}",
-              consecutiveFailures, e.getMessage(), e);
+              consecutiveFailures.get(), e.getMessage(), e);
 
           try {
             long duration = System.currentTimeMillis() - startTime;
             // Apply exponential backoff on errors
-            long sleepTime = Math.max(0, currentBackoffMs - duration);
+            long backoff = currentBackoffMs.get();
+            long sleepTime = Math.max(0, backoff - duration);
 
             if (sleepTime > 0) {
               log.warn("Backing off for {} ms due to error (backoff level: {} ms)",
-                  sleepTime, currentBackoffMs);
+                  sleepTime, backoff);
               Thread.sleep(sleepTime);
             }
 
             // Increase backoff for next error (exponential backoff)
-            currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS);
+            currentBackoffMs.updateAndGet(current -> Math.min(current * 2, MAX_BACKOFF_MS));
 
           } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
