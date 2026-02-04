@@ -29,7 +29,7 @@ public class UserBatchServiceImpl implements UserBatchService {
 
     User user = userRepository.findById(userId).orElseThrow();
     Long since = null;
-    if(isFirstTime) {
+    if (!isFirstTime) {
       since =  userDailyStreakRepository.findLastGameAtByUserId(userId);
     }
 
