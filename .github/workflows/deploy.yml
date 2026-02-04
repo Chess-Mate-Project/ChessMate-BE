@@ -48,11 +48,10 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest
 
-            # 기존 컨테이너 및 찌꺼기 완전 삭제
+            # 기존 컨테이너 및 네트워크 정리
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            docker rm -f chessladder-api chessladder-worker chessladder-mysql chessladder-redis || true
             
-            # 새 컨테이너 실행
+            # 새 컨테이너 실행 (모든 필수 변수 주입)
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
