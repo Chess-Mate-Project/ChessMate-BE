@@ -63,7 +63,9 @@ jobs:
             REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             LICHESS_CLIENT_ID="${{ secrets.LICHESS_CLIENT_ID }}" \
             SPRING_JWT_ACCESS_TOKEN_SECRET="${{ secrets.SPRING_JWT_ACCESS_TOKEN_SECRET }}" \
+            SPRING_JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.SPRING_JWT_ACCESS_TOKEN_EXPIRATION }}" \
             SPRING_JWT_REFRESH_TOKEN_SECRET="${{ secrets.SPRING_JWT_REFRESH_TOKEN_SECRET }}" \
+            SPRING_JWT_REFRESH_TOKEN_EXPIRATION="${{ secrets.SPRING_JWT_REFRESH_TOKEN_EXPIRATION }}" \
             docker compose -f docker-compose.prod.yml up -d
 
             # 미사용 이미지 정리
