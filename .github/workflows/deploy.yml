@@ -48,11 +48,11 @@ jobs:
           script: |
             cd /opt/chessladder
             
-            # 이미지 먼저 풀링
+            # 1. 이미지 최신화
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml pull
 
-            # 컨테이너 실행 (모든 환경 변수 강제 주입)
+            # 2. 컨테이너 재시작 (모든 환경 변수 강제 주입)
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
@@ -71,4 +71,8 @@ jobs:
             LICHESS_REDIRECT_URL="${{ secrets.LICHESS_REDIRECT_URL }}" \
             docker compose -f docker-compose.prod.yml up -d --force-recreate
 
+            # 3. Nginx 설정 점검 및 재시작
+            sudo nginx -t && sudo systemctl restart nginx
+            
+            # 4. 안 쓰는 이미지 정리
             docker image prune -f
