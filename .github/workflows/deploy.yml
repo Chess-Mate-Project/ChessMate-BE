@@ -51,9 +51,11 @@ jobs:
           script: |
             cd /opt/chessladder
             
+            # Docker Hub로부터 최신 이미지 가져오기
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml pull
 
+            # 모든 환경 변수를 명시적으로 주입하여 컨테이너 실행
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
@@ -61,6 +63,8 @@ jobs:
             REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
             LICHESS_CLIENT_ID="${{ secrets.LICHESS_CLIENT_ID }}" \
             SPRING_JWT_ACCESS_TOKEN_SECRET="${{ secrets.SPRING_JWT_ACCESS_TOKEN_SECRET }}" \
+            SPRING_JWT_REFRESH_TOKEN_SECRET="${{ secrets.SPRING_JWT_REFRESH_TOKEN_SECRET }}" \
             docker compose -f docker-compose.prod.yml up -d
 
+            # 미사용 이미지 정리
             docker image prune -f
