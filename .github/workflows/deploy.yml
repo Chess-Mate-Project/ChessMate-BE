@@ -3,7 +3,7 @@ name: Deploy to EC2 with RDS
 on:
   push:
     branches:
-      - main  # 또는 배포를 원하는 브랜치명 (예: master)
+      - main  # 또는 배포를 원하는 브랜치명
 
 jobs:
   build-and-push:
@@ -18,7 +18,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # Gradle 빌드 (테스트 제외로 빌드 속도 향상)
+      # Gradle 빌드 (테스트 제외)
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
@@ -28,16 +28,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # API 이미지 빌드 및 푸시
+      # API 이미지 빌드 및 푸시 (-f 옵션으로 루트의 특정 파일 지정)
       - name: Build and Push API Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest ./chessmate-api
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest -f ./dockerfile-api .
           docker push ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest
 
-      # Worker 이미지 빌드 및 푸시
+      # Worker 이미지 빌드 및 푸시 (-f 옵션으로 루트의 특정 파일 지정)
       - name: Build and Push Worker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest ./chessmate-worker
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest -f ./dockerfile-worker .
           docker push ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest
 
   deploy:
@@ -52,14 +52,13 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
           script: |
-            # 배포 디렉토리로 이동
             cd /opt/chessladder
             
             # 최신 이미지 풀링
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml pull
 
-            # 컨테이너 재시작 (환경변수 주입)
+            # 컨테이너 실행 (환경변수 주입)
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
@@ -68,5 +67,5 @@ jobs:
             LICHESS_CLIENT_ID="${{ secrets.LICHESS_CLIENT_ID }}" \
             docker compose -f docker-compose.prod.yml up -d
 
-            # 미사용 이미지 정리 (용량 확보)
+            # 불필요한 이미지 정리
             docker image prune -f
