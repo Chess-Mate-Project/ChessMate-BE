@@ -42,7 +42,7 @@ jobs:
     needs: build-and-push
     steps:
       - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST_PROD }}
           username: ubuntu
@@ -51,11 +51,10 @@ jobs:
           script: |
             cd /opt/chessladder
             
-            # Docker Hub로부터 최신 이미지 가져오기
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml pull
 
-            # 모든 환경 변수
+            # 모든 환경 변수를 주입하여 컨테이너 실행
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
@@ -70,7 +69,8 @@ jobs:
             CLOUDFLARE_R2_ACCESS_KEY="${{ secrets.CLOUDFLARE_R2_ACCESS_KEY }}" \
             CLOUDFLARE_R2_SECRET_KEY="${{ secrets.CLOUDFLARE_R2_SECRET_KEY }}" \
             CLOUDFLARE_R2_BUCKET_NAME="${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}" \
+            CLIENT_URL="${{ secrets.CLIENT_URL }}" \
+            LICHESS_REDIRECT_URL="${{ secrets.LICHESS_REDIRECT_URL }}" \
             docker compose -f docker-compose.prod.yml up -d
 
-            # 미사용 이미지 정리
             docker image prune -f
