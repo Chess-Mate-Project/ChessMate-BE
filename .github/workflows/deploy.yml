@@ -66,6 +66,10 @@ jobs:
             SPRING_JWT_ACCESS_TOKEN_EXPIRATION="${{ secrets.SPRING_JWT_ACCESS_TOKEN_EXPIRATION }}" \
             SPRING_JWT_REFRESH_TOKEN_SECRET="${{ secrets.SPRING_JWT_REFRESH_TOKEN_SECRET }}" \
             SPRING_JWT_REFRESH_TOKEN_EXPIRATION="${{ secrets.SPRING_JWT_REFRESH_TOKEN_EXPIRATION }}" \
+            CLOUDFLARE_R2_ENDPOINT="${{ secrets.CLOUDFLARE_R2_ENDPOINT }}" \
+            CLOUDFLARE_R2_ACCESS_KEY="${{ secrets.CLOUDFLARE_R2_ACCESS_KEY }}" \
+            CLOUDFLARE_R2_SECRET_KEY="${{ secrets.CLOUDFLARE_R2_SECRET_KEY }}" \
+            CLOUDFLARE_R2_BUCKET_NAME="${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}" \
             docker compose -f docker-compose.prod.yml up -d
 
             # 미사용 이미지 정리
