@@ -54,7 +54,7 @@ jobs:
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml pull
 
-            # 모든 환경 변수를 주입하여 컨테이너 실행
+            # 모든 환경 변수 주입 (에러 방지를 위해 소문자 키까지 포함)
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
