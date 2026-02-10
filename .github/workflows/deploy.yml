@@ -47,10 +47,9 @@ jobs:
           port: 22
           script: |
             cd /opt/chessladder
-
+            
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml down --remove-orphans
-
 
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml pull
@@ -72,8 +71,8 @@ jobs:
             CLIENT_URL="${{ secrets.CLIENT_URL }}" \
             LICHESS_REDIRECT_URL="${{ secrets.LICHESS_REDIRECT_URL }}" \
             docker compose -f docker-compose.prod.yml up -d --force-recreate
-            
-            sudo nginx -t && sudo systemctl restart nginx
 
+            sudo nginx -t && sudo systemctl restart nginx
+            
             docker image prune -f
-            echo "Deployment Completed Successfully!"
+            echo "Successfully Deployed!"
