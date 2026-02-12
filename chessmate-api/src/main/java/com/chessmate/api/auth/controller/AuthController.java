@@ -4,6 +4,7 @@ package com.chessmate.api.auth.controller;
 import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.auth.service.AuthService;
 import com.chessmate.common.response.SuccessResponse;
+import com.chessmate.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -49,11 +50,11 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<SuccessResponse<UserPrincipal>> me(
+  public ResponseEntity<SuccessResponse<User>> me(
       @AuthenticationPrincipal UserPrincipal userPrincipal
   ) {
       return ResponseEntity.ok(
-          new SuccessResponse<>("인증되어 있습니다.", userPrincipal)
+          new SuccessResponse<>("인증되어 있습니다.", userPrincipal.getUser())
       );
   }
 }
