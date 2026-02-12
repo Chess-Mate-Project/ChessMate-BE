@@ -67,7 +67,8 @@ jobs:
             CLOUDFLARE_R2_ENDPOINT="${{ secrets.CLOUDFLARE_R2_ENDPOINT }}" \
             CLOUDFLARE_R2_ACCESS_KEY="${{ secrets.CLOUDFLARE_R2_ACCESS_KEY }}" \
             CLOUDFLARE_R2_SECRET_KEY="${{ secrets.CLOUDFLARE_R2_SECRET_KEY }}" \
-            CLOUDFLARE_R2_BUCKET_NAME="${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}" \
+            CLOUDFLARE_R2_BUCKET="${{ secrets.CLOUDFLARE_R2_BUCKET }}" \
+            CLOUDFLARE_R2_CDN="${{ secrets.CLOUDFLARE_R2_CDN }}" \
             CLIENT_URL="${{ secrets.CLIENT_URL }}" \
             LICHESS_REDIRECT_URL="${{ secrets.LICHESS_REDIRECT_URL }}" \
             docker compose -f docker-compose.prod.yml up -d --force-recreate
