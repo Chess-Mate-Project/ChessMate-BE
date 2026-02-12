@@ -27,13 +27,10 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push API Image
+      - name: Build and Push Images
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest -f ./dockerfile-api .
           docker push ${{ secrets.DOCKER_USERNAME }}/chessladder-api:latest
-
-      - name: Build and Push Worker Image
-        run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest -f ./dockerfile-worker .
           docker push ${{ secrets.DOCKER_USERNAME }}/chessladder-worker:latest
 
@@ -52,9 +49,11 @@ jobs:
             cd /opt/chessladder
             
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
+            docker compose -f docker-compose.prod.yml down --remove-orphans
+
+            DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             docker compose -f docker-compose.prod.yml pull
 
-            # 변수 주입
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
             DB_URL="${{ secrets.DB_URL }}" \
             DB_USERNAME="${{ secrets.DB_USERNAME }}" \
@@ -71,6 +70,9 @@ jobs:
             CLOUDFLARE_R2_BUCKET_NAME="${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}" \
             CLIENT_URL="${{ secrets.CLIENT_URL }}" \
             LICHESS_REDIRECT_URL="${{ secrets.LICHESS_REDIRECT_URL }}" \
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d --force-recreate
 
+            sudo nginx -t && sudo systemctl restart nginx
+            
             docker image prune -f
+            echo "Successfully Deployed!"
