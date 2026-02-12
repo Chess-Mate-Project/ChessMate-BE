@@ -30,16 +30,23 @@ public class UserBatchServiceImpl implements UserBatchService {
     User user = userRepository.findById(userId).orElseThrow();
     Long since = null;
     if (!isFirstTime) {
-      since =  userDailyStreakRepository.findLastGameAtByUserId(userId);
+      since = userDailyStreakRepository.findLastGameAtByUserId(userId);
     }
 
     try {
-      JobParameters params = new JobParametersBuilder()
+      JobParametersBuilder paramsBuilder = new JobParametersBuilder()
           .addString("username", user.getUsername())
-          .addString("token", lichessToken)
-          .addLong("since", since)
-          .toJobParameters();
+          .addString("token", lichessToken);
 
+      // since가 null이 아닐 때만 추가 (첫 로그인이 아닐 때)
+      if (since != null) {
+        paramsBuilder.addLong("since", since);
+      } else {
+        // 첫 로그인 시 기본값 0으로 설정
+        paramsBuilder.addLong("since", 0L);
+      }
+
+      JobParameters params = paramsBuilder.toJobParameters();
       jobLauncher.run(lichessJob, params);
 
     } catch (Exception e) {

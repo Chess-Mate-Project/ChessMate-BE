@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @StepScope
+@Slf4j
 public class GameStatItemWriter implements ItemWriter<GameStat> {
 
   private final UserDailyStreakRepositoryImpl streakRepository;
@@ -50,6 +52,7 @@ public class GameStatItemWriter implements ItemWriter<GameStat> {
           if (streak.getLastGameAt() != null && (agg.getLastGameAt() == null
               || streak.getLastGameAt() > agg.getLastGameAt())) {
             agg.setLastGameAt(streak.getLastGameAt());
+            agg.setLastRating(streak.getLastRating());
           }
         }
       }
@@ -62,6 +65,9 @@ public class GameStatItemWriter implements ItemWriter<GameStat> {
       }
     }
 
+    log.info("[Writer] 저장 시작 - aggregatedStreaks={}개, colorStats={}개, firstMoveStats={}개",
+        aggregatedStreaks.size(), colorStats.size(), firstMoveStats.size());
+
     // 집계된 streak들을 DB에 반영 (존재하면 업데이트, 없으면 삽입)
     for (UserDailyStreak aggregated : aggregatedStreaks.values()) {
       streakRepository.findByUserIdAndDate(aggregated.getUserId(), aggregated.getDate())
@@ -72,16 +78,28 @@ public class GameStatItemWriter implements ItemWriter<GameStat> {
             if (aggregated.getLastGameAt() != null && (existing.getLastGameAt() == null
                 || aggregated.getLastGameAt() > existing.getLastGameAt())) {
               existing.setLastGameAt(aggregated.getLastGameAt());
+              // lastGameAt이 더 최신이면 lastRating도 함께 업데이트
+              existing.setLastRating(aggregated.getLastRating());
+              log.debug("[Writer] Streak 업데이트 - userId={}, date={}, lastRating={}",
+                  existing.getUserId(), existing.getDate(), existing.getLastRating());
             }
             streakRepository.save(existing);
-          }, () -> streakRepository.save(aggregated));
+          }, () -> {
+            streakRepository.save(aggregated);
+            log.debug("[Writer] Streak 신규 저장 - userId={}, date={}, lastRating={}",
+                aggregated.getUserId(), aggregated.getDate(), aggregated.getLastRating());
+          });
     }
 
     if (!colorStats.isEmpty()) {
       colorStatRepository.saveAll(colorStats);
+      log.debug("[Writer] ColorStat 저장 완료 - count={}", colorStats.size());
     }
     if (!firstMoveStats.isEmpty()) {
       firstMoveStatRepository.saveAll(firstMoveStats);
+      log.debug("[Writer] FirstMoveStat 저장 완료 - count={}", firstMoveStats.size());
     }
+
+    log.info("[Writer] 저장 완료 - aggregatedStreaks={}개", aggregatedStreaks.size());
   }
 }
