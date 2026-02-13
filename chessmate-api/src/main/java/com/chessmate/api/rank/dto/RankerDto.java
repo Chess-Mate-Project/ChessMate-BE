@@ -1,11 +1,25 @@
 package com.chessmate.api.rank.dto;
 
-import com.chessmate.common.dto.TierResult;
+import lombok.Builder;
+import lombok.Getter;
 
-public record RankerDto (
-    String profileImageUrl,
-    String bannerImageUrl,
-    String username,
-    TierResult tierResult
-) {
+@Getter
+@Builder
+public class RankerDto {
+
+  private Long userId;
+
+  private String username;
+
+  private String title;
+
+  private int rating;
+
+  private int rank;
+
+  private String bannerImage;
+
+  private String profileImage;
+
 }
+

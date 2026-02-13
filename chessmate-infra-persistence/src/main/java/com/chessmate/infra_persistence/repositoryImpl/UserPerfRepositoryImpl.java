@@ -1,11 +1,13 @@
 package com.chessmate.infra_persistence.repositoryImpl;
 
+import com.chessmate.domain.user.User;
 import com.chessmate.domain.userPerf.UserPerf;
 import com.chessmate.domain.userPerf.UserPerfRepository;
 import com.chessmate.common.type.GameType;
 import com.chessmate.infra_persistence.entity.UserPerfEntity;
 import com.chessmate.infra_persistence.jpaRepository.UserPerfJpaRepository;
 import com.chessmate.infra_persistence.mapper.UserPerfMapper;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -28,5 +30,20 @@ public class UserPerfRepositoryImpl implements UserPerfRepository {
     return jpaRepository.findByUserIdAndGameType(userId, gameType)
         .map(UserPerfMapper::toDomain);
   }
+
+  @Override
+  public List<UserPerf> findRankingByGameType(GameType gameType) {
+    return jpaRepository.findRankingByGameType(gameType)
+        .stream()
+        .map(UserPerfMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public int countUsersBetterRating(GameType gameType, int rating) {
+    return jpaRepository.countUsersBetterRating(gameType, rating);
+  }
+
+
 }
 
