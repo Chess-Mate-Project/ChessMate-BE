@@ -68,8 +68,8 @@ public class RankService {
     MyRankInfo myRankInfo;
     if (userPerf.getRated() < 50) {
       myRankInfo = MyRankInfo.builder()
-          .LoggedInUser(true)
-          .Unrated(true)
+          .loggedInUser(true)
+          .unrated(true)
           .userId(user.getId())
           .username(user.getUsername())
           .title(user.getTitle())
@@ -84,8 +84,8 @@ public class RankService {
           .count() + 1;
 
       myRankInfo = MyRankInfo.builder()
-          .LoggedInUser(true)
-          .Unrated(false)
+          .loggedInUser(true)
+          .unrated(false)
           .userId(user.getId())
           .username(user.getUsername())
           .title(user.getTitle())
