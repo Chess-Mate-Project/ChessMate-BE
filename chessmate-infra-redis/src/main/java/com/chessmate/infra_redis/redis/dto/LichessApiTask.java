@@ -1,9 +1,11 @@
 package com.chessmate.infra_redis.redis.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import lombok.Builder;
 
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record LichessApiTask(
     Long userId,
     TaskType type,
