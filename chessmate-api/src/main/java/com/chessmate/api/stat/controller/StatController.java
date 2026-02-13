@@ -41,37 +41,24 @@ public class StatController {
     );
   }
 
-  /**
-   * 년도별 레이팅 히스토리 조회
-   * @param userPrincipal 사용자 정보
-   * @param year 조회할 년도 (예: 2025)
-   * @return List<RatingHistoryDto> 일별 lastRating 목록
-   */
-  @GetMapping("/rating-history")
-  public ResponseEntity<SuccessResponse<Object>> getRatingHistory(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
-      @RequestParam Year year
-  ) {
-
-    var ratingHistory = statService.getRatingHistory(userPrincipal.getUser(), year);
-
-    return ResponseEntity.ok(
-        new SuccessResponse<>("레이팅 히스토리 조회 성공", ratingHistory)
-    );
-  }
-
-  @GetMapping("/color")
-  public ResponseEntity<SuccessResponse<ColorStatsResponse>> getColorStats(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
-      @RequestParam(defaultValue = "RAPID") GameType gameType
-  ) {
-
-    ColorStatsResponse response = statService.getColorStats(userPrincipal.getUser(), gameType);
-
-    return ResponseEntity.ok(
-        new SuccessResponse<>("Color Stats 조회 성공", response)
-    );
-  }
+//  /**
+//   * 년도별 레이팅 히스토리 조회
+//   * @param userPrincipal 사용자 정보
+//   * @param year 조회할 년도 (예: 2025)
+//   * @return List<RatingHistoryDto> 일별 lastRating 목록
+//   */
+//  @GetMapping("/rating-history")
+//  public ResponseEntity<SuccessResponse<Object>> getRatingHistory(
+//      @AuthenticationPrincipal UserPrincipal userPrincipal,
+//      @RequestParam Year year
+//  ) {
+//
+//    var ratingHistory = statService.getRatingHistory(userPrincipal.getUser(), year);
+//
+//    return ResponseEntity.ok(
+//        new SuccessResponse<>("레이팅 히스토리 조회 성공", ratingHistory)
+//    );
+//  }
 
   @GetMapping("/perf")
   public ResponseEntity<SuccessResponse<UserPerfResponse>> getUserPerf(
@@ -89,6 +76,19 @@ public class StatController {
 
     return ResponseEntity.ok(
         new SuccessResponse<>("UserPerf 정보 조회 성공", response)
+    );
+  }
+
+  @GetMapping("/color")
+  public ResponseEntity<SuccessResponse<ColorStatsResponse>> getColorStats(
+      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @RequestParam(defaultValue = "RAPID") GameType gameType
+  ) {
+
+    ColorStatsResponse response = statService.getColorStats(userPrincipal.getUser(), gameType);
+
+    return ResponseEntity.ok(
+        new SuccessResponse<>("Color Stats 조회 성공", response)
     );
   }
 

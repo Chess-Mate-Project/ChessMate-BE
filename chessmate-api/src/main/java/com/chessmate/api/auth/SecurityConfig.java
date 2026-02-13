@@ -32,7 +32,8 @@ public class SecurityConfig {
                           "/api/oauth/callback",
                             "/api/user/count",
                             "/api/auth/refresh",
-                            "api/auth/logout"
+                            "api/auth/logout",
+                            "/api/rank/ranking"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

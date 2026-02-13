@@ -2,10 +2,6 @@ package com.chessmate.worker.batch.worker;
 
 import com.chessmate.domain.user.User;
 import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
-import com.chessmate.infra_redis.redis.CacheService;
-import com.chessmate.infra_redis.redis.LichessApiRedisService;
-import com.chessmate.infra_redis.redis.dto.LichessApiTask;
-import com.chessmate.infra_redis.redis.dto.TaskType;
 import com.chessmate.worker.batch.service.UpdateDataService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -14,24 +10,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
-public class updateWorker {
+@RequiredArgsConstructor
+public class RankWorker {
+
   private final UpdateDataService updateDataService;
   private final UserRepositoryImpl userRepository;
   // 30분 간격으로 변경 (매시 0분, 30분)
-  @Scheduled(cron = "0 0/30 * * * ?")
-  public void updateUserData() {
-    log.info("게임 스트릭 조회로 증분 업데이트 시작");
-
-    List<User> recentUsers = userRepository.findRecentLoginUsersWithin3Days();
-
-    for (User user : recentUsers) {
-      log.info("증분 업데이트 대상 사용자: {}", user.getUsername());
-      updateDataService.updateUserGameData(user);
-    }
-  }
-
   @Scheduled(cron = "0 0 * * * ?")
   public void updateRanking() {
     log.info("랭킹 업데이트 시작");
