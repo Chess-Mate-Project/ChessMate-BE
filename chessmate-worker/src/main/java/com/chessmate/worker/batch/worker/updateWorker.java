@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class updateWorker {
+public class UpdateWorker {
 
   private final UpdateDataService updateDataService;
   private final UserRepositoryImpl userRepository;

@@ -12,8 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 public class MyRankInfo {
-  private boolean LoggedInUser; // 로그인유저임? true or false
-  private boolean Unrated; // 언레이팅임? true or false
+  private boolean loggedInUser; // 로그인유저임? true or false
+  private boolean unrated; // 언레이팅임? true or false
 
   private int rank;
   private int rating;
