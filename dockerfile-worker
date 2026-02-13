@@ -1,0 +1,5 @@
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY chessmate-worker/build/libs/*.jar app.jar
+EXPOSE 9000
+ENTRYPOINT ["java", "-jar", "app.jar"]

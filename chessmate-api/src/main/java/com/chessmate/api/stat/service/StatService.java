@@ -68,8 +68,14 @@ public class StatService {
     LocalDate start = LocalDate.of(year.getValue(), 1, 1);
     LocalDate end = LocalDate.of(year.getValue(), 12, 31);
 
-    userDailyStreakRepository.findByUserIdAndYearRange(user.getId(), start, end)
-        .forEach(streak -> {
+    log.info("[YearStreak] 조회 범위 - userId={}, start={}, end={}", user.getId(), start, end);
+
+    var streaks = userDailyStreakRepository.findByUserIdAndYearRange(user.getId(), start, end);
+
+    log.info("[YearStreak] DB 조회 결과 - userId={}, year={}, 데이터 개수={}",
+        user.getId(), year.getValue(), streaks.size());
+
+    streaks.forEach(streak -> {
           DailyStreakDto dto = new DailyStreakDto(
               streak.getDate(),
               streak.getWin(),
@@ -79,13 +85,16 @@ public class StatService {
               streak.getLastRating()
           );
           dailyStreakDto.add(dto);
+          log.debug("[YearStreak] 변환된 데이터 - date={}, win={}, lose={}, draw={}, lastRating={}",
+              streak.getDate(), streak.getWin(), streak.getLose(), streak.getDraw(), streak.getLastRating());
         });
 
     YearStreakDto result = new YearStreakDto(year, dailyStreakDto);
 
     // Cache-Aside Pattern 3단계: 조회 결과를 캐시에 저장 (TTL: 1시간)
     cacheService.saveCache(cacheKey, result, 3600);
-    log.info("[Cache-Set] YearStreak - userId={}, year={}, TTL=3600s", user.getId(), year.getValue());
+    log.info("[Cache-Set] YearStreak - userId={}, year={}, count={}, TTL=3600s",
+        user.getId(), year.getValue(), dailyStreakDto.size());
 
     return result;
   }

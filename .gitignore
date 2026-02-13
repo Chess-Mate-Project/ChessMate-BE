@@ -36,9 +36,5 @@ out/
 ### VS Code ###
 .vscode/
 
-
-
-
-# application config
-**/application*.yml
-**/application*.yaml
+src/**/resources/application*.yml
+src/**/resources/application*.yaml

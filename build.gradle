@@ -39,7 +39,9 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
 jar { enabled = true }
 
 bootJar { enabled = false }

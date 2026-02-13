@@ -1,0 +1,12 @@
+spring:
+  profiles:
+    active: worker,persistence,external,common,domain,redis
+
+server:
+  port: 9000
+
+logging:
+  level:
+    org.springframework.batch: DEBUG
+    org.springframework.batch.core: DEBUG
+

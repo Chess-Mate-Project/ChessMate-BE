@@ -1,0 +1,34 @@
+spring:
+  config:
+    activate:
+      on-profile: api
+
+  application:
+    name: ChessMate-api
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+  jwt:
+    access-token:
+      secret: chessMateGbswProjectAccessTokenSecret
+      expiration: 3600000
+    refresh-token:
+      secret: chessMateGbswProjectRefreshTokenSecret
+      expiration: 604800000
+
+oauth:
+  lichess:
+    redirect-url: http://localhost:8080/api/oauth/callback
+
+client:
+  url: http://localhost:5173
+
+
+cloudflare:
+  r2:
+    endpoint: https://8abcc1ccfb278ca2c5b3e8ba07623e9e.r2.cloudflarestorage.com
+    accessKey: 599e880ffcface6a291030c9dbc2f0a1
+    secretKey: 06ee2c6f82726bb26b97cf2fabbfafd8224f7073fd0c87d68a3cf3383ee4d903
+    bucket: chessladder
+    cdn: https://pub-1e7b1be2d4da472a936752a572ed0419.r2.dev
