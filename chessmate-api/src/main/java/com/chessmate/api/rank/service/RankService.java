@@ -75,7 +75,7 @@ public class RankService {
           .title(user.getTitle())
           .banner(user.getBannerImage())
           .profile(user.getProfileImage())
-          .rating(userPerf.getRated())
+          .rating(userPerf.getRating())
           .rank(0) // rank 0 = 언레이팅 유저
           .build();
     } else {
