@@ -9,5 +9,8 @@ public record LichessApiTask(
     TaskType type,
     String lichessToken,
     String username,
-    boolean isFullSync // true면 전체기록(Heavy), false면 단순업데이트(Light)
-) implements Serializable {}
+    boolean isFullSync, // true면 전체기록(Heavy), false면 단순업데이트(Light)
+
+        String batchId, //UUID
+    String taskId //UUID
+ ) implements Serializable {}

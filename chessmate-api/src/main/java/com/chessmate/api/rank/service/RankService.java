@@ -56,10 +56,6 @@ public class RankService {
       // DB에서 전체 랭킹 조회
       allRankings = userPerfRepository.findRankingByGameType(gameType);
       log.info("[DB-Query] 전체 랭킹 조회 완료 - gameType={}, totalCount={}", gameType, allRankings.size());
-
-      // 캐시에 저장
-      cacheService.saveRanking(gameType, allRankings);
-      log.info("[Cache-Set] Ranking 캐시 저장 완료 - gameType={}", gameType);
     }
 
 

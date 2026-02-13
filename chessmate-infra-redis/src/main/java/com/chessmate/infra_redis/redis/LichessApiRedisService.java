@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class LichessApiRedisService {
+  private static final String QUEUE_FAST = "task:queue:fast";
+  private static final String QUEUE_HEAVY = "task:queue:low";
+
   private final RedisService redisService;
 
   public void pushTask(LichessApiTask task) {
@@ -17,20 +20,13 @@ public class LichessApiRedisService {
 
     //작업 타입에 따른 큐 분리
     if (task.type() == TaskType.GAMES) {
-      queueKey = "task:queue:heavy"; // 오래 걸리는 길
+      redisService.leftPush(QUEUE_HEAVY, task);
     } else {
-      queueKey = "task:queue:fast";  // 빨리 처리해야 하는 길
+      redisService.leftPush(QUEUE_FAST, task);
     }
-
-    redisService.leftPush(queueKey, task);
   }
 
   public LichessApiTask popGameTask() {
-    return redisService.brPopMultiple(
-        10,
-        LichessApiTask.class,
-        "task:queue:heavy",
-        "task:queue:fast"
-    );
+    return redisService.brPopMultiple(5, LichessApiTask.class, QUEUE_FAST, QUEUE_HEAVY);
   }
 }
