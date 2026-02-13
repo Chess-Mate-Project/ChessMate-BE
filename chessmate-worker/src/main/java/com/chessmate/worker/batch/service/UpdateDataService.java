@@ -20,7 +20,7 @@ public class UpdateDataService {
   private final CacheService cacheService;
   private final LichessApiRedisService lichessApiRedisService;
 
-  public void updateUserGameData(User user) {
+  public void updateUserGameData(User user, String batchId) {
     String cachedToken = cacheService.getLichessToken(user.getId());
     if (cachedToken == null || cachedToken.isEmpty()) {
       log.info("사용자 : {} id : {} 의 Lichess 토큰이 없습니다. 건너뜁니다.", user.getUsername(), user.getId());
@@ -32,6 +32,8 @@ public class UpdateDataService {
         .lichessToken(cachedToken)
         .type(TaskType.GAMES)
         .isFullSync(false)
+        .batchId(batchId)
+        .taskId(java.util.UUID.randomUUID().toString())
         .build();
 
     LichessApiTask accounttask = LichessApiTask.builder()
@@ -40,6 +42,8 @@ public class UpdateDataService {
         .lichessToken(cachedToken)
         .type(TaskType.ACCOUNT)
         .isFullSync(false)
+        .batchId(batchId)
+        .taskId(java.util.UUID.randomUUID().toString())
         .build();
 
     LichessApiTask perftask = LichessApiTask.builder()
@@ -48,6 +52,8 @@ public class UpdateDataService {
         .lichessToken(cachedToken)
         .type(TaskType.PERF)
         .isFullSync(false)
+        .batchId(batchId)
+        .taskId(java.util.UUID.randomUUID().toString())
         .build();
 
     lichessApiRedisService.pushTask(gamestask);

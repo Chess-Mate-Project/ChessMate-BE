@@ -30,6 +30,7 @@
             "/api/oauth/callback",
             "/api/auth/refresh",
             "/api/user/count"
+            ,"/api/rank/ranking"
         };
 
         for (String path : excluded) {
