@@ -1,6 +1,5 @@
 package com.chessmate.api.auth.controller;
 
-
 import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.auth.service.AuthService;
 import com.chessmate.common.response.SuccessResponse;
