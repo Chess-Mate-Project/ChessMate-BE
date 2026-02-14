@@ -15,6 +15,11 @@ public class ImageUtil {
   public String getProfileImageUrl(User u) {
     log.debug("프로필 이미지 URL 조회 - userId={}", u.getId());
 
+    if (cloudflareProperties == null) {
+      log.warn("CloudflareProperties가 null입니다. 기본값 반환");
+      return "/default/default_profile.png";
+    }
+
     String key = u.getProfileImage();
     String baseUrl = cloudflareProperties.getCdn();
 
@@ -33,6 +38,11 @@ public class ImageUtil {
 
   public String getBannerImageUrl(User u) {
     log.debug("배너 이미지 URL 조회 - userId={}", u.getId());
+
+    if (cloudflareProperties == null) {
+      log.warn("CloudflareProperties가 null입니다. 기본값 반환");
+      return "/default/default_banner.png";
+    }
 
     String key = u.getBannerImage();
     String baseUrl = cloudflareProperties.getCdn();

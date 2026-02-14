@@ -152,30 +152,68 @@ public class LichessApiTaskHandler {
             dto.stat().resultStreak().loss().max() != null
             ? dto.stat().resultStreak().loss().max().v() : 0;
 
-        UserPerf userPerf = UserPerf.builder()
-            .userId(task.userId())
-            .gameType(type)
-            .rating(dto.perf().glicko().rating().intValue())
-            .gamesPlayed(dto.perf().nb())
-            .prov(dto.perf().glicko().provisional() != null && dto.perf().glicko().provisional())
-            .all(dto.stat().count().all())
-            .rated(ratedCount)
-            .wins(dto.stat().count().win())
-            .losses(dto.stat().count().loss())
-            .draws(dto.stat().count().draw())
-            .tour(dto.stat().count().tour())
-            .berserk(dto.stat().count().berserk())
-            .opAvg(dto.stat().count().opAvg())
-            .seconds(dto.stat().count().seconds())
-            .disconnects(dto.stat().count().disconnects())
-            .highestRating(highestRating)
-            .lowestRating(lowestRating)
-            .maxStreak(maxWinStreak)
-            .maxLossStreak(maxLossStreak)
-            .uncertain(ratedCount < 50)
-            .build();
+        transactionTemplate.executeWithoutResult(status -> {
+          // 기존 UserPerf 조회 또는 새로 생성
+          UserPerf existingPerf = userPerfRepository.findByUserIdAndGameType(task.userId(), type)
+              .orElse(null);
 
-        transactionTemplate.executeWithoutResult(status -> userPerfRepository.save(userPerf));
+          if (existingPerf != null) {
+            log.info("[Worker-Update] UserPerf 업데이트: userId={}, gameType={}, oldRating={}, newRating={}",
+                task.userId(), type, existingPerf.getRating(),
+                dto.perf().glicko().rating().intValue());
+
+            // 기존 데이터 업데이트
+            existingPerf.setRating(dto.perf().glicko().rating().intValue());
+            existingPerf.setGamesPlayed(dto.perf().nb());
+            existingPerf.setProv(dto.perf().glicko().provisional() != null && dto.perf().glicko().provisional());
+            existingPerf.setAll(dto.stat().count().all());
+            existingPerf.setRated(ratedCount);
+            existingPerf.setWins(dto.stat().count().win());
+            existingPerf.setLosses(dto.stat().count().loss());
+            existingPerf.setDraws(dto.stat().count().draw());
+            existingPerf.setTour(dto.stat().count().tour());
+            existingPerf.setBerserk(dto.stat().count().berserk());
+            existingPerf.setOpAvg(dto.stat().count().opAvg());
+            existingPerf.setSeconds(dto.stat().count().seconds());
+            existingPerf.setDisconnects(dto.stat().count().disconnects());
+            existingPerf.setHighestRating(highestRating);
+            existingPerf.setLowestRating(lowestRating);
+            existingPerf.setMaxStreak(maxWinStreak);
+            existingPerf.setMaxLossStreak(maxLossStreak);
+            existingPerf.setUncertain(ratedCount < 50);
+
+            userPerfRepository.save(existingPerf);
+          } else {
+            log.info("[Worker-Create] UserPerf 신규 생성: userId={}, gameType={}, rating={}",
+                task.userId(), type, dto.perf().glicko().rating().intValue());
+
+            // 신규 생성
+            UserPerf userPerf = UserPerf.builder()
+                .userId(task.userId())
+                .gameType(type)
+                .rating(dto.perf().glicko().rating().intValue())
+                .gamesPlayed(dto.perf().nb())
+                .prov(dto.perf().glicko().provisional() != null && dto.perf().glicko().provisional())
+                .all(dto.stat().count().all())
+                .rated(ratedCount)
+                .wins(dto.stat().count().win())
+                .losses(dto.stat().count().loss())
+                .draws(dto.stat().count().draw())
+                .tour(dto.stat().count().tour())
+                .berserk(dto.stat().count().berserk())
+                .opAvg(dto.stat().count().opAvg())
+                .seconds(dto.stat().count().seconds())
+                .disconnects(dto.stat().count().disconnects())
+                .highestRating(highestRating)
+                .lowestRating(lowestRating)
+                .maxStreak(maxWinStreak)
+                .maxLossStreak(maxLossStreak)
+                .uncertain(ratedCount < 50)
+                .build();
+
+            userPerfRepository.save(userPerf);
+          }
+        });
 
       } catch (Exception e) {
         allOk = false;
