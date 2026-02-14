@@ -1,5 +1,6 @@
 package com.chessmate.api.rank.service;
 
+import com.chessmate.api.image.ImageUtil;
 import com.chessmate.api.rank.dto.MyRankInfo;
 import com.chessmate.api.rank.dto.RankerDto;
 import com.chessmate.api.rank.dto.RankingResponse;
@@ -25,6 +26,7 @@ public class RankService {
   private final UserPerfRepository userPerfRepository;
   private final UserRepositoryImpl userRepository;
   private final CacheService cacheService;
+  private final ImageUtil imageUtil;
 
   @Transactional(readOnly = true)
   public RankingResponse getRankers(User user, GameType gameType, Pageable pageable) {
@@ -63,6 +65,8 @@ public class RankService {
     UserPerf userPerf = userPerfRepository.findByUserIdAndGameType(user.getId(), gameType)
         .orElseThrow(() -> new IllegalArgumentException("유저 퍼포먼스 정보를 찾을 수 없습니다."));
 
+    User saveUser = userRepository.findById(user.getId()).orElseThrow(() -> new IllegalArgumentException("유저 정보를 찾을 수 없습니다. - 랭킹 부문"));
+
 
     // 언레이팅 유저 감지하기
     MyRankInfo myRankInfo;
@@ -70,11 +74,11 @@ public class RankService {
       myRankInfo = MyRankInfo.builder()
           .loggedInUser(true)
           .unrated(true)
-          .userId(user.getId())
-          .username(user.getUsername())
-          .title(user.getTitle())
-          .banner(user.getBannerImage())
-          .profile(user.getProfileImage())
+          .userId(saveUser.getId())
+          .username(saveUser.getUsername())
+          .description(saveUser.getDescription())
+          .banner(imageUtil.getBannerImageUrl(saveUser))
+          .profile(imageUtil.getProfileImageUrl(saveUser))
           .rating(userPerf.getRating())
           .rank(0) // rank 0 = 언레이팅 유저
           .build();
@@ -86,11 +90,11 @@ public class RankService {
       myRankInfo = MyRankInfo.builder()
           .loggedInUser(true)
           .unrated(false)
-          .userId(user.getId())
-          .username(user.getUsername())
-          .title(user.getTitle())
-          .banner(user.getBannerImage())
-          .profile(user.getProfileImage())
+          .userId(saveUser.getId())
+          .username(saveUser.getUsername())
+          .description(saveUser.getDescription())
+          .banner(imageUtil.getBannerImageUrl(saveUser))
+          .profile(imageUtil.getProfileImageUrl(saveUser))
           .rating(userPerf.getRated())
           .rank(myRank)
           .build();
@@ -135,6 +139,7 @@ public class RankService {
             .username(rankingUser.getUsername())
             .rating(ranking.getRating())
             .rank(i + 1)
+            .description(rankingUser.getDescription())
             .bannerImage(rankingUser.getBannerImage())
             .profileImage(rankingUser.getProfileImage())
             .build();

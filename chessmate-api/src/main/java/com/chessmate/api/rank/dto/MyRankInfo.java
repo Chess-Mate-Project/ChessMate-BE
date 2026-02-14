@@ -21,7 +21,7 @@ public class MyRankInfo {
   private String username;
   private String banner;
   private String profile;
-  private String title;
+  private String description;
 
   public static MyRankInfo imNotLoginUser() {
     return new MyRankInfo(false, false, 0, 0, null, null, null, null, null);

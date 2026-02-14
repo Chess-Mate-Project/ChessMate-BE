@@ -11,7 +11,7 @@ public class RankerDto {
 
   private String username;
 
-  private String title;
+  private String description;
 
   private int rating;
 
