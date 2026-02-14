@@ -140,8 +140,8 @@ public class RankService {
             .rating(ranking.getRating())
             .rank(i + 1)
             .description(rankingUser.getDescription())
-            .bannerImage(rankingUser.getBannerImage())
-            .profileImage(rankingUser.getProfileImage())
+            .bannerImage(imageUtil.getBannerImageUrl(rankingUser))
+            .profileImage(imageUtil.getProfileImageUrl(rankingUser))
             .build();
         rankers.add(ranker);
         log.debug("[Ranker] rank={}, username={}, rating={}", i + 1, rankingUser.getUsername(), ranking.getRating());
