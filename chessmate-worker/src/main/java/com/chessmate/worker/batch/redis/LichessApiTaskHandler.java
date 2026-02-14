@@ -34,13 +34,20 @@ public class LichessApiTaskHandler {
   private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
   public void handle(LichessApiTask task) {
+    log.info("[Worker-Handler] 작업 처리 시작 - taskId={}, userId={}, taskType={}",
+        task.taskId(), task.userId(), task.type());
+
     if (task.type() == TaskType.RANKING_SNAPSHOT) {
+      log.info("[Worker-Handler] RANKING_SNAPSHOT 작업 처리 - batchId={}", task.batchId());
       updateRankingService.buildAndCacheSnapshots(task.batchId());
+      log.info("[Worker-Handler] RANKING_SNAPSHOT 작업 완료");
       return;
     }
 
     if (task.type() == TaskType.PERF) {
+      log.info("[Worker-Handler] PERF 작업 처리 - userId={}, username={}", task.userId(), task.username());
       boolean ok = syncUserPerf(task);
+      log.info("[Worker-Handler] PERF 작업 결과 - status={}", ok ? "SUCCESS" : "FAILED");
       if (ok) {
         batchBarrierService.ackAndMaybeTriggerSnapshot(task.batchId(), task.taskId());
       }
@@ -48,12 +55,16 @@ public class LichessApiTaskHandler {
     }
 
     if (task.type() == TaskType.GAMES) {
+      log.info("[Worker-Handler] GAMES 작업 처리 - userId={}", task.userId());
       syncUserGames(task);
+      log.info("[Worker-Handler] GAMES 작업 완료");
       return;
     }
 
     if (task.type() == TaskType.ACCOUNT) {
+      log.info("[Worker-Handler] ACCOUNT 작업 처리 - userId={}, username={}", task.userId(), task.username());
       boolean ok = syncUserAccount(task);
+      log.info("[Worker-Handler] ACCOUNT 작업 결과 - status={}", ok ? "SUCCESS" : "FAILED");
       if (ok) {
         batchBarrierService.ackAndMaybeTriggerSnapshot(task.batchId(), task.taskId());
       }
@@ -61,14 +72,16 @@ public class LichessApiTaskHandler {
     }
 
     if (task.type() == TaskType.FORCE_UPDATE) {
+      log.info("[Worker-Handler] FORCE_UPDATE 작업 처리 - userId={}", task.userId());
       updateDataService.updateUserGameData(
           userRepository.findById(task.userId()).orElseThrow(),
           null
       );
+      log.info("[Worker-Handler] FORCE_UPDATE 작업 완료");
       return;
     }
 
-    log.warn("[Worker] 알 수 없는 작업 유형: {} for userId={}", task.type(), task.userId());
+    log.warn("[Worker-Handler] === 알 수 없는 작업 유형 === taskType={}, userId={}", task.type(), task.userId());
   }
 
   /**
@@ -76,69 +89,114 @@ public class LichessApiTaskHandler {
    * - DB에 저장된 데이터와 API 응답 데이터를 비교하여 다를 경우만 업데이트
    */
   private boolean syncUserAccount(LichessApiTask task) {
-    log.info("[Worker] Account 정보 동기화 시작: userId={}, username={}", task.userId(), task.username());
+    log.info("[Worker-ACCOUNT] ========== Account 정보 동기화 시작 ==========");
+    log.info("[Worker-ACCOUNT] 사용자: userId={}, username={}", task.userId(), task.username());
 
     try {
+      // 1. API에서 데이터 조회
+      log.debug("[Worker-ACCOUNT] API 호출: username={}", task.username());
       LichessAccountDto accountDto = lichessApiService.getUserAccount(task.lichessToken());
 
+      log.debug("[Worker-ACCOUNT] API 응답 수신: title={}, allGames={}, ratedGames={}, wins={}, losses={}, draws={}, seconds={}",
+          accountDto.title(), accountDto.count().all(), accountDto.count().rated(),
+          accountDto.count().win(), accountDto.count().loss(), accountDto.count().draw(),
+          accountDto.playTime().total());
+
       transactionTemplate.executeWithoutResult(status -> {
+        // 2. DB에서 사용자 조회
+        log.debug("[Worker-ACCOUNT] DB 조회: userId={}", task.userId());
+
         User existingUser = userRepository.findById(task.userId())
             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + task.userId()));
 
+        log.info("[Worker-ACCOUNT] DB 기존 데이터: title={}, allGames={}, ratedGames={}, wins={}, losses={}, draws={}, seconds={}",
+            existingUser.getTitle(), existingUser.getAllGames(), existingUser.getRatedGames(),
+            existingUser.getWins(), existingUser.getLosses(), existingUser.getDraws(),
+            existingUser.getTotalSeconds());
+
+        // 3. 각 필드별 변경 감지
         boolean needsUpdate = false;
+        StringBuilder changeLog = new StringBuilder();
+        changeLog.append("[변경 사항]\n");
 
         if (!compareStrings(existingUser.getTitle(), accountDto.title())) {
+          changeLog.append(String.format("  - title: '%s' -> '%s'\n", existingUser.getTitle(), accountDto.title()));
           existingUser.setTitle(accountDto.title());
           needsUpdate = true;
         }
         if (existingUser.getAllGames() != accountDto.count().all()) {
+          changeLog.append(String.format("  - allGames: %d -> %d\n", existingUser.getAllGames(), accountDto.count().all()));
           existingUser.setAllGames(accountDto.count().all());
           needsUpdate = true;
         }
         if (existingUser.getRatedGames() != accountDto.count().rated()) {
+          changeLog.append(String.format("  - ratedGames: %d -> %d\n", existingUser.getRatedGames(), accountDto.count().rated()));
           existingUser.setRatedGames(accountDto.count().rated());
           needsUpdate = true;
         }
         if (existingUser.getWins() != accountDto.count().win()) {
+          changeLog.append(String.format("  - wins: %d -> %d\n", existingUser.getWins(), accountDto.count().win()));
           existingUser.setWins(accountDto.count().win());
           needsUpdate = true;
         }
         if (existingUser.getLosses() != accountDto.count().loss()) {
+          changeLog.append(String.format("  - losses: %d -> %d\n", existingUser.getLosses(), accountDto.count().loss()));
           existingUser.setLosses(accountDto.count().loss());
           needsUpdate = true;
         }
         if (existingUser.getDraws() != accountDto.count().draw()) {
+          changeLog.append(String.format("  - draws: %d -> %d\n", existingUser.getDraws(), accountDto.count().draw()));
           existingUser.setDraws(accountDto.count().draw());
           needsUpdate = true;
         }
         if (existingUser.getTotalSeconds() != accountDto.playTime().total()) {
+          changeLog.append(String.format("  - totalSeconds: %d -> %d\n", existingUser.getTotalSeconds(), accountDto.playTime().total()));
           existingUser.setTotalSeconds(accountDto.playTime().total());
           needsUpdate = true;
         }
 
+        // 4. 업데이트 여부 판단
         if (needsUpdate) {
+          log.info("[Worker-ACCOUNT] === 데이터 변경 감지 ===\n{}", changeLog.toString());
+          log.debug("[Worker-ACCOUNT] UPDATE 실행 중...");
           userRepository.save(existingUser);
+          log.info("[Worker-ACCOUNT] === UPDATE 완료 ===");
+        } else {
+          log.info("[Worker-ACCOUNT] 데이터 변경 없음 - 스킵");
         }
       });
 
+      log.info("[Worker-ACCOUNT] ========== Account 동기화 완료 (SUCCESS) ==========");
       return true;
     } catch (Exception e) {
-      log.error("[Worker] Account 정보 동기화 실패 (userId={}): {}", task.userId(), e.getMessage(), e);
+      log.error("[Worker-ACCOUNT] === Account 동기화 실패 === userId={}, message={}",
+          task.userId(), e.getMessage(), e);
       return false;
     }
   }
 
   private boolean syncUserPerf(LichessApiTask task) {
-    log.info("[Worker] UserPerf 수집 시작: userId={}", task.userId());
-    GameType[] gameTypes = {GameType.BULLET, GameType.BLITZ, GameType.RAPID, GameType.CLASSICAL};
+    log.info("[Worker-PERF] ========== UserPerf 동기화 시작 ==========");
+    log.info("[Worker-PERF] 사용자: userId={}, username={}", task.userId(), task.username());
 
+    GameType[] gameTypes = {GameType.BULLET, GameType.BLITZ, GameType.RAPID, GameType.CLASSICAL};
     boolean allOk = true;
 
     for (GameType type : gameTypes) {
+      log.debug("[Worker-PERF] [{}] API 호출 시작", type);
+
       try {
+        // 1. API에서 데이터 조회
         UserPerfDto dto = lichessApiService.getUserPerf(task.username(), type);
 
+        log.debug("[Worker-PERF] [{}] API 응답 수신: rating={}, gamesPlayed={}, rated={}",
+            type,
+            dto.perf().glicko().rating().intValue(),
+            dto.perf().nb(),
+            dto.stat().count().rated());
+
         int ratedCount = dto.stat().count().rated();
+        int newRating = dto.perf().glicko().rating().intValue();
         int highestRating = dto.stat().highest() != null ? dto.stat().highest().int_() : 0;
         int lowestRating = dto.stat().lowest() != null ? dto.stat().lowest().int_() : 0;
 
@@ -152,18 +210,48 @@ public class LichessApiTaskHandler {
             dto.stat().resultStreak().loss().max() != null
             ? dto.stat().resultStreak().loss().max().v() : 0;
 
+        // 2. DB에서 기존 데이터 조회
+        log.debug("[Worker-PERF] [{}] DB 조회: userId={}, gameType={}", type, task.userId(), type);
+
         transactionTemplate.executeWithoutResult(status -> {
-          // 기존 UserPerf 조회 또는 새로 생성
           UserPerf existingPerf = userPerfRepository.findByUserIdAndGameType(task.userId(), type)
               .orElse(null);
 
           if (existingPerf != null) {
-            log.info("[Worker-Update] UserPerf 업데이트: userId={}, gameType={}, oldRating={}, newRating={}",
-                task.userId(), type, existingPerf.getRating(),
-                dto.perf().glicko().rating().intValue());
+            // 3-1. UPDATE 케이스
+            log.info("[Worker-PERF] [{}] === DB에 기존 데이터 발견 ===", type);
+            log.info("[Worker-PERF] [{}] 업데이트 전 - rating: {}, games: {}, rated: {}, wins: {}, losses: {}, draws: {}",
+                type,
+                existingPerf.getRating(),
+                existingPerf.getGamesPlayed(),
+                existingPerf.getRated(),
+                existingPerf.getWins(),
+                existingPerf.getLosses(),
+                existingPerf.getDraws());
+
+            // 변경 사항 확인
+            boolean ratingChanged = existingPerf.getRating() != newRating;
+            boolean gamesChanged = existingPerf.getGamesPlayed() != dto.perf().nb();
+            boolean ratedChanged = existingPerf.getRated() != ratedCount;
+
+            if (ratingChanged || gamesChanged || ratedChanged) {
+              log.info("[Worker-PERF] [{}] 데이터 변경 감지:", type);
+              if (ratingChanged) {
+                log.info("[Worker-PERF] [{}]   - rating: {} -> {}", type, existingPerf.getRating(), newRating);
+              }
+              if (gamesChanged) {
+                log.info("[Worker-PERF] [{}]   - gamesPlayed: {} -> {}", type, existingPerf.getGamesPlayed(), dto.perf().nb());
+              }
+              if (ratedChanged) {
+                log.info("[Worker-PERF] [{}]   - rated: {} -> {}", type, existingPerf.getRated(), ratedCount);
+              }
+            } else {
+              log.info("[Worker-PERF] [{}] 데이터 변경 없음 - 스킵", type);
+              return;
+            }
 
             // 기존 데이터 업데이트
-            existingPerf.setRating(dto.perf().glicko().rating().intValue());
+            existingPerf.setRating(newRating);
             existingPerf.setGamesPlayed(dto.perf().nb());
             existingPerf.setProv(dto.perf().glicko().provisional() != null && dto.perf().glicko().provisional());
             existingPerf.setAll(dto.stat().count().all());
@@ -182,16 +270,18 @@ public class LichessApiTaskHandler {
             existingPerf.setMaxLossStreak(maxLossStreak);
             existingPerf.setUncertain(ratedCount < 50);
 
+            log.debug("[Worker-PERF] [{}] UPDATE 실행 중...", type);
             userPerfRepository.save(existingPerf);
-          } else {
-            log.info("[Worker-Create] UserPerf 신규 생성: userId={}, gameType={}, rating={}",
-                task.userId(), type, dto.perf().glicko().rating().intValue());
+            log.info("[Worker-PERF] [{}] === UPDATE 완료 ===", type);
 
-            // 신규 생성
+          } else {
+            // 3-2. INSERT 케이스
+            log.info("[Worker-PERF] [{}] === DB에 기존 데이터 없음 - 신규 생성 ===", type);
+
             UserPerf userPerf = UserPerf.builder()
                 .userId(task.userId())
                 .gameType(type)
-                .rating(dto.perf().glicko().rating().intValue())
+                .rating(newRating)
                 .gamesPlayed(dto.perf().nb())
                 .prov(dto.perf().glicko().provisional() != null && dto.perf().glicko().provisional())
                 .all(dto.stat().count().all())
@@ -211,24 +301,43 @@ public class LichessApiTaskHandler {
                 .uncertain(ratedCount < 50)
                 .build();
 
+            log.info("[Worker-PERF] [{}] INSERT 데이터: rating={}, games={}, rated={}, wins={}, losses={}, draws={}",
+                type, newRating, dto.perf().nb(), ratedCount,
+                dto.stat().count().win(), dto.stat().count().loss(), dto.stat().count().draw());
+
+            log.debug("[Worker-PERF] [{}] INSERT 실행 중...", type);
             userPerfRepository.save(userPerf);
+            log.info("[Worker-PERF] [{}] === INSERT 완료 ===", type);
           }
         });
 
       } catch (Exception e) {
         allOk = false;
-        log.error("[Worker] UserPerf 수집 실패 (gameType={}): {}", type, e.getMessage(), e);
+        log.error("[Worker-PERF] [{}] === 에러 발생 === userId={}, gameType={}, message={}",
+            type, task.userId(), type, e.getMessage(), e);
       }
     }
 
+    log.info("[Worker-PERF] ========== UserPerf 동기화 완료 (status={}) ==========", allOk ? "SUCCESS" : "PARTIAL_FAILURE");
     return allOk;
   }
 
   private void syncUserGames(LichessApiTask task) {
-    log.info("[Worker] GAMES 배치 실행: userId={}", task.userId());
-    userBatchService.triggerUserUpdate(task.userId(), task.lichessToken(), task.isFullSync());
+    log.info("[Worker-GAMES] ========== 게임 데이터 동기화 시작 ==========");
+    log.info("[Worker-GAMES] 사용자: userId={}, isFullSync={}", task.userId(), task.isFullSync());
+    try {
+      userBatchService.triggerUserUpdate(task.userId(), task.lichessToken(), task.isFullSync());
+      log.info("[Worker-GAMES] ========== 게임 데이터 동기화 완료 (SUCCESS) ==========");
+    } catch (Exception e) {
+      log.error("[Worker-GAMES] ========== 게임 데이터 동기화 실패 ========== userId={}, message={}",
+          task.userId(), e.getMessage(), e);
+    }
   }
 
+  /**
+   * 문자열 비교 헬퍼 메서드
+   * - null 안전성 처리 포함
+   */
   private boolean compareStrings(String existing, String incoming) {
     if (existing == null && incoming == null) return true;
     if (existing == null || incoming == null) return false;
