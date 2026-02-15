@@ -51,10 +51,6 @@ public class UserService {
           log.info("[DB 저장 완료] userId={}, savedDescription={}, 저장된 객체 id={}",
               savedUser.getId(), savedUser.getDescription(), savedUser.getId());
 
-          // DB에 제대로 저장되었는지 재확인
-          userRepository.findById(user.getId()).ifPresent(dbUser -> {
-            log.info("[DB 재조회 확인] userId={}, DBDescription={}", dbUser.getId(), dbUser.getDescription());
-          });
 
           // 캐시 무효화 - 프로필 정보가 변경되었으므로 캐시 삭제
           String cacheKey = buildProfileCacheKey(u.getId());
