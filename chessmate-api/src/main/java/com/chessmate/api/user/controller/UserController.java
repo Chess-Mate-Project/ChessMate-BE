@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +50,7 @@ public class UserController {
       @AuthenticationPrincipal UserPrincipal u,
       @RequestBody UpdateUserDescriptionRequest request
   ) {
+    log.info("[자기소개 수정 요청] userId={}, description={}", u.getUser().getId(), request.description());
     userService.updateUserDescription(u.getUser(), request);
     return ResponseEntity.ok(
         new SuccessResponse<>("사용자 소개글 수정 성공", null)

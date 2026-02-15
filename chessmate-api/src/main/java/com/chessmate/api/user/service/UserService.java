@@ -42,11 +42,19 @@ public class UserService {
     userRepository.findById(user.getId()).ifPresentOrElse(
         u -> {
           String oldDescription = u.getDescription();
-          u.setDescription(updateUserDescriptionRequest.description());
-          userRepository.save(u);
+          log.debug("[변경 전] userId={}, oldDescription={}", u.getId(), oldDescription);
 
-          log.info("[자기소개 업데이트 완료] userId={}, oldDescription={}, newDescription={}",
-              u.getId(), oldDescription, updateUserDescriptionRequest.description());
+          u.setDescription(updateUserDescriptionRequest.description());
+          log.debug("[메모리 변경 완료] userId={}, newDescription={}", u.getId(), updateUserDescriptionRequest.description());
+
+          User savedUser = userRepository.save(u);
+          log.info("[DB 저장 완료] userId={}, savedDescription={}, 저장된 객체 id={}",
+              savedUser.getId(), savedUser.getDescription(), savedUser.getId());
+
+          // DB에 제대로 저장되었는지 재확인
+          userRepository.findById(user.getId()).ifPresent(dbUser -> {
+            log.info("[DB 재조회 확인] userId={}, DBDescription={}", dbUser.getId(), dbUser.getDescription());
+          });
 
           // 캐시 무효화 - 프로필 정보가 변경되었으므로 캐시 삭제
           String cacheKey = buildProfileCacheKey(u.getId());
@@ -73,8 +81,8 @@ public class UserService {
     ProfileResponse cachedData = cacheService.getCache(cacheKey, ProfileResponse.class);
 
     if (cachedData != null) {
-      log.info("[Cache-Hit] UserProfile - userId={}, profileImageUrl={}, bannerImageUrl={}",
-          user.getId(), cachedData.profileImage(), cachedData.bannerImage());
+      log.info("[Cache-Hit] UserProfile - userId={}, cachedDescription={}, profileImageUrl={}, bannerImageUrl={}",
+          user.getId(), cachedData.description(), cachedData.profileImage(), cachedData.bannerImage());
       return cachedData;
     }
 
@@ -85,8 +93,8 @@ public class UserService {
         () -> new UserException(UserErrorCode.NOT_FOUND_USER)
     );
 
-    log.debug("[DB 조회 완료] userId={}, profileImage={}, bannerImage={}",
-        u.getId(), u.getProfileImage(), u.getBannerImage());
+    log.debug("[DB 조회 완료] userId={}, dbDescription={}, profileImage={}, bannerImage={}",
+        u.getId(), u.getDescription(), u.getProfileImage(), u.getBannerImage());
 
     // 이미지 URL 생성
     String profileImageUrl = imageUtil.getProfileImageUrl(u);
@@ -113,12 +121,12 @@ public class UserService {
         u.getTotalSeconds()
     );
 
-    log.debug("[ProfileResponse 객체 생성 완료] userId={}", u.getId());
+    log.debug("[ProfileResponse 객체 생성 완료] userId={}, description={}", u.getId(), response.description());
 
     // Cache-Aside Pattern 3단계: 조회 결과를 캐시에 저장 (TTL: 1시간)
     cacheService.saveCache(cacheKey, response, 3600);
-    log.info("[Cache-Set] UserProfile - userId={}, profileImageUrl={}, bannerImageUrl={}, TTL=3600s",
-        u.getId(), profileImageUrl, bannerImageUrl);
+    log.info("[Cache-Set] UserProfile - userId={}, description={}, profileImageUrl={}, bannerImageUrl={}, TTL=3600s",
+        u.getId(), response.description(), profileImageUrl, bannerImageUrl);
 
     log.info("[프로필 조회 완료] userId={}", u.getId());
     return response;
