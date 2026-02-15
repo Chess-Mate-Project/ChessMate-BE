@@ -20,7 +20,7 @@ public class UpdateWorker {
   private final UserRepositoryImpl userRepository;
   private final BatchBarrierService batchBarrierService;
 
-  @Scheduled(cron = "0 0/30 * * * ?")
+  @Scheduled(cron = "0 0/1 * * * ?")
   public void updateUserData() {
     log.info("게임 스트릭 조회로 증분 업데이트 시작");
 

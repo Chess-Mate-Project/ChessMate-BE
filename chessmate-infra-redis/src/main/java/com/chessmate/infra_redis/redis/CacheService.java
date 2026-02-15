@@ -5,6 +5,7 @@ import com.chessmate.domain.userPerf.UserPerf;
 import com.chessmate.external.dto.account.PerfsDto;
 import com.chessmate.external.dto.account.PlayTimeDto;
 import com.chessmate.external.dto.account.UserCountDto;
+import java.time.Year;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -370,6 +371,16 @@ public class CacheService {
     return String.format("rank:ranking:%s", gameType.name());
   }
 
+  public void deleteGames(Long userId) {
+    String key = buildYearStreakCacheKeyByAllDelete(userId);
+    redisService.deleteByPattern(key);
+  }
+
+  private String buildYearStreakCacheKeyByAllDelete(Long userId) {
+    return String.format("stat:yearstreak:%d:*", userId);
+  }
+
+
   // ============================================
   // Generic Cache Methods (Stat Service 등)
   // ============================================
@@ -442,5 +453,7 @@ public class CacheService {
   public <T> List<T> getListCache(String key) {
     return (List<T>) redisTemplate.opsForValue().get(key);
   }
+
+
 }
 
