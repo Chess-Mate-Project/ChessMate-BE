@@ -2,27 +2,26 @@ package com.chessmate.api.image;
 
 import com.chessmate.api.image.dto.UploadUrlResponse;
 import com.chessmate.domain.user.User;
-import com.chessmate.infra_persistence.entity.UserEntity;
 import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
+import com.chessmate.infra_redis.redis.CacheService;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ImageService {
 
-  private final S3Client s3Client;
   private final UserRepositoryImpl userRepository;
   private final CloudflareProperties cloudflareProperties;
   private final S3Presigner s3Presigner;
+  private final CacheService cacheService;
 
   @Transactional
   public UploadUrlResponse generateUploadUrl(
@@ -31,7 +30,6 @@ public class ImageService {
       String contentType
   ) {
     String key = String.format("users/%d/%s.jpg", user.getId(), type.name().toLowerCase());
-    String extension = contentType.split("/")[1];
     PutObjectRequest putRequest = PutObjectRequest.builder()
         .bucket(cloudflareProperties.getBucket())
         .key(key)
@@ -58,13 +56,22 @@ public class ImageService {
       UserImageType type
   ) {
     String key = String.format("users/%d/%s.jpg", user.getId(), type.name().toLowerCase());
+
+    log.info("[이미지 업로드 완료 시작] userId={}, type={}, key={}", user.getId(), type, key);
+
     if (type == UserImageType.PROFILE) {
       userRepository.updateProfileImage(user.getId(), key);
-      log.info("프로필 이미지 업로드 완료: userId={}, key={}", user.getId(), key);
+      log.info("[프로필 이미지 저장 완료] userId={}, key={}", user.getId(), key);
     } else {
       userRepository.updateBannerImage(user.getId(), key);
-      log.info("배너 이미지 업로드 완료: user)Id={}, key={}", user.getId(), key);
+      log.info("[배너 이미지 저장 완료] userId={}, key={}", user.getId(), key);
     }
+
+    // 프로필 캐시 무효화 - 이미지 정보가 변경되었으므로 캐시 삭제
+    String cacheKey = buildProfileCacheKey(user.getId());
+    cacheService.deleteCache(cacheKey);
+    log.info("[Cache-Invalidate] UserProfile - userId={}, imageType={}, reason=image_updated",
+        user.getId(), type);
   }
 
   public UploadUrlResponse getImageUrl(
@@ -95,5 +102,9 @@ public class ImageService {
     }
 
     return new UploadUrlResponse(cloudflareProperties.getCdn() + "/" + key);
+  }
+
+  private String buildProfileCacheKey(Long userId) {
+    return String.format("user:profile:%d", userId);
   }
 }
