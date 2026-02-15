@@ -17,7 +17,6 @@ import com.chessmate.worker.batch.service.UpdateRankingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -157,7 +156,7 @@ public class LichessApiTaskHandler {
 
         // 4. 업데이트 여부 판단
         if (needsUpdate) {
-          log.info("[Worker-ACCOUNT] === 데이터 변경 감지 ===\n{}", changeLog.toString());
+          log.info("[Worker-ACCOUNT] === 데이터 변경 감지 ===\n{}", changeLog);
           log.debug("[Worker-ACCOUNT] UPDATE 실행 중...");
           userRepository.save(existingUser);
           log.info("[Worker-ACCOUNT] === UPDATE 완료 ===");
@@ -214,20 +213,30 @@ public class LichessApiTaskHandler {
         log.debug("[Worker-PERF] [{}] DB 조회: userId={}, gameType={}", type, task.userId(), type);
 
         transactionTemplate.executeWithoutResult(status -> {
+          // DB 조회: 기존 데이터 있는지 확인
+          log.info("[Worker-PERF] [{}] === DB 조회 시작 === userId={}, gameType={}",
+              type, task.userId(), type);
+          long findStartTime = System.currentTimeMillis();
+
           UserPerf existingPerf = userPerfRepository.findByUserIdAndGameType(task.userId(), type)
               .orElse(null);
 
+          long findDuration = System.currentTimeMillis() - findStartTime;
+
+          // 조회 결과 로그 - 중복 생성 감지용
+          if (existingPerf != null) {
+            log.info("[Worker-PERF] [{}] [DB-FOUND] 기존 데이터 발견 | id={}, rating={}, games={}, rated={}, QueryTime={}ms",
+                type, existingPerf.getId(), existingPerf.getRating(),
+                existingPerf.getGamesPlayed(), existingPerf.getRated(), findDuration);
+          } else {
+            log.warn("[Worker-PERF] [{}] [DB-NOT-FOUND] 기존 데이터 없음 | userId={}, gameType={} | 신규 INSERT 예정 | QueryTime={}ms",
+                type, task.userId(), type, findDuration);
+          }
+
           if (existingPerf != null) {
             // 3-1. UPDATE 케이스
-            log.info("[Worker-PERF] [{}] === DB에 기존 데이터 발견 ===", type);
-            log.info("[Worker-PERF] [{}] 업데이트 전 - rating: {}, games: {}, rated: {}, wins: {}, losses: {}, draws: {}",
-                type,
-                existingPerf.getRating(),
-                existingPerf.getGamesPlayed(),
-                existingPerf.getRated(),
-                existingPerf.getWins(),
-                existingPerf.getLosses(),
-                existingPerf.getDraws());
+            long updateStartTime = System.currentTimeMillis();
+            log.info("[Worker-PERF] [{}] [UPDATE] 시작 | id={}", type, existingPerf.getId());
 
             // 변경 사항 확인
             boolean ratingChanged = existingPerf.getRating() != newRating;
@@ -235,18 +244,23 @@ public class LichessApiTaskHandler {
             boolean ratedChanged = existingPerf.getRated() != ratedCount;
 
             if (ratingChanged || gamesChanged || ratedChanged) {
-              log.info("[Worker-PERF] [{}] 데이터 변경 감지:", type);
+              log.info("[Worker-PERF] [{}] [UPDATE-CHANGE-DETECTED] id={} | 변경 사항 감지",
+                  type, existingPerf.getId());
               if (ratingChanged) {
-                log.info("[Worker-PERF] [{}]   - rating: {} -> {}", type, existingPerf.getRating(), newRating);
+                log.info("[Worker-PERF] [{}]   [FIELD-CHANGE] rating: {} → {}",
+                    type, existingPerf.getRating(), newRating);
               }
               if (gamesChanged) {
-                log.info("[Worker-PERF] [{}]   - gamesPlayed: {} -> {}", type, existingPerf.getGamesPlayed(), dto.perf().nb());
+                log.info("[Worker-PERF] [{}]   [FIELD-CHANGE] games: {} → {}",
+                    type, existingPerf.getGamesPlayed(), dto.perf().nb());
               }
               if (ratedChanged) {
-                log.info("[Worker-PERF] [{}]   - rated: {} -> {}", type, existingPerf.getRated(), ratedCount);
+                log.info("[Worker-PERF] [{}]   [FIELD-CHANGE] rated: {} → {}",
+                    type, existingPerf.getRated(), ratedCount);
               }
             } else {
-              log.info("[Worker-PERF] [{}] 데이터 변경 없음 - 스킵", type);
+              log.info("[Worker-PERF] [{}] [UPDATE-SKIP] id={} | 변경 사항 없음 - 스킵",
+                  type, existingPerf.getId());
               return;
             }
 
@@ -270,13 +284,21 @@ public class LichessApiTaskHandler {
             existingPerf.setMaxLossStreak(maxLossStreak);
             existingPerf.setUncertain(ratedCount < 50);
 
-            log.debug("[Worker-PERF] [{}] UPDATE 실행 중...", type);
-            userPerfRepository.save(existingPerf);
-            log.info("[Worker-PERF] [{}] === UPDATE 완료 ===", type);
+            log.debug("[Worker-PERF] [{}] [UPDATE-EXECUTE] id={} | 저장 중...", type, existingPerf.getId());
+            UserPerf updatedPerf = userPerfRepository.save(existingPerf);
+            long updateDuration = System.currentTimeMillis() - updateStartTime;
+
+            log.info("[Worker-PERF] [{}] [UPDATE-SUCCESS] ✓ | id={}, rating={}, games={}, SaveTime={}ms",
+                type, updatedPerf.getId(), updatedPerf.getRating(),
+                updatedPerf.getGamesPlayed(), updateDuration);
 
           } else {
             // 3-2. INSERT 케이스
-            log.info("[Worker-PERF] [{}] === DB에 기존 데이터 없음 - 신규 생성 ===", type);
+            long insertStartTime = System.currentTimeMillis();
+            log.info("[Worker-PERF] [{}] [INSERT] 시작 | userId={}", type, task.userId());
+            log.debug("[Worker-PERF] [{}] [INSERT-DATA] rating={}, games={}, rated={}, wins={}, losses={}, draws={}",
+                type, newRating, dto.perf().nb(), ratedCount,
+                dto.stat().count().win(), dto.stat().count().loss(), dto.stat().count().draw());
 
             UserPerf userPerf = UserPerf.builder()
                 .userId(task.userId())
@@ -301,20 +323,20 @@ public class LichessApiTaskHandler {
                 .uncertain(ratedCount < 50)
                 .build();
 
-            log.info("[Worker-PERF] [{}] INSERT 데이터: rating={}, games={}, rated={}, wins={}, losses={}, draws={}",
-                type, newRating, dto.perf().nb(), ratedCount,
-                dto.stat().count().win(), dto.stat().count().loss(), dto.stat().count().draw());
+            log.debug("[Worker-PERF] [{}] [INSERT-EXECUTE] userId={} | 저장 중...", type, task.userId());
+            UserPerf savedPerf = userPerfRepository.save(userPerf);
+            long insertDuration = System.currentTimeMillis() - insertStartTime;
 
-            log.debug("[Worker-PERF] [{}] INSERT 실행 중...", type);
-            userPerfRepository.save(userPerf);
-            log.info("[Worker-PERF] [{}] === INSERT 완료 ===", type);
+            log.info("[Worker-PERF] [{}] [INSERT-SUCCESS] ✓ | newId={}, userId={}, gameType={}, rating={}, SaveTime={}ms",
+                type, savedPerf.getId(), savedPerf.getUserId(), savedPerf.getGameType(),
+                savedPerf.getRating(), insertDuration);
           }
         });
 
       } catch (Exception e) {
         allOk = false;
-        log.error("[Worker-PERF] [{}] === 에러 발생 === userId={}, gameType={}, message={}",
-            type, task.userId(), type, e.getMessage(), e);
+        log.error("[Worker-PERF] [{}] [ERROR] ✗ | userId={}, gameType={}, message={}, exceptionType={}",
+            type, task.userId(), type, e.getMessage(), e.getClass().getSimpleName(), e);
       }
     }
 

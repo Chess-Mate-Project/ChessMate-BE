@@ -95,7 +95,7 @@ public class RankService {
           .description(saveUser.getDescription())
           .banner(imageUtil.getBannerImageUrl(saveUser))
           .profile(imageUtil.getProfileImageUrl(saveUser))
-          .rating(userPerf.getRated())
+          .rating(userPerf.getRating())
           .rank(myRank)
           .build();
     }

@@ -3,6 +3,7 @@ package com.chessmate.domain.userPerf;
 import com.chessmate.common.type.GameType;
 
 public class UserPerf {
+  private Long id;
   private Long userId;
   private GameType gameType;
   private int rating;
@@ -32,6 +33,7 @@ public class UserPerf {
   public UserPerf() {}
 
   private UserPerf(Builder builder) {
+    this.id = builder.id;
     this.userId = builder.userId;
     this.gameType = builder.gameType;
     this.rating = builder.rating;
@@ -59,6 +61,10 @@ public class UserPerf {
   }
 
   // Getters
+  public Long getId() {
+    return id;
+  }
+
   public Long getUserId() {
     return userId;
   }
@@ -140,6 +146,10 @@ public class UserPerf {
   }
 
   // Setters
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   public void setUserId(Long userId) {
     this.userId = userId;
   }
@@ -221,6 +231,7 @@ public class UserPerf {
   }
 
   public static class Builder {
+    private Long id;
     private Long userId;
     private GameType gameType;
     private int rating;
@@ -241,6 +252,11 @@ public class UserPerf {
     private int maxStreak;
     private int maxLossStreak;
     private boolean uncertain;
+
+    public Builder id(Long id) {
+      this.id = id;
+      return this;
+    }
 
     public Builder userId(Long userId) {
       this.userId = userId;
