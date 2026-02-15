@@ -13,6 +13,7 @@ import com.chessmate.common.type.GameType;
 import com.chessmate.infra_redis.redis.CacheService;
 import java.time.Year;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/stat")
@@ -66,13 +68,23 @@ public class StatController {
       @RequestParam(defaultValue = "RAPID") GameType gameType
   ) {
 
+    log.info("[API-PERF] 요청 처리: userId={}, gameType={}", userPrincipal.getUser().getId(), gameType);
+
+    long startTime = System.currentTimeMillis();
     UserPerfResponse response = statService.getUserPerf(userPrincipal.getUser(), gameType);
+    long duration = System.currentTimeMillis() - startTime;
 
     if (response == null) {
+      log.warn("[API-PERF] UserPerf 데이터 없음: userId={}, gameType={}, duration={}ms",
+          userPrincipal.getUser().getId(), gameType, duration);
       return ResponseEntity.ok(
           new SuccessResponse<>("UserPerf 데이터 없음", null)
       );
     }
+
+    log.info("[API-PERF] [SUCCESS] userId={}, gameType={}, rating={}, games={}, duration={}ms",
+        userPrincipal.getUser().getId(), gameType, response.rating(),
+        response.gamesPlayed(), duration);
 
     return ResponseEntity.ok(
         new SuccessResponse<>("UserPerf 정보 조회 성공", response)

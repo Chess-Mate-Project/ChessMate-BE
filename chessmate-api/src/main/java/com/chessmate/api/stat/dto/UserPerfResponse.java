@@ -5,6 +5,7 @@ import com.chessmate.common.type.GameType;
 /**
  * 게임 타입별 상세 퍼포먼스 정보 응답
  */
+
 public record UserPerfResponse(
     // 기본 레이팅 정보
     int rating,

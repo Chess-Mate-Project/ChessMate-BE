@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,6 +28,9 @@ public class GameStatItemWriter implements ItemWriter<GameStat> {
   private final UserDailyStreakRepositoryImpl streakRepository;
   private final UserColorStatRepositoryImpl colorStatRepository;
   private final UserFirstMoveStatRepositoryImpl firstMoveStatRepository;
+
+  @Value("#{jobParameters['batchId']}")
+  private String batchId;
 
   @Override
   public void write(Chunk<? extends GameStat> chunk) throws Exception {
@@ -64,9 +68,17 @@ public class GameStatItemWriter implements ItemWriter<GameStat> {
         firstMoveStats.add(gs.firstMoveStat());
       }
     }
+    log.info("[Batch-Writer] [START] 배치 데이터 저장 시작 - batchId={}, aggregatedStreaks={}개, colorStats={}개, firstMoveStats={}개",
+        batchId, aggregatedStreaks.size(), colorStats.size(), firstMoveStats.size());
 
-    log.info("[Writer] 저장 시작 - aggregatedStreaks={}개, colorStats={}개, firstMoveStats={}개",
-        aggregatedStreaks.size(), colorStats.size(), firstMoveStats.size());
+    // 집계된 스트릭 데이터 상세 로깅
+    log.info("[Batch-Writer] [AGGREGATED-DATA] 집계된 일일 스트릭 목록:");
+    for (Map.Entry<String, UserDailyStreak> entry : aggregatedStreaks.entrySet()) {
+      UserDailyStreak streak = entry.getValue();
+      log.info("  - userId={}, date={}, win={}, lose={}, draw={}, lastGameAt={}, lastRating={}",
+          streak.getUserId(), streak.getDate(), streak.getWin(), streak.getLose(), streak.getDraw(),
+          streak.getLastGameAt(), streak.getLastRating());
+    }
 
     // 집계된 streak들을 DB에 반영 (존재하면 업데이트, 없으면 삽입)
     for (UserDailyStreak aggregated : aggregatedStreaks.values()) {
@@ -80,26 +92,27 @@ public class GameStatItemWriter implements ItemWriter<GameStat> {
               existing.setLastGameAt(aggregated.getLastGameAt());
               // lastGameAt이 더 최신이면 lastRating도 함께 업데이트
               existing.setLastRating(aggregated.getLastRating());
-              log.debug("[Writer] Streak 업데이트 - userId={}, date={}, lastRating={}",
-                  existing.getUserId(), existing.getDate(), existing.getLastRating());
+              log.debug("[Batch-Writer] [STREAK-UPDATE] batchId={}, userId={}, date={}, lastRating={}",
+                  batchId, existing.getUserId(), existing.getDate(), existing.getLastRating());
             }
             streakRepository.save(existing);
           }, () -> {
             streakRepository.save(aggregated);
-            log.debug("[Writer] Streak 신규 저장 - userId={}, date={}, lastRating={}",
-                aggregated.getUserId(), aggregated.getDate(), aggregated.getLastRating());
+            log.debug("[Batch-Writer] [STREAK-INSERT] batchId={}, userId={}, date={}, lastRating={}",
+                batchId, aggregated.getUserId(), aggregated.getDate(), aggregated.getLastRating());
           });
     }
 
     if (!colorStats.isEmpty()) {
       colorStatRepository.saveAll(colorStats);
-      log.debug("[Writer] ColorStat 저장 완료 - count={}", colorStats.size());
+      log.debug("[Batch-Writer] [COLORSTAT-SAVE] batchId={}, count={}", batchId, colorStats.size());
     }
     if (!firstMoveStats.isEmpty()) {
       firstMoveStatRepository.saveAll(firstMoveStats);
-      log.debug("[Writer] FirstMoveStat 저장 완료 - count={}", firstMoveStats.size());
+      log.debug("[Batch-Writer] [FIRSTMOVE-SAVE] batchId={}, count={}", batchId, firstMoveStats.size());
     }
 
-    log.info("[Writer] 저장 완료 - aggregatedStreaks={}개", aggregatedStreaks.size());
+    log.info("[Batch-Writer] [COMPLETE] 배치 데이터 저장 완료 - batchId={}, aggregatedStreaks={}개",
+        batchId, aggregatedStreaks.size());
   }
 }

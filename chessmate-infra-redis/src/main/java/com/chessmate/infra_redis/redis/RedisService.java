@@ -53,6 +53,16 @@ public class RedisService {
     }
 
     /**
+     * 패턴으로 키 삭제
+     */
+    public void deleteByPattern(String pattern) {
+        java.util.Set<String> keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
+
+    /**
      * 키 존재 여부 확인
      */
     public boolean hasKey(String key) {

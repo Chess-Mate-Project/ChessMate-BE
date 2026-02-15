@@ -59,5 +59,32 @@ public class UpdateDataService {
     lichessApiRedisService.pushTask(gamestask);
     lichessApiRedisService.pushTask(accounttask);
     lichessApiRedisService.pushTask(perftask);
+
+    log.info("[UpdateDataService] === 캐시 삭제 시작 === userId={}, lichessId={}",
+             user.getId(), user.getLichessId());
+
+    try {
+      String lichessId = user.getLichessId();
+
+      cacheService.deletePlayTime(lichessId);
+      log.info("[UpdateDataService] 삭제: PlayTime 캐시 - lichessId={}", lichessId);
+
+      cacheService.deletePerfs(lichessId);
+      log.info("[UpdateDataService] 삭제: Perfs 캐시 - lichessId={}", lichessId);
+
+      cacheService.deleteUserCount(lichessId);
+      log.info("[UpdateDataService] 삭제: UserCount 캐시 - lichessId={}", lichessId);
+
+      cacheService.deleteGames(user.getId());
+      log.info("[UpdateDataService] 삭제: Games 캐시 - lichessId={}", lichessId);
+
+      cacheService.deleteAllRankings();
+      log.info("[UpdateDataService] 삭제: AllRankings 캐시");
+
+      log.info("[UpdateDataService] === 캐시 삭제 완료 === userId={}", user.getId());
+    } catch (Exception e) {
+      log.warn("[UpdateDataService] 캐시 삭제 실패 - userId={}, error={}",
+               user.getId(), e.getMessage(), e);
+    }
   }
 }

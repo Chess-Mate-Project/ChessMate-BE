@@ -40,44 +40,55 @@ public class LichessGameProcessor
   @Value("#{jobParameters['until']}")
   private Long until;
 
+  @Value("#{jobParameters['batchId']}")
+  private String batchId;
+
   @Override
   public GameStat process(LichessGamesDto game) {
 
-    log.info("게임 처리 시작: username='{}', game='{}'", username, game);
     if (game == null) {
       log.warn("처리중인 game이 null 입니다. username='{}' - 이 게임은 건너뜁니다.", username);
       return null;
     }
+
+    // 게임 기본 정보 로깅 (중복 추적용)
+    log.info("[Game-Process] gameId={}, createdAt={}, lastMoveAt={}, username={}, perf={}",
+        game.id(), game.createdAt(), game.lastMoveAt(), username, game.perf());
+
     if (game.players() == null) {
-      log.warn("game.players가 null 입니다. username='{}', game='{}' - 이 게임은 건너뜁니다.", username, game);
+      log.warn("game.players가 null 입니다. username='{}', gameId='{}' - 이 게임은 건너뜁니다.", username, game.id());
       return null;
     }
 
     // GameType 검증: perf 필드가 지원되는 게임 타입이 아니면 건너뛰기
     GameType gameType = getGameType(game.perf());
     if (gameType == null) {
-      log.info("지원되지 않는 게임 타입입니다. perf='{}', username='{}', game.createdAt='{}' - 이 게임은 건너뜁니다.",
-          game.perf(), username, game.createdAt());
+      log.info("지원되지 않는 게임 타입입니다. perf='{}', username='{}', gameId='{}', createdAt='{}' - 이 게임은 건너뜁니다.",
+          game.perf(), username, game.id(), game.createdAt());
       return null;
     }
 
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> {
-          log.error("사용자 조회 실패: username='{}' - 게임 처리 불가, game='{}'", username, game);
+          log.error("사용자 조회 실패: username='{}' - 게임 처리 불가, gameId='{}'", username, game.id());
           return new IllegalArgumentException("User not found: " + username);
         });
 
     ChessColor myColor = resolveMyColor(game, user);
     if (myColor == null) {
-      log.info("해당 게임이 사용자 게임이 아님 또는 익명/봇입니다. username='{}', game='{}' - 건너뜁니다.", username, game);
+      log.info("해당 게임이 사용자 게임이 아님 또는 익명/봇입니다. username='{}', gameId='{}' - 건너뜁니다.", username, game.id());
       return null; // 내 게임 아님 / 익명 / 봇
     }
 
     GameResult result = resolveMyGameResult(game, myColor);
     if (result == null) {
-      log.warn("게임 결과 판별 실패: username='{}', game='{}' - 건너뜁니다.", username, game);
+      log.warn("게임 결과 판별 실패: username='{}', gameId='{}'- 건너뜁니다.", username, game.id());
       return null;
     }
+
+    log.info("[Game-Process] [SUCCESS] gameId={}, result={}, gameType={}, date={}",
+        game.id(), result, gameType,
+        Instant.ofEpochMilli(game.createdAt()).atZone(ZoneId.of("Asia/Seoul")).toLocalDate());
 
     return GameStat.builder()
         .colorStat(buildColorStat(user, myColor, result, gameType))

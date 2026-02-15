@@ -88,12 +88,14 @@ public class LichessApiService {
    * - 설명: Lichess API를 통해 특정 사용자의 게임 기록을 Reactive 방식으로 조회
    * - @param token Lichess OAuth Access Token
    * - @param username 조회할 Lichess 사용자 이름
+   * - @param since 조회 시작 시간 (밀리초, null이면 0)
+   * - @param until 조회 종료 시간 (밀리초)
    * - @return Flux<LichessGamesDto> Lichess 사용자 게임 기록 DTO의 Flux 스트림
    * - Throws: UserException - 사용자 게임 기록 조회 실패 시 발생
    * */
-  public Flux<LichessGamesDto> getUserGamesReactive(String token, String username, Long since) {
-    log.info("username = " + username);
-    
+  public Flux<LichessGamesDto> getUserGamesReactive(String token, String username, Long since, Long until) {
+    log.info("[LichessAPI] 게임 조회 시작 - username={}, since={}, until={}", username, since, until);
+
     return webClient.get()
         .uri(uriBuilder -> {
           var builder = uriBuilder
@@ -103,10 +105,16 @@ public class LichessApiService {
           
           // since값이 있음 -> 증분 추가
           // since 값이 없음 -> 초기 가입 전체 동기화함
-          // until -> 생략 가능 어짜피 가장 최근 시점으로 맞춰짐
-          if (since != null) {
+          if (since != null && since > 0) {
             builder.queryParam("since", since);
           }
+
+          // until 값으로 조회 범위의 끝을 명시적으로 지정
+          // 이를 통해 최근 데이터까지 정확하게 조회 가능
+          if (until != null && until > 0) {
+            builder.queryParam("until", until);
+          }
+
           return builder.build(username);
         })
         .accept(MediaType.parseMediaType("application/x-ndjson"))
@@ -114,7 +122,7 @@ public class LichessApiService {
         .retrieve()
         .onStatus(HttpStatusCode::is4xxClientError, resp ->
             resp.bodyToMono(String.class)
-                .doOnNext(body -> log.error("4xx 오류 응답 바디: {}", body))
+                .doOnNext(body -> log.error("[LichessAPI] 4xx 오류 응답 바디: {}", body))
                 .then(Mono.error(new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)))
         )
         .bodyToFlux(LichessGamesDto.class);

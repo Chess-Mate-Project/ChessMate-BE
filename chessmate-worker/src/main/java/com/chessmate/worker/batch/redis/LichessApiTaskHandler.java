@@ -5,6 +5,7 @@ import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
 import com.chessmate.domain.userPerf.UserPerf;
 import com.chessmate.domain.userPerf.UserPerfRepository;
+import com.chessmate.domain.userDailyStreak.UserDailyStreakRepository;
 import com.chessmate.external.dto.account.LichessAccountDto;
 import com.chessmate.external.dto.perf.UserPerfDto;
 import com.chessmate.external.service.LichessApiService;
@@ -29,6 +30,7 @@ public class LichessApiTaskHandler {
   private final UpdateDataService updateDataService;
   private final UserRepositoryImpl userRepository;
   private final BatchBarrierService batchBarrierService;
+  private final UserDailyStreakRepository userDailyStreakRepository;
   private final UpdateRankingService updateRankingService;
   private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
@@ -350,6 +352,13 @@ public class LichessApiTaskHandler {
     try {
       userBatchService.triggerUserUpdate(task.userId(), task.lichessToken(), task.isFullSync());
       log.info("[Worker-GAMES] ========== 게임 데이터 동기화 완료 (SUCCESS) ==========");
+
+      // 다음 배치를 위한 since 값 로깅
+      Long lastGameAt = userDailyStreakRepository.findLastGameAtByUserId(task.userId());
+      if (lastGameAt != null && lastGameAt > 0) {
+        log.info("[Worker-GAMES] [NEXT-SINCE] 다음 배치 조회 기준: lastGameAt={}, nextSince={} ({}시간 전)",
+            lastGameAt, lastGameAt + 1, (System.currentTimeMillis() - lastGameAt) / (1000.0 * 60 * 60));
+      }
     } catch (Exception e) {
       log.error("[Worker-GAMES] ========== 게임 데이터 동기화 실패 ========== userId={}, message={}",
           task.userId(), e.getMessage(), e);
