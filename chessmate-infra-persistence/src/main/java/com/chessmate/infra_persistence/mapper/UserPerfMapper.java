@@ -8,6 +8,7 @@ public class UserPerfMapper {
   public static UserPerf toDomain(UserPerfEntity entity) {
     if (entity == null) return null;
     return UserPerf.builder()
+        .id(entity.getId())
         .userId(entity.getUserId())
         .gameType(entity.getGameType())
         .rating(entity.getRating())
@@ -34,6 +35,7 @@ public class UserPerfMapper {
   public static UserPerfEntity toEntity(UserPerf domain) {
     if (domain == null) return null;
     return UserPerfEntity.builder()
+        .id(domain.getId())
         .userId(domain.getUserId())
         .gameType(domain.getGameType())
         .rating(domain.getRating())

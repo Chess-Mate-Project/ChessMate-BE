@@ -30,22 +30,34 @@ public class UserService {
   }
 
   /**
-   * - 사용자 자기소개 업데이트 - @param user 현재 사용자 - @param updateUserDescriptionRequest 사용자 자기소개 업데이트 요청 DTO
-   * - @return void
-   *
+   * 사용자 자기소개 업데이트
+   * @param user 현재 사용자
+   * @param updateUserDescriptionRequest 사용자 자기소개 업데이트 요청 DTO
    */
-
   public void updateUserDescription(User user,
       UpdateUserDescriptionRequest updateUserDescriptionRequest) {
-    userRepository.findById(user.getId()).ifPresent(u -> {
-      u.setDescription(updateUserDescriptionRequest.description());
-      userRepository.save(u);
+    log.info("[자기소개 업데이트 시작] userId={}, newDescription={}",
+        user.getId(), updateUserDescriptionRequest.description());
 
-      // 캐시 무효화 - 프로필 정보가 변경되었으므로 캐시 삭제
-      String cacheKey = buildProfileCacheKey(u.getId());
-      cacheService.deleteCache(cacheKey);
-      log.info("[Cache-Invalidate] UserProfile - userId={}", u.getId());
-    });
+    userRepository.findById(user.getId()).ifPresentOrElse(
+        u -> {
+          String oldDescription = u.getDescription();
+          u.setDescription(updateUserDescriptionRequest.description());
+          userRepository.save(u);
+
+          log.info("[자기소개 업데이트 완료] userId={}, oldDescription={}, newDescription={}",
+              u.getId(), oldDescription, updateUserDescriptionRequest.description());
+
+          // 캐시 무효화 - 프로필 정보가 변경되었으므로 캐시 삭제
+          String cacheKey = buildProfileCacheKey(u.getId());
+          cacheService.deleteCache(cacheKey);
+          log.info("[Cache-Invalidate] UserProfile - userId={}, reason=description_updated", u.getId());
+        },
+        () -> {
+          log.warn("[자기소개 업데이트 실패] 사용자를 찾을 수 없음 - userId={}", user.getId());
+          throw new UserException(UserErrorCode.NOT_FOUND_USER);
+        }
+    );
   }
 
   /**

@@ -137,9 +137,10 @@ public class CacheService {
   /**
    * Lichess OAuth 토큰 저장
    *
-   * TTL: 24시간 (86400초)
+   * TTL: 3일 (259200초)
    * - API 호출 효율성 향상
    * - 매 요청마다 OAuth 서버 호출 불필요
+   * - 사용자 세션 유지 기간 연장
    *
    * @param id 사용자 ID
    * @param oauthToken 저장할 Lichess OAuth 토큰
@@ -148,7 +149,7 @@ public class CacheService {
     redisService.save(
         redisKeyProperties.getOauth().lichessToken(id),
         oauthToken,
-        86400L
+        259200L
     );
   }
 
