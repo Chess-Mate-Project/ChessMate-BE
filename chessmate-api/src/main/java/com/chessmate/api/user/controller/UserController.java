@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,14 +51,22 @@ public class UserController {
       @AuthenticationPrincipal UserPrincipal u,
       @RequestBody UpdateUserDescriptionRequest request
   ) {
-    log.info("[자기소개 수정 요청] userId={}, description={}", u.getUser().getId(), request.description());
     userService.updateUserDescription(u.getUser(), request);
+
     return ResponseEntity.ok(
-        new SuccessResponse<>("사용자 소개글 수정 성공", null)
+        new SuccessResponse<>("자기소개 업데이트 성공", null)
     );
   }
 
+  @DeleteMapping("/withdraw")
+  public ResponseEntity<SuccessResponse<Void>> withdraw(
+      @AuthenticationPrincipal UserPrincipal u
+  ) {
+    userService.withdraw(u.getUser());
 
-
+    return ResponseEntity.ok(
+        new SuccessResponse<>("회원 탈퇴 성공", null)
+    );
+  }
 
 }

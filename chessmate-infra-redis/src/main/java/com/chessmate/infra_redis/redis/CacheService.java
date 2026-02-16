@@ -376,6 +376,21 @@ public class CacheService {
     redisService.deleteByPattern(key);
   }
 
+  /**
+   * 사용자의 모든 통계 캐시 삭제
+   *
+   * 사용 시점:
+   * - 회원 탈퇴
+   * - 데이터 대규모 업데이트
+   *
+   * @param userId 사용자 ID
+   */
+  public void deleteAllUserStats(Long userId) {
+    // stat:*:userId:* 패턴의 모든 키 삭제
+    String pattern = String.format("stat:*:%d:*", userId);
+    redisService.deleteByPattern(pattern);
+  }
+
   private String buildYearStreakCacheKeyByAllDelete(Long userId) {
     return String.format("stat:yearstreak:%d:*", userId);
   }

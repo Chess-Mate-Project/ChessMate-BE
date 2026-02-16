@@ -12,4 +12,6 @@ public interface UserPerfRepository {
   List<UserPerf> findRankingByGameType(GameType gameType);
 
   int countUsersBetterRating(GameType gameType, int rating);
+
+  void deleteAllByUserId(Long userId);
 }

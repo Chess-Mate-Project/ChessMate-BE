@@ -44,6 +44,8 @@ public class UserPerfRepositoryImpl implements UserPerfRepository {
     return jpaRepository.countUsersBetterRating(gameType, rating);
   }
 
-
+  @Override
+  public void deleteAllByUserId(Long userId) {
+    jpaRepository.deleteByUserId(userId);
+  }
 }
-
