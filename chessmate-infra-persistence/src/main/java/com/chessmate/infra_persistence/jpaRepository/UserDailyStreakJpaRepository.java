@@ -23,6 +23,8 @@ public interface UserDailyStreakJpaRepository extends
 
   Optional<UserDailyStreakEntity> findByUserIdAndDate(Long userId, LocalDate date);
 
+  void deleteByUserId(Long userId);
+
   List<UserDailyStreakEntity> findByUserIdAndDateBetween(Long userId, LocalDate start, LocalDate end);
 
   List<UserDailyStreakEntity> findAllByUserId(Long userId);

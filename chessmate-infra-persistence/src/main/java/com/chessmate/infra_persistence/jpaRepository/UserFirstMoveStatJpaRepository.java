@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserFirstMoveStatJpaRepository extends
     JpaRepository<UserFirstMoveStatEntity, Long> {
-
   List<UserFirstMoveStatEntity> findByUserIdAndGameType(Long userId, GameType gameType);
-
   List<UserFirstMoveStatEntity> findByUserIdAndGameTypeAndColor(Long userId, GameType gameType, ChessColor color);
+
+  void deleteByUserId(Long userId);
 }

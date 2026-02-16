@@ -13,6 +13,8 @@ import jakarta.persistence.LockModeType;
 public interface UserPerfJpaRepository extends JpaRepository<UserPerfEntity, Long> {
   Optional<UserPerfEntity> findByUserIdAndGameType(Long userId, GameType gameType);
 
+  void deleteByUserId(Long userId);
+
   /**
    * Pessimistic Lock을 사용한 조회
    * - 조회 시점부터 해당 row에 Write Lock 획득
@@ -55,4 +57,5 @@ public interface UserPerfJpaRepository extends JpaRepository<UserPerfEntity, Lon
       + "AND up.rating > :rating")
   int countUsersBetterRating(@Param("gameType") GameType gameType, @Param("rating") int rating);
 }
+
 

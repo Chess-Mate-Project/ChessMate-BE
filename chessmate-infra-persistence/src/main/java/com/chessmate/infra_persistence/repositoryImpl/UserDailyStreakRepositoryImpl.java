@@ -63,4 +63,9 @@ public class UserDailyStreakRepositoryImpl implements UserDailyStreakRepository 
         .map(UserDailyStreakMapper::toDomain)
         .toList();
   }
+
+  @Override
+  public void deleteAllByUserId(Long userId) {
+    jpaRepository.deleteByUserId(userId);
+  }
 }

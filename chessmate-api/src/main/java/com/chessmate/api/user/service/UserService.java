@@ -8,11 +8,16 @@ import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import com.chessmate.common.code.UserErrorCode;
 import com.chessmate.common.exception.UserException;
 import com.chessmate.domain.user.User;
+import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
+import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
+import com.chessmate.infra_persistence.repositoryImpl.UserFirstMoveStatRepositoryImpl;
+import com.chessmate.infra_persistence.repositoryImpl.UserPerfRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
 import com.chessmate.infra_redis.redis.CacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Slf4j
@@ -21,6 +26,10 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
   private final UserRepositoryImpl userRepository;
+  private final UserPerfRepositoryImpl userPerfRepository;
+  private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
+  private final UserColorStatRepositoryImpl userColorStatRepository;
+  private final UserFirstMoveStatRepositoryImpl userFirstMoveStatRepository;
   private final CacheService cacheService;
   private final ImageUtil imageUtil;
 
@@ -126,6 +135,57 @@ public class UserService {
 
     log.info("[프로필 조회 완료] userId={}", u.getId());
     return response;
+  }
+
+  /**
+   * 회원 탈퇴 (Hard Delete)
+   * 사용자와 관련된 모든 데이터를 삭제합니다.
+   * @param user 현재 사용자
+   */
+  @Transactional
+  public void withdraw(User user) {
+    Long userId = user.getId();
+    String lichessId = user.getLichessId();
+    log.info("[회원 탈퇴 시작] userId={}, lichessId={}", userId, lichessId);
+
+    // 1. 통계 데이터 삭제 (DB)
+    log.debug("[회원 탈퇴 - 데이터 삭제] UserPerf 삭제");
+    userPerfRepository.deleteAllByUserId(userId);
+
+    log.debug("[회원 탈퇴 - 데이터 삭제] UserDailyStreak 삭제");
+    userDailyStreakRepository.deleteAllByUserId(userId);
+
+    log.debug("[회원 탈퇴 - 데이터 삭제] UserColorStat 삭제");
+    userColorStatRepository.deleteAllByUserId(userId);
+
+    log.debug("[회원 탈퇴 - 데이터 삭제] UserFirstMoveStat 삭제");
+    userFirstMoveStatRepository.deleteAllByUserId(userId);
+
+    // 2. 사용자 정보 삭제 (DB)
+    log.debug("[회원 탈퇴 - 데이터 삭제] User 정보 삭제");
+    userRepository.deleteById(userId);
+
+    // 3. 캐시 및 보안 데이터 삭제 (Redis)
+    log.debug("[회원 탈퇴 - 캐시 삭제] Redis 데이터 청소 시작");
+
+    // 프로필 캐시 삭제
+    cacheService.deleteCache(buildProfileCacheKey(userId));
+
+    // 인증 관련 토큰 삭제
+    cacheService.deleteRefreshToken(userId);
+    cacheService.deleteLichessToken(userId);
+
+    // Lichess API 기반 캐시 삭제
+    if (lichessId != null) {
+      cacheService.deletePlayTime(lichessId);
+      cacheService.deletePerfs(lichessId);
+      cacheService.deleteUserCount(lichessId);
+    }
+
+    // 모든 하위 통계 캐시 삭제 (stat:*:userId:* 패턴)
+    cacheService.deleteAllUserStats(userId);
+
+    log.info("[회원 탈퇴 완료] userId={}", userId);
   }
 
   /**

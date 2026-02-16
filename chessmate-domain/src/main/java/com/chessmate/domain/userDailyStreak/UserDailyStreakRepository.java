@@ -15,4 +15,6 @@ public interface UserDailyStreakRepository {
   Long findLastGameAtByUserId(Long userId);
 
   List<UserDailyStreak> findByUserIdAndYearRange(Long userId, LocalDate start, LocalDate end);
+
+  void deleteAllByUserId(Long userId);
 }

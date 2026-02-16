@@ -34,4 +34,9 @@ public class UserColorStatRepositoryImpl implements UserColorStatRepository
         .map(UserColorStatMapper::toDomain)
         .toList();
   }
+
+  @Override
+  public void deleteAllByUserId(Long userId) {
+    jpaRepository.deleteByUserId(userId);
+  }
 }

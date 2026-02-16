@@ -10,4 +10,6 @@ public interface UserColorStatJpaRepository extends
     JpaRepository<UserColorStatEntity, Long> {
 
   List<UserColorStatEntity> findByUserIdAndGameType(Long userId, GameType gameType);
+
+  void deleteByUserId(Long userId);
 }
