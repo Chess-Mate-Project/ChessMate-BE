@@ -65,7 +65,7 @@ public class JwtService {
                 .path("/")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(ACCESS_EXP / 1000)
                 .build();
         res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());
@@ -82,7 +82,7 @@ public class JwtService {
                 .path("/")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(REFRESH_EXP / 1000)
                 .build();
         res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());
