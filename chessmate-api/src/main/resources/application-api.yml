@@ -17,6 +17,9 @@ spring:
       secret: chessMateGbswProjectRefreshTokenSecret
       expiration: 604800000
 
+cookie:
+  domain: .chessladder.org
+
 oauth:
   lichess:
     redirect-url: http://localhost:8080/api/oauth/callback

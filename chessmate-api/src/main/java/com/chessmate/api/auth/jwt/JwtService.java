@@ -35,6 +35,8 @@ public class JwtService {
     private final long REFRESH_EXP;
     @Value("${spring.data.redis.key.refresh_token_base}")
     private String REFRESH_TOKEN_KEY;
+    @Value("${cookie.domain}")
+    private String cookieDomain;
 
     // 생성자: 의존성 및 JWT 관련 설정값 주입
     public JwtService(
@@ -63,6 +65,7 @@ public class JwtService {
         String at = generator.generateAccessToken(ACCESS_KEY, ACCESS_EXP, u);
         ResponseCookie cookie = ResponseCookie.from(ACCESS_PREFIX.getValue(), at)
                 .path("/")
+                .domain(cookieDomain)
                 .httpOnly(false)
                 .secure(true)
                 .sameSite("Lax")
@@ -80,6 +83,7 @@ public class JwtService {
         String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, u);
         ResponseCookie cookie = ResponseCookie.from(REFRESH_PREFIX.getValue(), rt)
                 .path("/")
+                .domain(cookieDomain)
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Lax")
