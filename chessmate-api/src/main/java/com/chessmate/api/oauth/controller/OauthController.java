@@ -47,7 +47,7 @@ public class OauthController {
 
     oauthService.callback(code, state, response);
 
-    response.sendRedirect(clientUrl + "/oauth/success");
+    response.sendRedirect(clientUrl);
   }
 
 }
