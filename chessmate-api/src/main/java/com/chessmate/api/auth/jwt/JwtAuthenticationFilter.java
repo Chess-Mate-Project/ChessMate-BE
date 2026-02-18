@@ -1,5 +1,9 @@
     package com.chessmate.api.auth.jwt;
 
+    import com.chessmate.common.code.AuthErrorCode;
+    import com.chessmate.common.exception.AuthException;
+    import com.chessmate.common.response.ErrorResponse;
+    import com.chessmate.common.response.SuccessResponse;
     import jakarta.servlet.FilterChain;
     import jakarta.servlet.ServletException;
     import jakarta.servlet.http.HttpServletRequest;
@@ -9,10 +13,12 @@
     import lombok.extern.slf4j.Slf4j;
     import org.springframework.context.annotation.Configuration;
     import org.springframework.security.core.context.SecurityContextHolder;
+    import org.springframework.stereotype.Component;
+    import org.springframework.util.StringUtils;
     import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
-@Configuration
+@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
@@ -44,6 +50,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return false;
       }
+      private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+          return bearerToken.substring(7);
+        }
+        return null;
+      }
+
+    private void setErrorResponse(HttpServletResponse response, AuthErrorCode errorCode) throws IOException {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 설정
+      response.setContentType("application/json;charset=UTF-8");
+
+      ErrorResponse errorResponse = new ErrorResponse(errorCode.getStatusCode(), errorCode.getMessage());
+      String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(errorResponse);
+
+      response.getWriter().write(json);
+    }
 
 
       @Override
@@ -51,13 +74,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String uri = request.getRequestURI();
             log.info("[JWT Filter] 요청 URI: {}", uri);
 
-            String accessToken = jwtService.resolveToken(request, JwtRule.ACCESS_PREFIX);
+            String accessToken = resolveToken(request);
+            log.debug("[JWT Filter] 엑세스 토큰: {}", accessToken);
+
+            // 토큰이 없거나 빈 경우
             if (accessToken == null || accessToken.isBlank()) {
-                log.info("[JWT Filter] 엑세스 토큰 없음 - 비인증 사용자로 처리: {}", uri);
-                chain.doFilter(request, response);
+                log.warn("[JWT Filter] 엑세스 토큰 없음 - uri={}", uri);
+                setErrorResponse(response, AuthErrorCode.JWT_TOKEN_NOT_FOUND);
                 return;
             }
 
+            // 토큰 검증
             log.info("[JWT Filter] 토큰 검증 시작 - uri={}", uri);
             if (jwtService.validateAccessToken(accessToken)) {
                 SecurityContextHolder.getContext().setAuthentication(
@@ -68,11 +95,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            // 토큰 검증 실패
             log.warn("[JWT Filter] 엑세스 토큰 검증 실패 - uri={}", uri);
-            chain.doFilter(request, response);
-
-
-
+            setErrorResponse(response, AuthErrorCode.JWT_TOKEN_NOT_FOUND);
         }
     }
 

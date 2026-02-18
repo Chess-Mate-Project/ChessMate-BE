@@ -44,6 +44,7 @@ public class LichessApiService {
     return webClient.post()
         .uri("/token")
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .headers(headers -> headers.set("user-agent", "ChessLadder/1.0 (https://chessladder.org)"))
         .body(BodyInserters
             .fromFormData("grant_type", "authorization_code")
             .with("code", request.code())
@@ -73,7 +74,10 @@ public class LichessApiService {
   public LichessAccountDto getUserAccount(String token) {
     return webClient.get()
         .uri("/account")
-        .headers(headers -> headers.setBearerAuth(token))
+        .headers(headers -> {
+          headers.setBearerAuth(token);
+          headers.set("user-agent", "ChessLadder/1.0 (https://chessladder.org)");
+        })
         .retrieve()
         .bodyToMono(LichessAccountDto.class)
         .doOnError(e -> {
@@ -118,7 +122,10 @@ public class LichessApiService {
           return builder.build(username);
         })
         .accept(MediaType.parseMediaType("application/x-ndjson"))
-        .headers(h -> h.setBearerAuth(token))
+        .headers(h -> {
+          h.setBearerAuth(token);
+          h.set("user-agent", "ChessLadder/1.0 (https://chessladder.org)");
+        })
         .retrieve()
         .onStatus(HttpStatusCode::is4xxClientError, resp ->
             resp.bodyToMono(String.class)
@@ -145,6 +152,7 @@ public class LichessApiService {
           .uri(uriBuilder -> uriBuilder
               .path("/user/{username}/perf/{perfType}")
               .build(username, gameType.name().toLowerCase()))
+          .headers(h -> h.set("user-agent", "ChessLadder/1.0 (https://chessladder.org)"))
           .retrieve()
           .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
             return clientResponse.bodyToMono(String.class)
