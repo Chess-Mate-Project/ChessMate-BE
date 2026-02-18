@@ -18,7 +18,7 @@ spring:
       expiration: 604800000
 
 cookie:
-  domain: .chessladder.org
+  domain: localhost
 
 oauth:
   lichess:
