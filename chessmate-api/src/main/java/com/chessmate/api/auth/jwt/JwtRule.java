@@ -13,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum JwtRule {
     JWT_ISSUE_HEADER("Set-Cookie"),   // 토큰 발급 시 HTTP 헤더 이름
-    ACCESS_PREFIX("access"),          // Access Token 쿠키 이름
-    REFRESH_PREFIX("refresh");        // Refresh Token 쿠키 이름
+    ACCESS_PREFIX("ChessLadder-Access"),          // Access Token 쿠키 이름
+    REFRESH_PREFIX("ChessLadder-refresh");        // Refresh Token 쿠키 이름
 
     private final String value;
 }
