@@ -74,16 +74,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String uri = request.getRequestURI();
             log.info("[JWT Filter] 요청 URI: {}", uri);
 
-
             String accessToken = resolveToken(request);
-            log.info(accessToken + " <- 엑세스 토큰 추출 완료");
+            log.debug("[JWT Filter] 엑세스 토큰: {}", accessToken);
 
+            // 토큰이 없거나 빈 경우
             if (accessToken == null || accessToken.isBlank()) {
-                log.info("[JWT Filter] 엑세스 토큰 없음 - 비인증 사용자로 처리: {}", uri);
-                chain.doFilter(request, response);
+                log.warn("[JWT Filter] 엑세스 토큰 없음 - uri={}", uri);
+                setErrorResponse(response, AuthErrorCode.JWT_TOKEN_NOT_FOUND);
                 return;
             }
 
+            // 토큰 검증
             log.info("[JWT Filter] 토큰 검증 시작 - uri={}", uri);
             if (jwtService.validateAccessToken(accessToken)) {
                 SecurityContextHolder.getContext().setAuthentication(
@@ -92,16 +93,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.info("[JWT Filter] 엑세스 토큰 검증 성공, 인증 객체 설정 완료 - uri={}", uri);
                 chain.doFilter(request, response);
                 return;
-            } else {
-
-              log.warn("[JWT Filter] 엑세스 토큰 검증 실패 - uri={}", uri);
-              setErrorResponse(response, AuthErrorCode.JWT_TOKEN_NOT_FOUND);
             }
 
-            chain.doFilter(request, response);
-
-
-
+            // 토큰 검증 실패
+            log.warn("[JWT Filter] 엑세스 토큰 검증 실패 - uri={}", uri);
+            setErrorResponse(response, AuthErrorCode.JWT_TOKEN_NOT_FOUND);
         }
     }
 

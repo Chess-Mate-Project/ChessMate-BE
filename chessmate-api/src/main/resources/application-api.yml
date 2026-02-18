@@ -12,7 +12,7 @@ spring:
   jwt:
     access-token:
       secret: chessMateGbswProjectAccessTokenSecret
-      expiration: 300000
+      expiration: 10000
     refresh-token:
       secret: chessMateGbswProjectRefreshTokenSecret
       expiration: 604800000
