@@ -65,7 +65,7 @@ public class JwtService {
                 .path("/")
                 .httpOnly(false)
                 .secure(true)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .maxAge(60) // 프론트 단에서 바로 읽고 저장소 저장 후 삭제할것이기때문에 짧은 maxAge설정하기.
                 .build();
         res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());
