@@ -33,14 +33,12 @@ public class AuthController {
       );
   }
 
-  @PostMapping("refresh")
+  @GetMapping ("refresh")
   public ResponseEntity<SuccessResponse<Void>> refreshToken(
       HttpServletResponse res,
       HttpServletRequest req
   ) {
       authService.refresh(req, res);
-
-
 
       return ResponseEntity.ok(
           new SuccessResponse<>("토큰 재발급 성공", null)

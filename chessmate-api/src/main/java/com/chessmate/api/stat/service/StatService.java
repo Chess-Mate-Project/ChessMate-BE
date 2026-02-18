@@ -75,7 +75,15 @@ public class StatService {
     log.info("[YearStreak] DB 조회 결과 - userId={}, year={}, 데이터 개수={}",
         user.getId(), year.getValue(), streaks.size());
 
+    if (streaks.isEmpty()) {
+      log.warn("[YearStreak] [EMPTY] 조회된 데이터가 없음 - userId={}, year={}, start={}, end={}",
+          user.getId(), year.getValue(), start, end);
+    }
+
     streaks.forEach(streak -> {
+          log.debug("[YearStreak] 변환 전 - date={}, win={}, lose={}, draw={}, lastRating={}",
+              streak.getDate(), streak.getWin(), streak.getLose(), streak.getDraw(), streak.getLastRating());
+
           DailyStreakDto dto = new DailyStreakDto(
               streak.getDate(),
               streak.getWin(),
@@ -85,8 +93,8 @@ public class StatService {
               streak.getLastRating()
           );
           dailyStreakDto.add(dto);
-          log.debug("[YearStreak] 변환된 데이터 - date={}, win={}, lose={}, draw={}, lastRating={}",
-              streak.getDate(), streak.getWin(), streak.getLose(), streak.getDraw(), streak.getLastRating());
+          log.debug("[YearStreak] 변환 후 - date={}, win={}, lose={}, draw={}, total={}, lastRating={}",
+              dto.date(), dto.win(), dto.lose(), dto.draw(), dto.total(), dto.lastRating());
         });
 
     YearStreakDto result = new YearStreakDto(year, dailyStreakDto);
@@ -333,15 +341,16 @@ public class StatService {
   }
 
   private String buildColorStatsCacheKey(Long userId, GameType gameType) {
-    return String.format("stat:colorstats:%d:%s", userId, gameType);
+    return String.format("stat:colorstats:%d:%s", userId, gameType.name());
   }
 
   private String buildFirstMoveCacheKey(Long userId, GameType gameType) {
-    return String.format("stat:firstmove:%d:%s", userId, gameType);
+    return String.format("stat:firstmove:%d:%s", userId, gameType.name());
   }
 
   private String buildUserPerfCacheKey(Long userId, GameType gameType) {
-    return String.format("stat:userperf:%d:%s", userId, gameType);
+    return String.format("stat:userperf:%d:%s", userId, gameType.name()
+        );
   }
 
 }

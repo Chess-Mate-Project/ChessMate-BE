@@ -13,6 +13,7 @@ import com.chessmate.common.type.GameType;
 import com.chessmate.infra_redis.redis.CacheService;
 import java.time.Year;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/stat")
@@ -41,22 +43,51 @@ public class StatController {
     );
   }
 
-  /**
-   * 년도별 레이팅 히스토리 조회
-   * @param userPrincipal 사용자 정보
-   * @param year 조회할 년도 (예: 2025)
-   * @return List<RatingHistoryDto> 일별 lastRating 목록
-   */
-  @GetMapping("/rating-history")
-  public ResponseEntity<SuccessResponse<Object>> getRatingHistory(
+//  /**
+//   * 년도별 레이팅 히스토리 조회
+//   * @param userPrincipal 사용자 정보
+//   * @param year 조회할 년도 (예: 2025)
+//   * @return List<RatingHistoryDto> 일별 lastRating 목록
+//   */
+//  @GetMapping("/rating-history")
+//  public ResponseEntity<SuccessResponse<Object>> getRatingHistory(
+//      @AuthenticationPrincipal UserPrincipal userPrincipal,
+//      @RequestParam Year year
+//  ) {
+//
+//    var ratingHistory = statService.getRatingHistory(userPrincipal.getUser(), year);
+//
+//    return ResponseEntity.ok(
+//        new SuccessResponse<>("레이팅 히스토리 조회 성공", ratingHistory)
+//    );
+//  }
+
+  @GetMapping("/perf")
+  public ResponseEntity<SuccessResponse<UserPerfResponse>> getUserPerf(
       @AuthenticationPrincipal UserPrincipal userPrincipal,
-      @RequestParam Year year
+      @RequestParam(defaultValue = "RAPID") GameType gameType
   ) {
 
-    var ratingHistory = statService.getRatingHistory(userPrincipal.getUser(), year);
+    log.info("[API-PERF] 요청 처리: userId={}, gameType={}", userPrincipal.getUser().getId(), gameType);
+
+    long startTime = System.currentTimeMillis();
+    UserPerfResponse response = statService.getUserPerf(userPrincipal.getUser(), gameType);
+    long duration = System.currentTimeMillis() - startTime;
+
+    if (response == null) {
+      log.warn("[API-PERF] UserPerf 데이터 없음: userId={}, gameType={}, duration={}ms",
+          userPrincipal.getUser().getId(), gameType, duration);
+      return ResponseEntity.ok(
+          new SuccessResponse<>("UserPerf 데이터 없음", null)
+      );
+    }
+
+    log.info("[API-PERF] [SUCCESS] userId={}, gameType={}, rating={}, games={}, duration={}ms",
+        userPrincipal.getUser().getId(), gameType, response.rating(),
+        response.gamesPlayed(), duration);
 
     return ResponseEntity.ok(
-        new SuccessResponse<>("레이팅 히스토리 조회 성공", ratingHistory)
+        new SuccessResponse<>("UserPerf 정보 조회 성공", response)
     );
   }
 
@@ -70,25 +101,6 @@ public class StatController {
 
     return ResponseEntity.ok(
         new SuccessResponse<>("Color Stats 조회 성공", response)
-    );
-  }
-
-  @GetMapping("/perf")
-  public ResponseEntity<SuccessResponse<UserPerfResponse>> getUserPerf(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
-      @RequestParam(defaultValue = "RAPID") GameType gameType
-  ) {
-
-    UserPerfResponse response = statService.getUserPerf(userPrincipal.getUser(), gameType);
-
-    if (response == null) {
-      return ResponseEntity.ok(
-          new SuccessResponse<>("UserPerf 데이터 없음", null)
-      );
-    }
-
-    return ResponseEntity.ok(
-        new SuccessResponse<>("UserPerf 정보 조회 성공", response)
     );
   }
 

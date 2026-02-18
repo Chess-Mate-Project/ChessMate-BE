@@ -35,6 +35,8 @@ public class JwtService {
     private final long REFRESH_EXP;
     @Value("${spring.data.redis.key.refresh_token_base}")
     private String REFRESH_TOKEN_KEY;
+    @Value("${cookie.domain}")
+    private String cookieDomain;
 
     // 생성자: 의존성 및 JWT 관련 설정값 주입
     public JwtService(
@@ -63,10 +65,11 @@ public class JwtService {
         String at = generator.generateAccessToken(ACCESS_KEY, ACCESS_EXP, u);
         ResponseCookie cookie = ResponseCookie.from(ACCESS_PREFIX.getValue(), at)
                 .path("/")
-                .httpOnly(true)
+                .domain(cookieDomain)
+                .httpOnly(false)
                 .secure(true)
-                .sameSite("None")
-                .maxAge(ACCESS_EXP / 1000)
+                .sameSite("Lax")
+                .maxAge(60) // 프론트 단에서 바로 읽고 저장소 저장 후 삭제할것이기때문에 짧은 maxAge설정하기.
                 .build();
         res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());
         return at;
@@ -80,9 +83,10 @@ public class JwtService {
         String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, u);
         ResponseCookie cookie = ResponseCookie.from(REFRESH_PREFIX.getValue(), rt)
                 .path("/")
+                .domain(cookieDomain)
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(REFRESH_EXP / 1000)
                 .build();
         res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());

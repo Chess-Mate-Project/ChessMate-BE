@@ -48,18 +48,5 @@
       );
     }
 
-    @GetMapping("/image-url")
-    public ResponseEntity<SuccessResponse<UploadUrlResponse>> getImageUrl(
-        @AuthenticationPrincipal UserPrincipal u,
-        @RequestParam("type") UserImageType type
-    ) {
-
-      UploadUrlResponse url = imageService.getImageUrl(u.getUser(), type);
-
-      return ResponseEntity.ok(
-          new SuccessResponse<>("이미지 URL 반환", url)
-      );
-    }
-
   }
 

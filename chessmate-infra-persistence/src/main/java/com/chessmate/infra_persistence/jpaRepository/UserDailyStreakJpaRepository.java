@@ -16,12 +16,16 @@ public interface UserDailyStreakJpaRepository extends
   SELECT uds.lastGameAt
   FROM UserDailyStreakEntity uds
   WHERE uds.userId = :userId
-  ORDER BY uds.lastGameAt ASC
+  ORDER BY uds.lastGameAt DESC
   LIMIT 1
 """)
   Optional<Long> findLastGameAtByUserId(@Param("userId") Long userId);
 
   Optional<UserDailyStreakEntity> findByUserIdAndDate(Long userId, LocalDate date);
 
+  void deleteByUserId(Long userId);
+
   List<UserDailyStreakEntity> findByUserIdAndDateBetween(Long userId, LocalDate start, LocalDate end);
+
+  List<UserDailyStreakEntity> findAllByUserId(Long userId);
 }

@@ -17,4 +17,5 @@ public interface UserRepository {
 
     List<User> findRecentLoginUsersWithin3Days();
 
+    void deleteById(Long id);
 }

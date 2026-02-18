@@ -39,4 +39,9 @@ public class UserFirstMoveStatRepositoryImpl implements UserFirstMoveStatReposit
         .map(UserFirstMoveStatMapper::toDomain)
         .toList();
   }
+
+  @Override
+  public void deleteAllByUserId(Long userId) {
+    jpaRepository.deleteByUserId(userId);
+  }
 }

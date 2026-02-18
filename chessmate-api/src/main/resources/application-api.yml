@@ -12,10 +12,13 @@ spring:
   jwt:
     access-token:
       secret: chessMateGbswProjectAccessTokenSecret
-      expiration: 3600000
+      expiration: 10000
     refresh-token:
       secret: chessMateGbswProjectRefreshTokenSecret
       expiration: 604800000
+
+cookie:
+  domain: .chessladder.org
 
 oauth:
   lichess:

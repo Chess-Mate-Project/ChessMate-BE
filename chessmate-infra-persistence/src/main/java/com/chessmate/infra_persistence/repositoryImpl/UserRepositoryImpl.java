@@ -85,4 +85,9 @@ public class UserRepositoryImpl implements UserRepository {
         .map(UserMapper::toDomain)
         .toList();
   }
+
+  @Override
+  public void deleteById(Long id) {
+    jpaRepository.deleteById(id);
+  }
 }

@@ -9,10 +9,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class UserDailyStreakRepositoryImpl implements UserDailyStreakRepository {
 
   private final UserDailyStreakJpaRepository jpaRepository;
@@ -36,10 +38,34 @@ public class UserDailyStreakRepositoryImpl implements UserDailyStreakRepository 
   }
 
   @Override
-  public List<UserDailyStreak> findByUserIdAndYearRange(Long userId, LocalDate start, LocalDate end) {
-    return jpaRepository.findByUserIdAndDateBetween(userId, start, end).stream()
+  public List<UserDailyStreak> findByUserIdAndYearRange(Long userId, LocalDate start,
+      LocalDate end) {
+    log.debug("[UserDailyStreakRepository] DB 조회 시작 - userId={}, start={}, end={}", userId, start, end);
+    List<UserDailyStreakEntity> entities = jpaRepository.findByUserIdAndDateBetween(userId, start, end);
+    log.info("[UserDailyStreakRepository] DB 조회 완료 - userId={}, start={}, end={}, 조회된 데이터 개수={}",
+        userId, start, end, entities.size());
+
+    if (!entities.isEmpty()) {
+      entities.forEach(entity ->
+          log.debug("[UserDailyStreakRepository] Entity 상세 - id={}, userId={}, date={}, win={}, lose={}, draw={}, lastGameAt={}, lastRating={}",
+              entity.getId(), entity.getUserId(), entity.getDate(), entity.getWin(),
+              entity.getLose(), entity.getDraw(), entity.getLastGameAt(), entity.getLastRating())
+      );
+    }
+
+    return entities.stream()
         .map(UserDailyStreakMapper::toDomain)
         .toList();
   }
 
+  public List<UserDailyStreak> findByUserId(Long userId) {
+    return jpaRepository.findAllByUserId(userId).stream()
+        .map(UserDailyStreakMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public void deleteAllByUserId(Long userId) {
+    jpaRepository.deleteByUserId(userId);
+  }
 }

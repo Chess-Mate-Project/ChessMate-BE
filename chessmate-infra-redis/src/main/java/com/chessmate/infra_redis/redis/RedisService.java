@@ -53,6 +53,16 @@ public class RedisService {
     }
 
     /**
+     * 패턴으로 키 삭제
+     */
+    public void deleteByPattern(String pattern) {
+        java.util.Set<String> keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
+
+    /**
      * 키 존재 여부 확인
      */
     public boolean hasKey(String key) {
@@ -103,5 +113,30 @@ public class RedisService {
 
     if (obj == null) return null;
     return objectMapper.convertValue(obj, type);
+  }
+
+  /// ///////////
+  public Long increment(String key) {
+    return redisTemplate.opsForValue().increment(key);
+  }
+
+  public Boolean setIfAbsent(String key, Object value, long expirationSeconds) {
+    return redisTemplate.opsForValue()
+        .setIfAbsent(key, value, expirationSeconds, TimeUnit.SECONDS);
+  }
+
+  public void expire(String key, long expirationSeconds) {
+    redisTemplate.expire(key, expirationSeconds, TimeUnit.SECONDS);
+  }
+
+  public Long sAdd(String key, Object value) {
+    return redisTemplate.opsForSet().add(key, value);
+  }
+
+  public Long getLong(String key) {
+    Object obj = redisTemplate.opsForValue().get(key);
+    if (obj == null) return null;
+    if (obj instanceof Number n) return n.longValue();
+    return Long.parseLong(String.valueOf(obj));
   }
 }

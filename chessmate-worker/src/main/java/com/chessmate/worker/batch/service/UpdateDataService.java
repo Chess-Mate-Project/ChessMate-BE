@@ -20,7 +20,7 @@ public class UpdateDataService {
   private final CacheService cacheService;
   private final LichessApiRedisService lichessApiRedisService;
 
-  public void updateUserGameData(User user) {
+  public void updateUserGameData(User user, String batchId) {
     String cachedToken = cacheService.getLichessToken(user.getId());
     if (cachedToken == null || cachedToken.isEmpty()) {
       log.info("사용자 : {} id : {} 의 Lichess 토큰이 없습니다. 건너뜁니다.", user.getUsername(), user.getId());
@@ -32,6 +32,8 @@ public class UpdateDataService {
         .lichessToken(cachedToken)
         .type(TaskType.GAMES)
         .isFullSync(false)
+        .batchId(batchId)
+        .taskId(java.util.UUID.randomUUID().toString())
         .build();
 
     LichessApiTask accounttask = LichessApiTask.builder()
@@ -40,6 +42,8 @@ public class UpdateDataService {
         .lichessToken(cachedToken)
         .type(TaskType.ACCOUNT)
         .isFullSync(false)
+        .batchId(batchId)
+        .taskId(java.util.UUID.randomUUID().toString())
         .build();
 
     LichessApiTask perftask = LichessApiTask.builder()
@@ -48,10 +52,39 @@ public class UpdateDataService {
         .lichessToken(cachedToken)
         .type(TaskType.PERF)
         .isFullSync(false)
+        .batchId(batchId)
+        .taskId(java.util.UUID.randomUUID().toString())
         .build();
 
     lichessApiRedisService.pushTask(gamestask);
     lichessApiRedisService.pushTask(accounttask);
     lichessApiRedisService.pushTask(perftask);
+
+    log.info("[UpdateDataService] === 캐시 삭제 시작 === userId={}, lichessId={}",
+             user.getId(), user.getLichessId());
+
+    try {
+      String lichessId = user.getLichessId();
+
+      cacheService.deletePlayTime(lichessId);
+      log.info("[UpdateDataService] 삭제: PlayTime 캐시 - lichessId={}", lichessId);
+
+      cacheService.deletePerfs(lichessId);
+      log.info("[UpdateDataService] 삭제: Perfs 캐시 - lichessId={}", lichessId);
+
+      cacheService.deleteUserCount(lichessId);
+      log.info("[UpdateDataService] 삭제: UserCount 캐시 - lichessId={}", lichessId);
+
+      cacheService.deleteGames(user.getId());
+      log.info("[UpdateDataService] 삭제: Games 캐시 - lichessId={}", lichessId);
+
+      cacheService.deleteAllRankings();
+      log.info("[UpdateDataService] 삭제: AllRankings 캐시");
+
+      log.info("[UpdateDataService] === 캐시 삭제 완료 === userId={}", user.getId());
+    } catch (Exception e) {
+      log.warn("[UpdateDataService] 캐시 삭제 실패 - userId={}, error={}",
+               user.getId(), e.getMessage(), e);
+    }
   }
 }
