@@ -25,4 +25,5 @@ public enum AuthErrorCode implements ErrorCode {
   public String getMessage() {
     return this.message;
   }
+
 }

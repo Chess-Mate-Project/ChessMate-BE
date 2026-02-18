@@ -3,10 +3,10 @@ package com.chessmate.common.response;
 public class ErrorResponse {
 
   private final boolean success = false;
-  private final String code; // 에러 코드
+  private final int code; // 에러 코드
   private final String message; // 사용자한테 보여줄 문구
 
-  public ErrorResponse(String code, String message) {
+  public ErrorResponse(Integer code, String message) {
     this.code = code;
     this.message = message;
   }
@@ -20,7 +20,7 @@ public class ErrorResponse {
     return success;
   }
 
-  public String getCode() {
+  public int getCode() {
     return code;
   }
 

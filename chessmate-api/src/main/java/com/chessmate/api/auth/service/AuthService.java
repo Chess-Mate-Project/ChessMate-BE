@@ -11,10 +11,12 @@ import com.chessmate.infra_redis.redis.CacheService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
   private final JwtService jwtService;
@@ -31,6 +33,7 @@ public class AuthService {
   public void refresh(HttpServletRequest req, HttpServletResponse res) {
     String refreshToken = jwtService.resolveToken(req, JwtRule.REFRESH_PREFIX);
     String userId = jwtService.getSubject(refreshToken);
+    log.info("[토큰 재발급 요청] userId={}, refreshToken={}", userId, refreshToken);
 
     if (refreshToken == null || !jwtService.validateRefreshToken(refreshToken, Long.valueOf(userId))) {
       throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
