@@ -62,7 +62,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 설정
       response.setContentType("application/json;charset=UTF-8");
 
-      ErrorResponse errorResponse = new ErrorResponse(errorCode.getStatusCode(), errorCode.getMessage());
+      ErrorResponse errorResponse = new ErrorResponse(errorCode.getStatusCode
+          (), errorCode.getMessage());
       String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(errorResponse);
 
       response.getWriter().write(json);
