@@ -5,7 +5,9 @@ import com.chessmate.domain.userPerf.UserPerf;
 import com.chessmate.external.dto.account.PerfsDto;
 import com.chessmate.external.dto.account.PlayTimeDto;
 import com.chessmate.external.dto.account.UserCountDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -335,7 +337,62 @@ public class CacheService {
   public List<UserPerf> getRanking(GameType gameType) {
     String key = buildRankingCacheKey(gameType);
     Object result = redisTemplate.opsForValue().get(key);
-    return (List<UserPerf>) result;
+
+    if (result == null) {
+      return null;
+    }
+
+    // LinkedHashMap으로 역직렬화된 경우 처리
+    if (result instanceof List) {
+      List<?> resultList = (List<?>) result;
+      if (resultList.isEmpty()) {
+        return (List<UserPerf>) result;
+      }
+
+      // 첫 번째 요소가 LinkedHashMap인지 확인
+      Object firstElement = resultList.get(0);
+      if (firstElement instanceof java.util.LinkedHashMap) {
+        return convertLinkedHashMapListToUserPerfList(resultList);
+      }
+
+      return (List<UserPerf>) result;
+    }
+
+    return null;
+  }
+
+  /**
+   * LinkedHashMap List를 UserPerf List로 변환
+   * Redis에서 역직렬화할 때 LinkedHashMap으로 반환되는 경우 처리
+   */
+  private List<UserPerf> convertLinkedHashMapListToUserPerfList(List<?> linkedHashMapList) {
+    List<UserPerf> userPerfList = new ArrayList<>();
+
+    for (Object item : linkedHashMapList) {
+      if (item instanceof java.util.LinkedHashMap) {
+        java.util.LinkedHashMap<String, Object> map = (java.util.LinkedHashMap<String, Object>) item;
+        UserPerf userPerf = convertMapToUserPerf(map);
+        if (userPerf != null) {
+          userPerfList.add(userPerf);
+        }
+      }
+    }
+
+    return userPerfList;
+  }
+
+  /**
+   * LinkedHashMap을 UserPerf 객체로 변환
+   * Jackson ObjectMapper 사용
+   */
+  private UserPerf convertMapToUserPerf(java.util.LinkedHashMap<String, Object> map) {
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      return objectMapper.convertValue(map, UserPerf.class);
+    } catch (Exception e) {
+      // ObjectMapper 변환 실패 시 null 반환
+      return null;
+    }
   }
 
   /**

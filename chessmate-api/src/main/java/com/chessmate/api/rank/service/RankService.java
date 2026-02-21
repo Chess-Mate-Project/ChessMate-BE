@@ -50,13 +50,16 @@ public class RankService {
     // Cache-Aside Pattern: 캐시에서 조회
     List<UserPerf> allRankings = cacheService.getRanking(gameType);
 
-    if (allRankings != null) {
+    if (allRankings != null && !allRankings.isEmpty()) {
       log.info("[Cache-Hit] Ranking 캐시 조회 성공 - gameType={}", gameType);
     } else {
       log.info("[Cache-Miss] Ranking 캐시 미스, DB 조회 시작 - gameType={}", gameType);
 
       // DB에서 전체 랭킹 조회
       allRankings = userPerfRepository.findRankingByGameType(gameType);
+      if (allRankings == null) {
+        allRankings = new ArrayList<>();
+      }
       log.info("[DB-Query] 전체 랭킹 조회 완료 - gameType={}, totalCount={}", gameType, allRankings.size());
     }
 
