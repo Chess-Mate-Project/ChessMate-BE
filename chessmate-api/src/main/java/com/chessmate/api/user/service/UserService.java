@@ -43,34 +43,30 @@ public class UserService {
    * @param user 현재 사용자
    * @param updateUserDescriptionRequest 사용자 자기소개 업데이트 요청 DTO
    */
+  @Transactional
   public void updateUserDescription(User user,
       UpdateUserDescriptionRequest updateUserDescriptionRequest) {
     log.info("[자기소개 업데이트 시작] userId={}, newDescription={}",
         user.getId(), updateUserDescriptionRequest.description());
 
-    userRepository.findById(user.getId()).ifPresentOrElse(
-        u -> {
-          String oldDescription = u.getDescription();
-          log.debug("[변경 전] userId={}, oldDescription={}", u.getId(), oldDescription);
-
-          u.setDescription(updateUserDescriptionRequest.description());
-          log.debug("[메모리 변경 완료] userId={}, newDescription={}", u.getId(), updateUserDescriptionRequest.description());
-
-          User savedUser = userRepository.save(u);
-          log.info("[DB 저장 완료] userId={}, savedDescription={}, 저장된 객체 id={}",
-              savedUser.getId(), savedUser.getDescription(), savedUser.getId());
-
-
-          // 캐시 무효화 - 프로필 정보가 변경되었으므로 캐시 삭제
-          String cacheKey = buildProfileCacheKey(u.getId());
-          cacheService.deleteCache(cacheKey);
-          log.info("[Cache-Invalidate] UserProfile - userId={}, reason=description_updated", u.getId());
-        },
-        () -> {
-          log.warn("[자기소개 업데이트 실패] 사용자를 찾을 수 없음 - userId={}", user.getId());
-          throw new UserException(UserErrorCode.NOT_FOUND_USER);
-        }
+    User u = userRepository.findById(user.getId()).orElseThrow(
+        () -> new UserException(UserErrorCode.NOT_FOUND_USER)
     );
+
+    String oldDescription = u.getDescription();
+    log.debug("[변경 전] userId={}, oldDescription={}", u.getId(), oldDescription);
+
+    u.setDescription(updateUserDescriptionRequest.description());
+    log.debug("[메모리 변경 완료] userId={}, newDescription={}", u.getId(), updateUserDescriptionRequest.description());
+
+    User savedUser = userRepository.save(u);
+    log.info("[DB 저장 완료] userId={}, savedDescription={}, 저장된 객체 id={}",
+        savedUser.getId(), savedUser.getDescription(), savedUser.getId());
+
+    // 캐시 무효화 - 프로필 정보가 변경되었으므로 캐시 삭제
+    String cacheKey = buildProfileCacheKey(u.getId());
+    cacheService.deleteCache(cacheKey);
+    log.info("[Cache-Invalidate] UserProfile - userId={}, reason=description_updated", u.getId());
   }
 
   /**
