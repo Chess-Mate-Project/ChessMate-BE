@@ -18,3 +18,4 @@ public class GlobalExceptionHandler {
         .body(new ErrorResponse(null, "서버 에러 발생" + ex.getMessage()));
   }
 }
+

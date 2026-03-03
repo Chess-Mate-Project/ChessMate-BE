@@ -22,3 +22,7 @@ spring:
 oauth:
   lichess:
     client-id: ${LICHESS_CLIENT_ID}
+
+cookie:
+  domain: ${COOKIE_DOMAIN:.chessladder.org}
+
