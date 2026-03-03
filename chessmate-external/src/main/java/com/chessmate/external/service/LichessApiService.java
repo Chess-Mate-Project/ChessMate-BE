@@ -3,7 +3,9 @@ package com.chessmate.external.service;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.code.UserErrorCode;
 import com.chessmate.common.exception.AuthException;
+import com.chessmate.common.exception.UserException;
 import com.chessmate.common.type.GameType;
+import com.chessmate.external.config.ChesscomConfig;
 import com.chessmate.external.config.LichessConfig;
 import com.chessmate.external.dto.account.LichessAccountDto;
 import com.chessmate.external.dto.game.LichessGamesDto;
@@ -12,6 +14,7 @@ import com.chessmate.external.dto.oauth.OauthAccessTokenDto;
 import com.chessmate.external.dto.perf.UserPerfDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -21,13 +24,16 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class LichessApiService {
 
   private final LichessConfig lichessConfig;
   private final WebClient webClient;
 
+  public LichessApiService(LichessConfig lichessConfig, @Qualifier("lichessWebClient") WebClient webClient) {
+    this.lichessConfig = lichessConfig;
+    this.webClient = webClient;
+  }
 
   /*
   * [ Lichess OAuth Access Token 발급 요청 ]
@@ -42,9 +48,8 @@ public class LichessApiService {
 
   public OauthAccessTokenDto getOAuthAccessToken(OAuthValueRequest request) {
     return webClient.post()
-        .uri("/token")
+        .uri(lichessConfig.getTokenUrl())
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        .headers(headers -> headers.set("user-agent", "ChessLadder/1.0 (https://chessladder.org)"))
         .body(BodyInserters
             .fromFormData("grant_type", "authorization_code")
             .with("code", request.code())
@@ -73,7 +78,7 @@ public class LichessApiService {
   **/
   public LichessAccountDto getUserAccount(String token) {
     return webClient.get()
-        .uri("/account")
+        .uri(lichessConfig.getBaseApiUrl() + "/account")
         .headers(headers -> {
           headers.setBearerAuth(token);
           headers.set("user-agent", "ChessLadder/1.0 (https://chessladder.org)");
@@ -81,7 +86,7 @@ public class LichessApiService {
         .retrieve()
         .bodyToMono(LichessAccountDto.class)
         .doOnError(e -> {
-          throw new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT);
+          throw new UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT);
         }).block();
   }
 
@@ -130,7 +135,7 @@ public class LichessApiService {
         .onStatus(HttpStatusCode::is4xxClientError, resp ->
             resp.bodyToMono(String.class)
                 .doOnNext(body -> log.error("[LichessAPI] 4xx 오류 응답 바디: {}", body))
-                .then(Mono.error(new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)))
+                .then(Mono.error(new UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)))
         )
         .bodyToFlux(LichessGamesDto.class);
   }
@@ -158,13 +163,13 @@ public class LichessApiService {
             return clientResponse.bodyToMono(String.class)
                 .doOnNext(errorBody -> log.error("[LichessAPI] 4xx 오류 응답 - username={}, gameType={}, body={}",
                     username, gameType, errorBody))
-                .then(Mono.error(new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)));
+                .then(Mono.error(new UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)));
           })
           .onStatus(HttpStatusCode::is5xxServerError, serverResponse -> {
             return serverResponse.bodyToMono(String.class)
                 .doOnNext(errorBody -> log.error("[LichessAPI] 5xx 오류 응답 - username={}, gameType={}, body={}",
                     username, gameType, errorBody))
-                .then(Mono.error(new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)));
+                .then(Mono.error(new UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT)));
           })
           .bodyToMono(UserPerfDto.class)
           .doOnNext(result2 -> log.info("[LichessAPI] 게임 통계 조회 완료 - username={}, gameType={}, rating={}, all={}",
@@ -173,7 +178,7 @@ public class LichessApiService {
 
       if (result == null) {
         log.error("[LichessAPI] UserPerfDto가 null - username={}, gameType={}", username, gameType);
-        throw new com.chessmate.common.exception.UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT);
+        throw new UserException(UserErrorCode.FAILD_GET_USER_ACCOUNT);
       }
 
       return result;

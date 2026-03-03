@@ -4,6 +4,11 @@ oauth:
     oauth-url: https://lichess.org/oauth
     token-url: https://lichess.org/api/token
     base-api-url: https://lichess.org/api
+  chesscom:
+    client-id: 0cb23ccc-127e-11f1-9e9f-011b3c0d4706
+    oauth-url: https://oauth.chess.com/authorize
+    token-url: https://oauth.chess.com/token
+    base-api-url: https://api.chess.com/pub
 
   ttl:
     account: 36000

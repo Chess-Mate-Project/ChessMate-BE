@@ -23,6 +23,8 @@ cookie:
 oauth:
   lichess:
     redirect-url: http://localhost:8080/api/oauth/callback
+  chess-com:
+    redirect-url: http://localhost:8080/login/oauth/code/chesscom
 
 client:
   url: http://localhost:5173

@@ -1,10 +1,8 @@
   package com.chessmate.api.image;
 
-  import com.chessmate.api.auth.UserPrincipal;
+  import com.chessmate.api.lichess.auth.UserPrincipal;
   import com.chessmate.api.image.dto.UploadUrlResponse;
   import com.chessmate.common.response.SuccessResponse;
-  import com.sun.net.httpserver.Authenticator.Success;
-  import java.util.Map;
   import lombok.RequiredArgsConstructor;
   import org.springframework.http.ResponseEntity;
   import org.springframework.security.core.annotation.AuthenticationPrincipal;

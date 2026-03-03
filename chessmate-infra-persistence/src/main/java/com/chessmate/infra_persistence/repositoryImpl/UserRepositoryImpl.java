@@ -68,8 +68,7 @@ public class UserRepositoryImpl implements UserRepository {
         .orElseThrow();
 
     user.setBannerImage(bannerImageUrl);
-
-    jpaRepository.save(user);
+    jpaRepository.saveAndFlush(user);
   }
 
   @Override

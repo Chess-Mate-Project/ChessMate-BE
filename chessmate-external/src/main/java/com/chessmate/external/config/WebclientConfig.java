@@ -11,11 +11,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Slf4j
 public class WebclientConfig {
   private final LichessConfig lichessConfig;
+  private final ChesscomConfig chesscomConfig;
 
-  @Bean
+  @Bean("lichessWebClient")
   public WebClient lichessWebClient() {
     return WebClient.builder()
         .baseUrl(lichessConfig.getBaseApiUrl())
+        .defaultHeader("user-agent", "ChessLadder/1.0 (https://chessladder.org)")
         .filter((request, next) -> {
           log.info("➡️ WebClient Request");
           log.info("METHOD: {}", request.method());
@@ -25,6 +27,22 @@ public class WebclientConfig {
         })
         .build();
   }
+
+  @Bean("chesscomWebClient")
+  public WebClient chesscomWebClient() {
+    return WebClient.builder()
+        .baseUrl(chesscomConfig.getBaseApiUrl())
+        .defaultHeader("user-agent", "ChessLadder/1.0 (https://chessladder.org)")
+        .filter((request, next) -> {
+          log.info("➡️ WebClient Request");
+          log.info("METHOD: {}", request.method());
+          log.info("URL: {}", request.url());
+          log.info("HEADERS: {}", request.headers());
+          return next.exchange(request);
+        })
+        .build();
+  }
+
 
 
 }
