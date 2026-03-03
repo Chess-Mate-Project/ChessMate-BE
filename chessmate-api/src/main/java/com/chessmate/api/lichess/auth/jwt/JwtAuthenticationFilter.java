@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String[] excluded = {
             "/api/oauth/oauth-url",
             "/api/oauth/chesscom",
+
             "/api/oauth/callback",
             "/api/auth/refresh",
             "/api/user/count",

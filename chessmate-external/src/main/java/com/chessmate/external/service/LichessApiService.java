@@ -78,7 +78,7 @@ public class LichessApiService {
   **/
   public LichessAccountDto getUserAccount(String token) {
     return webClient.get()
-        .uri(lichessConfig.getBaseApiUrl() + "/account")
+        .uri("/account")
         .headers(headers -> {
           headers.setBearerAuth(token);
           headers.set("user-agent", "ChessLadder/1.0 (https://chessladder.org)");
@@ -110,7 +110,8 @@ public class LichessApiService {
           var builder = uriBuilder
               .path("/games/user/{username}")
               .queryParam("perf", "rapid,bullet,classical,blitz")
-              .queryParam("opening", "true");
+              .queryParam("opening", "true")
+              .queryParam("rated", "true");
           
           // since값이 있음 -> 증분 추가
           // since 값이 없음 -> 초기 가입 전체 동기화함

@@ -151,10 +151,14 @@ public class LichessGameProcessor
   // ==============================
   private GameResult resolveMyGameResult(LichessGamesDto game, ChessColor myColor) {
 
+    if(game.status().equals("draw")) {
+      log.info("GameResult 결과 = DRAW (Status = draw)" + " username='{}', game.createdAt='{}'", username, game.createdAt());
+      return GameResult.DRAW;
+    }
     if (game.winner() == null) {
-      log.info("winner가 null 이므로 무승부로 처리합니다. username='{}', game.createdAt='{}'", username,
+      log.info("winner가 null 이므로 무승부(DRAW)로 처리합니다. username='{}', game.createdAt='{}'", username,
           game.createdAt());
-      return null;
+      return GameResult.DRAW;
     }
 
     return switch (game.winner()) {
@@ -173,9 +177,9 @@ public class LichessGameProcessor
         yield r;
       }
       default -> {
-        log.warn("예상치 못한 winner 값: '{}'. 무승부로 처리합니다. username='{}', game.createdAt='{}'",
+        log.warn("예상치 못한 winner 값: '{}'. 무승부(DRAW)로 처리합니다. username='{}', game.createdAt='{}'",
             game.winner(), username, game.createdAt());
-        yield null;
+        yield GameResult.DRAW;
       }
     };
   }

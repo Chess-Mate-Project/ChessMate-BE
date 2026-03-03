@@ -52,6 +52,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                           "/api/oauth/chesscom",
+                          "/api/oauth/callback",
                           "/api/oauth/oauth-url",
                             "/login/oauth/code/chesscom",
                             "/api/user/count",
