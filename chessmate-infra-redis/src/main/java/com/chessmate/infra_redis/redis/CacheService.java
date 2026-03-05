@@ -2,11 +2,10 @@ package com.chessmate.infra_redis.redis;
 
 import com.chessmate.common.type.GameType;
 import com.chessmate.domain.userPerf.UserPerf;
-import com.chessmate.external.dto.account.PerfsDto;
-import com.chessmate.external.dto.account.PlayTimeDto;
-import com.chessmate.external.dto.account.UserCountDto;
+import com.chessmate.external.lichess.dto.account.PerfsDto;
+import com.chessmate.external.lichess.dto.account.PlayTimeDto;
+import com.chessmate.external.lichess.dto.account.UserCountDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;

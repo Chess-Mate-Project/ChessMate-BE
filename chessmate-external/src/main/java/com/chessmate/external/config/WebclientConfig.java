@@ -1,5 +1,7 @@
 package com.chessmate.external.config;
 
+import com.chessmate.external.chesscom.ChesscomConfig;
+import com.chessmate.external.lichess.LichessConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;

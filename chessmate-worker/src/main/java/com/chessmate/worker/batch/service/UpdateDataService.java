@@ -1,12 +1,10 @@
 package com.chessmate.worker.batch.service;
 
 import com.chessmate.domain.user.User;
-import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
 import com.chessmate.infra_redis.redis.CacheService;
 import com.chessmate.infra_redis.redis.LichessApiRedisService;
 import com.chessmate.infra_redis.redis.dto.LichessApiTask;
 import com.chessmate.infra_redis.redis.dto.TaskType;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

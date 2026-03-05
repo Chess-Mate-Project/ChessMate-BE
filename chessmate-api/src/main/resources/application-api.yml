@@ -1,4 +1,5 @@
 spring:
+
   config:
     activate:
       on-profile: api
@@ -16,6 +17,43 @@ spring:
     refresh-token:
       secret: chessMateGbswProjectRefreshTokenSecret
       expiration: 604800000
+
+  security:
+    oauth2:
+      client:
+        registration:
+          lichess:
+            client-id: ChessLadder
+            client-authentication-method: none #PCKE 자동 활성화 하기
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/api/oauth/callback
+            scope:
+              - "preference:read"
+              - "email:read"
+            client-name: Lichess
+          chesscom:
+            client-id: 0cb23ccc-127e-11f1-9e9f-011b3c0d4706
+            client-authentication-method: none
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/login/oauth/code/chesscom
+            scope:
+              - "openid"
+              - "profile"
+              - "email"
+            client-name: Chess.com
+        provider:
+          lichess:
+            authorization-uri: https://lichess.org/oauth
+            token-uri: https://lichess.org/api/token
+            user-info-uri: https://lichess.org/api/account
+            user-name-attribute: id
+          chesscom:
+            authorization-uri: https://oauth.chess.com/authorize
+            token-uri: https://oauth.chess.com/token
+            jwk-set-uri: https://oauth.chess.com/certs # ID Token 서명 검증용
+            user-info-uri: https://api.chess.com/pub/player/{username}
+            user-name-attribute: sub # OIDC 표준 식별자
+
 
 cookie:
   domain: localhost

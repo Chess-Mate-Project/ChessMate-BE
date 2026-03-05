@@ -1,6 +1,6 @@
   package com.chessmate.api.image;
 
-  import com.chessmate.api.lichess.auth.UserPrincipal;
+  import com.chessmate.api.auth.UserPrincipal;
   import com.chessmate.api.image.dto.UploadUrlResponse;
   import com.chessmate.common.response.SuccessResponse;
   import lombok.RequiredArgsConstructor;

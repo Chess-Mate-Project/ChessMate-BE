@@ -2,7 +2,7 @@ package com.chessmate.api.image;
 
 import com.chessmate.api.image.dto.UploadUrlResponse;
 import com.chessmate.domain.user.User;
-import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
+import com.chessmate.infra_core.repositoryImpl.UserRepositoryImpl;
 import com.chessmate.infra_redis.redis.CacheService;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;

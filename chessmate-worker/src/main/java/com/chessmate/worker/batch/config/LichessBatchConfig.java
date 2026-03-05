@@ -1,6 +1,6 @@
 package com.chessmate.worker.batch.config;
 
-import com.chessmate.external.dto.game.LichessGamesDto;
+import com.chessmate.external.lichess.dto.game.LichessGamesDto;
 import com.chessmate.worker.batch.dto.GameStat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;

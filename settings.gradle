@@ -5,7 +5,7 @@ include(
         "chessmate-common",
         "chessmate-api",
         "chessmate-domain",
-        "chessmate-infra-persistence",
+        "chessmate-infra-core",
         "chessmate-external",
         "chessmate-infra-redis"
 )

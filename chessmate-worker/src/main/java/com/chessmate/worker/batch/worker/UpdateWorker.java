@@ -1,7 +1,7 @@
 package com.chessmate.worker.batch.worker;
 
 import com.chessmate.domain.user.User;
-import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
+import com.chessmate.infra_core.repositoryImpl.UserRepositoryImpl;
 import com.chessmate.worker.batch.service.BatchBarrierService;
 import com.chessmate.worker.batch.service.UpdateDataService;
 import java.util.List;

@@ -122,7 +122,7 @@ protected boolean shouldNotFilter(HttpServletRequest request) {
 // ❌ 제거된 코드
 private final UserRepositoryImpl userRepository;  // 사용하지 않음
 
-import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;  // 미사용 import
+import com.chessmate.infra_core.repositoryImpl.UserRepositoryImpl;  // 미사용 import
 ```
 
 ---

@@ -5,24 +5,17 @@ import static com.chessmate.external.util.LichessUtil.generateRandomCodeVerifier
 import static com.chessmate.external.util.LichessUtil.generateRandomState;
 
 import com.chessmate.api.chesscom.oauth.dto.OauthUrlResponse;
-import com.chessmate.api.lichess.auth.jwt.JwtService;
+import com.chessmate.api.auth.jwt.JwtService;
 import com.chessmate.api.redis.LichessApiProducer;
-import com.chessmate.domain.user.User;
 import com.chessmate.domain.user.UserRepository;
-import com.chessmate.external.config.ChesscomConfig;
-import com.chessmate.external.config.LichessConfig;
-import com.chessmate.external.dto.account.LichessAccountDto;
-import com.chessmate.external.dto.oauth.OAuthValueRequest;
-import com.chessmate.external.dto.oauth.OauthAccessTokenDto;
-import com.chessmate.external.service.ChesscomApiService;
-import com.chessmate.external.service.LichessApiService;
+import com.chessmate.external.chesscom.ChesscomConfig;
+import com.chessmate.external.chesscom.dto.ChesscomPlayer;
+import com.chessmate.external.lichess.dto.oauth.OAuthValueRequest;
+import com.chessmate.external.lichess.dto.oauth.OauthAccessTokenDto;
+import com.chessmate.external.chesscom.ChesscomApiService;
 import com.chessmate.infra_redis.redis.CacheService;
-import com.chessmate.infra_redis.redis.dto.TaskType;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URI;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +56,8 @@ public class ChesscomOauthService {
         "response_type", response_type,
         "client_id", client_id,
         "redirect_uri", redirect_uri,
-        "state", state
+        "state", state,
+        "scope", "openid, profile"
     );
 
     log.info(code_verifier + " <- code_verifier 저장 완료");
@@ -100,6 +94,7 @@ public class ChesscomOauthService {
         new OAuthValueRequest(code, codeVerifier)
     );
 
+//    ChesscomPlayer player = chesscomApiService.getChesscomPlayerInfo()
     // 사용자 정보 조회
 //    LichessAccountDto accountDto = lichessApiService.getUserAccount(dto.accessToken());
 //

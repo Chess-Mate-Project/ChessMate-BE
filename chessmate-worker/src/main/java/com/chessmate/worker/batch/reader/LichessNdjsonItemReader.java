@@ -1,8 +1,7 @@
 package com.chessmate.worker.batch.reader;
 
-import com.chessmate.external.dto.game.LichessGamesDto;
-import com.chessmate.external.service.LichessApiService;
-import java.time.Instant;
+import com.chessmate.external.lichess.dto.game.LichessGamesDto;
+import com.chessmate.external.lichess.LichessApiService;
 import java.util.Iterator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

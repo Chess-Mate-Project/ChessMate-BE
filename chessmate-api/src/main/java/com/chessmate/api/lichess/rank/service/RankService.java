@@ -8,7 +8,7 @@ import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
 import com.chessmate.domain.userPerf.UserPerf;
 import com.chessmate.domain.userPerf.UserPerfRepository;
-import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
+import com.chessmate.infra_core.repositoryImpl.UserRepositoryImpl;
 import com.chessmate.infra_redis.redis.CacheService;
 import java.util.ArrayList;
 import java.util.List;
