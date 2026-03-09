@@ -1,6 +1,9 @@
-  package com.chessmate.api.image;
+  package com.chessmate.api.image.controller;
 
+  import com.chessmate.api.image.service.ImageService;
+  import com.chessmate.api.image.dto.UserImageType;
   import com.chessmate.api.image.dto.UploadUrlResponse;
+  import com.chessmate.api.oauth.OAuth2PrincipalDetails;
   import com.chessmate.common.response.SuccessResponse;
   import lombok.RequiredArgsConstructor;
   import org.springframework.http.ResponseEntity;
@@ -20,12 +23,12 @@
 
     @GetMapping("/upload-url")
     public ResponseEntity<SuccessResponse<UploadUrlResponse>> getUploadUrl(
-        @AuthenticationPrincipal UserPrincipal u,
+        @AuthenticationPrincipal OAuth2PrincipalDetails oAuth2PrincipalDetails,
         @RequestParam("type") UserImageType type,
         @RequestParam("contentType") String contentType
     ) {
 
-      UploadUrlResponse url = imageService.generateUploadUrl(u.getUser(), type, contentType);
+      UploadUrlResponse url = imageService.generateUploadUrl(oAuth2PrincipalDetails.getId(), type, contentType);
 
       return ResponseEntity.ok(
           new SuccessResponse<>("이미지 업로드 URL 생성 성공", url)
@@ -34,11 +37,11 @@
 
     @PostMapping("/upload-complete")
     public ResponseEntity<SuccessResponse<Void>> completeUpload(
-        @AuthenticationPrincipal UserPrincipal u,
+        @AuthenticationPrincipal OAuth2PrincipalDetails oAuth2PrincipalDetails,
         @RequestParam("type") UserImageType type
     ) {
 
-      imageService.completeUpload(u.getUser(), type);
+      imageService.completeUpload(oAuth2PrincipalDetails.getId(), type);
 
       return ResponseEntity.ok(
           new SuccessResponse<>("업로드 완료", null)

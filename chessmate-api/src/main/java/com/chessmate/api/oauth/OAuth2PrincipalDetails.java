@@ -1,4 +1,4 @@
-package com.chessmate.api.lichess.oauth;
+package com.chessmate.api.oauth;
 
 import java.util.Collection;
 import java.util.Collections;

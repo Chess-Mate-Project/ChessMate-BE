@@ -2,9 +2,9 @@ package com.chessmate.api.auth;
 
 
 import com.chessmate.api.auth.jwt.JwtAuthenticationFilter;
-import com.chessmate.api.lichess.oauth.CustomOAuth2UserService;
-import com.chessmate.api.lichess.oauth.OAuth2FailureHandler;
-import com.chessmate.api.lichess.oauth.OAuth2SuccessHandler;
+import com.chessmate.api.oauth.CustomOAuth2UserService;
+import com.chessmate.api.oauth.OAuth2FailureHandler;
+import com.chessmate.api.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

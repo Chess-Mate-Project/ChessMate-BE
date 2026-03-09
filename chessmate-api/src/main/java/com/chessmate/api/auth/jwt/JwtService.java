@@ -5,7 +5,6 @@ import static com.chessmate.api.auth.jwt.JwtRule.ACCESS_PREFIX;
 import static com.chessmate.api.auth.jwt.JwtRule.JWT_ISSUE_HEADER;
 import static com.chessmate.api.auth.jwt.JwtRule.REFRESH_PREFIX;
 
-import com.chessmate.api.lichess.oauth.OAuth2PrincipalDetails;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.exception.AuthException;
 
@@ -17,9 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.security.Key;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

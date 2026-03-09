@@ -1,12 +1,17 @@
 package com.chessmate.infra_core.entity;
 
+import jakarta.persistence.Access;
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,13 +19,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-@Getter
-@Setter
-@MappedSuperclass // JPA 상속 매핑의 핵심
+@Entity
+@Table(name = "profile") // 모든 데이터가 이 테이블 하나에 담깁니다.
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // 전략 명시
+@DiscriminatorColumn(name = "platform_type") // 자식을 구분할 컬럼 이름
+@Getter @Setter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class Profile {
 
+  private final AccessLevel accessLevel = AccessLevel.PROTECTED;
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;

@@ -1,4 +1,4 @@
-package com.chessmate.api.lichess.oauth;
+package com.chessmate.api.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

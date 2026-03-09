@@ -1,4 +1,4 @@
-package com.chessmate.api.image;
+package com.chessmate.api.image.dto;
 
 public enum UserImageType {
   PROFILE,BANNER

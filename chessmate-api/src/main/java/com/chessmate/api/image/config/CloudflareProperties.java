@@ -1,4 +1,4 @@
-package com.chessmate.api.image;
+package com.chessmate.api.image.config;
 
 import lombok.Getter;
 import lombok.Setter;

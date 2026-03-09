@@ -1,4 +1,4 @@
-package com.chessmate.api.lichess.oauth;
+package com.chessmate.api.oauth;
 
 import com.chessmate.infra_core.entity.ChesscomProfile;
 import com.chessmate.infra_core.entity.LichessProfile;

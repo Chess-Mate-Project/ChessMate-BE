@@ -11,12 +11,10 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "chesscom_profile")
-@Getter
-@Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+@DiscriminatorValue("CHESSCOM") // platform_type 컬럼에 "LICHESS"라고 저장됨
+@Getter@Setter
 @SuperBuilder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChesscomProfile extends Profile {
 
   @Column(name = "chesscom_id", nullable = false, unique = true)

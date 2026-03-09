@@ -1,7 +1,7 @@
 package com.chessmate.api.auth.controller;
 
 import com.chessmate.api.auth.service.AuthService;
-import com.chessmate.api.lichess.oauth.OAuth2PrincipalDetails;
+import com.chessmate.api.oauth.OAuth2PrincipalDetails;
 import com.chessmate.common.response.SuccessResponse;
 import com.chessmate.infra_core.entity.Profile;
 import jakarta.servlet.http.HttpServletRequest;
