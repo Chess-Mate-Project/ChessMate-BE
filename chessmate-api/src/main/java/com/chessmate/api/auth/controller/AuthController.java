@@ -1,9 +1,9 @@
 package com.chessmate.api.auth.controller;
 
-import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.auth.service.AuthService;
+import com.chessmate.api.lichess.oauth.OAuth2PrincipalDetails;
 import com.chessmate.common.response.SuccessResponse;
-import com.chessmate.domain.user.User;
+import com.chessmate.infra_core.entity.Profile;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,10 +23,10 @@ public class AuthController {
 
   @PostMapping("logout")
   public ResponseEntity<SuccessResponse<Void>> logout(
-      @AuthenticationPrincipal UserPrincipal userPrincipal,
+      @AuthenticationPrincipal OAuth2PrincipalDetails principalDetails,
       HttpServletResponse res
   ) {
-      authService.logout(userPrincipal.getUser(), res);
+      authService.logout(principalDetails.getId(), res);
 
       return ResponseEntity.ok(
           new SuccessResponse<>("로그아웃 성공", null)
@@ -47,11 +47,11 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<SuccessResponse<User>> me(
-      @AuthenticationPrincipal UserPrincipal userPrincipal
+  public ResponseEntity<SuccessResponse<Profile>> me(
+      @AuthenticationPrincipal OAuth2PrincipalDetails principalDetails
   ) {
       return ResponseEntity.ok(
-          new SuccessResponse<>("인증되어 있습니다.", userPrincipal.getUser())
+          new SuccessResponse<>("인증되어 있습니다.", principalDetails.getId())
       );
   }
 }

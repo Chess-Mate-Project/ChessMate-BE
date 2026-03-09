@@ -18,10 +18,9 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @Slf4j
 public class ImageService {
 
-  private final UserRepositoryImpl userRepository;
+  private final ProifileRepository profileRepository;
   private final CloudflareProperties cloudflareProperties;
   private final S3Presigner s3Presigner;
-  private final CacheService cacheService;
 
   @Transactional
   public UploadUrlResponse generateUploadUrl(

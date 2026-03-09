@@ -1,6 +1,7 @@
 package com.chessmate.infra_core.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,13 +10,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "lichess_user_stats")
+@Table(name = "lichess_streak")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LichessUserStatsEntity {
+public class LichessStreak {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,20 +24,8 @@ public class LichessUserStatsEntity {
     @Column(name = "lichess_id", nullable = false)
     private String lichessId;
 
-    @Column(name = "game_type", nullable = false)
-    private String gameType;
-
     @Column(nullable = false)
-    private Integer rating;
-
-    @Column(nullable = false)
-    private Float rd;
-
-    @Column(nullable = false)
-    private Integer prog;
-
-    @Column(name = "rated_games_count")
-    private Integer ratedGamesCount;
+    private LocalDate date;
 
     @Column(nullable = false)
     private Integer win;
@@ -47,13 +36,13 @@ public class LichessUserStatsEntity {
     @Column(nullable = false)
     private Integer draw;
 
-    @Column(name = "best_rating")
-    private Integer bestRating;
+    @Column(nullable = false)
+    private Integer total;
 
-    @Column(name = "best_rating_date")
-    private LocalDateTime bestRatingDate;
+    @Column(name = "last_rating")
+    private Integer lastRating;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "last_game_time")
+    private LocalDateTime lastGameTime;
 }
 

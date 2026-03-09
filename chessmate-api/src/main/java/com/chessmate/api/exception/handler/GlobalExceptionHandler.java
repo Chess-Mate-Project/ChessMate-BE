@@ -13,9 +13,11 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(Exception ex) {
-    ex.printStackTrace();  // 로그 남기기
+    log.error("Unexpected error occurred", ex);
+    int errorCode = HttpStatus.INTERNAL_SERVER_ERROR.value();
+    String errorMessage = "서버 에러 발생: " + ex.getMessage();
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(new ErrorResponse(null, "서버 에러 발생" + ex.getMessage()));
+        .body(new ErrorResponse(errorCode, errorMessage));
   }
 }
 

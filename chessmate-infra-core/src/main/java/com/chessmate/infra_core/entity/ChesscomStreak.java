@@ -10,19 +10,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "lichess_streak")
+@Table(name = "chesscom_streak")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LichessStreakEntity {
+public class ChesscomStreak {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "lichess_id", nullable = false)
-    private String lichessId;
+    @Column(name = "player_id", nullable = false)
+    private Integer playerId;
 
     @Column(nullable = false)
     private LocalDate date;

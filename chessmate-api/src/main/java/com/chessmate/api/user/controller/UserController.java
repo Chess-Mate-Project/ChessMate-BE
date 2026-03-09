@@ -1,7 +1,6 @@
 package com.chessmate.api.user.controller;
 
 
-import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.user.dto.ProfileResponse;
 import com.chessmate.api.user.dto.TotalUserCountResponse;
 import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;

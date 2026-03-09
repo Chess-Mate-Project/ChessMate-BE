@@ -1,6 +1,5 @@
 package com.chessmate.api.lichess.stat.controller;
 
-import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.lichess.stat.dto.ColorStatsResponse;
 import com.chessmate.api.lichess.stat.dto.FirstMoveResponse;
 import com.chessmate.api.lichess.stat.dto.TierResponse;

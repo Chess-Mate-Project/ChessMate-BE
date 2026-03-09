@@ -35,7 +35,6 @@ dependencies {
     implementation project(':chessmate-external')
     implementation project(':chessmate-infra-core')
     implementation project(':chessmate-infra-redis')
-    implementation project(':chessmate-domain')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'

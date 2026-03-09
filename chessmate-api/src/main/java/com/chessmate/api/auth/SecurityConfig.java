@@ -3,6 +3,7 @@ package com.chessmate.api.auth;
 
 import com.chessmate.api.auth.jwt.JwtAuthenticationFilter;
 import com.chessmate.api.lichess.oauth.CustomOAuth2UserService;
+import com.chessmate.api.lichess.oauth.OAuth2FailureHandler;
 import com.chessmate.api.lichess.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,8 @@ public class SecurityConfig {
 
   private final CustomOAuth2UserService customOAuth2UserService;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
+  private final OAuth2FailureHandler oAuth2FailureHandler;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -30,27 +33,25 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(a -> a
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                          "/api/oauth/chesscom",
-                          "/api/oauth/callback",
-                          "/api/oauth/oauth-url",
-                            "/login/oauth/code/chesscom",
                             "/api/user/count",
                             "/api/auth/refresh",
                             "/api/auth/logout",
                             "/api/rank/ranking",
-                            "/oauth2/authorization/lichess"
+                            "/oauth2/authorization/lichess",
+                            "/oauth2/authorization/chesscom"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
                     .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
-                    .successHandler(customOAuth2UserService) // 성공 시 커스텀 로직 실행
-                );
+                    .successHandler(oAuth2SuccessHandler) // OAuth2 인증 성공 시 토큰 발급
+                    .failureHandler(oAuth2FailureHandler)
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

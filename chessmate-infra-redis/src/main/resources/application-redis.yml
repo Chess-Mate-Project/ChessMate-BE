@@ -4,6 +4,11 @@ spring:
       on-profile: redis
   data:
     redis:
+      prefix:
+        api:
+          prefix: chessladder-api
+        worker:
+          prefix: chessladder-worker
       host: localhost
       port: 6379
       key:
@@ -19,3 +24,4 @@ spring:
 
         auth:
           refresh-token: auth:refresh
+

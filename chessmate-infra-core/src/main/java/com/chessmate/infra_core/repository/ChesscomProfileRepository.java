@@ -1,23 +1,22 @@
 package com.chessmate.infra_core.repository;
 
-import com.chessmate.infra_core.entity.ChesscomProfileEntity;
+import com.chessmate.infra_core.entity.ChesscomProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface ChesscomProfileRepository extends JpaRepository<ChesscomProfileEntity, Long> {
-    Optional<ChesscomProfileEntity> findByPlayerId(Integer playerId);
+public interface ChesscomProfileRepository extends JpaRepository<ChesscomProfile, Long> {
+    Optional<ChesscomProfile> findByChesscomId(Integer ChesscomId);
 
-    Optional<ChesscomProfileEntity> findByUserId(Long userId);
+    Optional<ChesscomProfile> findByUserId(Long userId);
 
-    Optional<ChesscomProfileEntity> findByUsername(String username);
+    Optional<ChesscomProfile> findByUsername(String username);
 
-    boolean existsByPlayerId(Integer playerId);
+    boolean existsByChesscomId(Integer ChesscomId);
 
-    boolean existsByUserId(Long userId);
 
-    void deleteByPlayerId(Integer playerId);
+    void deleteByChesscomId(Integer ChesscomId);
 }
 

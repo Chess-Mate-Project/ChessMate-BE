@@ -9,19 +9,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "chesscom_user_stats")
+@Table(name = "lichess_user_stats")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChesscomUserStatsEntity {
+public class LichessUserStats {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "player_id", nullable = false)
-    private Integer playerId;
+    @Column(name = "lichess_id", nullable = false)
+    private String lichessId;
 
     @Column(name = "game_type", nullable = false)
     private String gameType;
@@ -30,7 +30,10 @@ public class ChesscomUserStatsEntity {
     private Integer rating;
 
     @Column(nullable = false)
-    private Integer rd;
+    private Float rd;
+
+    @Column(nullable = false)
+    private Integer prog;
 
     @Column(name = "rated_games_count")
     private Integer ratedGamesCount;
@@ -49,9 +52,6 @@ public class ChesscomUserStatsEntity {
 
     @Column(name = "best_rating_date")
     private LocalDateTime bestRatingDate;
-
-    @Column(name = "best_game_url")
-    private String bestGameUrl;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

@@ -1,6 +1,6 @@
 package com.chessmate.infra_core.repository;
 
-import com.chessmate.infra_core.entity.LichessStreakEntity;
+import com.chessmate.infra_core.entity.LichessStreak;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LichessStreakRepository extends JpaRepository<LichessStreakEntity, Long> {
-    Optional<LichessStreakEntity> findByLichessIdAndDate(String lichessId, LocalDate date);
+public interface LichessStreakRepository extends JpaRepository<LichessStreak, Long> {
+    Optional<LichessStreak> findByLichessIdAndDate(String lichessId, LocalDate date);
 
-    List<LichessStreakEntity> findByLichessIdOrderByDateDesc(String lichessId);
+    List<LichessStreak> findByLichessIdOrderByDateDesc(String lichessId);
 }
 

@@ -1,6 +1,5 @@
 package com.chessmate.api.lichess.rank.controller;
 
-import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.lichess.rank.dto.RankingResponse;
 import com.chessmate.api.lichess.rank.service.RankService;
 import com.chessmate.common.response.SuccessResponse;

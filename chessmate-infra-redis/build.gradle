@@ -41,7 +41,7 @@ dependencies {
 
     implementation project(':chessmate-common')
     implementation project(':chessmate-external')
-    implementation project(':chessmate-domain')
+    implementation project(':chessmate-infra-core')
 }
 
 tasks.named('test') {

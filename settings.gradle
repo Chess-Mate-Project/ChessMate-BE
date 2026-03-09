@@ -4,7 +4,6 @@ include(
         "chessmate-worker",
         "chessmate-common",
         "chessmate-api",
-        "chessmate-domain",
         "chessmate-infra-core",
         "chessmate-external",
         "chessmate-infra-redis"

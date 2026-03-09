@@ -1,7 +1,6 @@
 package com.chessmate.infra_core.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,13 +9,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "chesscom_streak")
+@Table(name = "chesscom_user_stats")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChesscomStreakEntity {
+public class ChesscomUserStats {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,8 +23,17 @@ public class ChesscomStreakEntity {
     @Column(name = "player_id", nullable = false)
     private Integer playerId;
 
+    @Column(name = "game_type", nullable = false)
+    private String gameType;
+
     @Column(nullable = false)
-    private LocalDate date;
+    private Integer rating;
+
+    @Column(nullable = false)
+    private Integer rd;
+
+    @Column(name = "rated_games_count")
+    private Integer ratedGamesCount;
 
     @Column(nullable = false)
     private Integer win;
@@ -36,13 +44,16 @@ public class ChesscomStreakEntity {
     @Column(nullable = false)
     private Integer draw;
 
-    @Column(nullable = false)
-    private Integer total;
+    @Column(name = "best_rating")
+    private Integer bestRating;
 
-    @Column(name = "last_rating")
-    private Integer lastRating;
+    @Column(name = "best_rating_date")
+    private LocalDateTime bestRatingDate;
 
-    @Column(name = "last_game_time")
-    private LocalDateTime lastGameTime;
+    @Column(name = "best_game_url")
+    private String bestGameUrl;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
 

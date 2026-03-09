@@ -1,6 +1,6 @@
 package com.chessmate.api.redis;
 
-import com.chessmate.domain.user.User;
+import com.chessmate.infra_core.entity.User;
 import com.chessmate.infra_redis.redis.LichessApiRedisService;
 import com.chessmate.infra_redis.redis.dto.LichessApiTask;
 import com.chessmate.infra_redis.redis.dto.TaskType;
