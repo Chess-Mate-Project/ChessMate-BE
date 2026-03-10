@@ -1,6 +1,5 @@
 package com.chessmate.api.auth.repository;
 
-import com.chessmate.api.auth.AuthRedisKetPrefix;
 import com.chessmate.api.auth.AuthRedisPrefix;
 import com.chessmate.api.auth.OAuthRedisPrefix;
 import com.chessmate.infra_redis.redis.RedisService;
