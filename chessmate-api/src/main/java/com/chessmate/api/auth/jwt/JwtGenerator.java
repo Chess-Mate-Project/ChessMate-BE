@@ -18,22 +18,22 @@ public class JwtGenerator {
     );
 
     // 1) Access Token 생성
-    public String generateAccessToken(Key secret, long expMillis, Profile profile) {
+    public String generateAccessToken(Key secret, long expMillis, String pk) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setHeader(HEADER)
-                .setSubject(String.valueOf(profile.getId()))      // sub: 사용자 PK(Id)
+                .setSubject(pk)      // sub: 사용자 PK(Id)
                 .setExpiration(new Date(now + expMillis))       // 만료시간
                 .signWith(secret, SignatureAlgorithm.HS256)     // 서명
                 .compact(); // JWT 생성
     }
 
     // 2) Refresh Token 생성
-    public String generateRefreshToken(Key secret, long expMillis, Profile profile) {
+    public String generateRefreshToken(Key secret, long expMillis, String pk) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setHeader(HEADER)
-                .setSubject(String.valueOf(profile.getId()))             // sub: 사용자 PK(Id)
+                .setSubject(String.valueOf(pk))             // sub: 사용자 PK(Id)
                 .setExpiration(new Date(now + expMillis)) // 만료시간
                 .signWith(secret, SignatureAlgorithm.HS256) // 서명
                 .compact(); // JWT 생성

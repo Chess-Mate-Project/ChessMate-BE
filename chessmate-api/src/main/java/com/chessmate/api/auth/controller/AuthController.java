@@ -47,7 +47,7 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<SuccessResponse<Profile>> me(
+  public ResponseEntity<SuccessResponse<Long>> me(
       @AuthenticationPrincipal OAuth2PrincipalDetails principalDetails
   ) {
       return ResponseEntity.ok(

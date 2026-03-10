@@ -98,8 +98,18 @@ public class AuthRedisRepository {
    * @return Refresh 토큰, 없으면 null
    */
   public String getRefreshToken(Long id) {
-    String key = OAuthRedisPrefix.LICHESS_OAUTH_TOKEN.bind(id);
+    String key = AuthRedisPrefix.REFRESH_TOKEN.bind(id);
     return redisService.get(key, String.class);
+  }
+
+  public void saveRefreshToken(Long id, String token, long ttlSeconds) {
+    String key = AuthRedisPrefix.REFRESH_TOKEN.bind(id);
+    redisService.save(key, token, ttlSeconds);
+  }
+
+  public void deleteRefreshToken(Long id) {
+    String key = AuthRedisPrefix.REFRESH_TOKEN.bind(id);
+    redisService.delete(key);
   }
 
 }

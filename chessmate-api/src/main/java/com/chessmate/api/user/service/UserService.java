@@ -7,13 +7,6 @@ import com.chessmate.api.user.dto.TotalUserCountResponse;
 import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import com.chessmate.common.code.UserErrorCode;
 import com.chessmate.common.exception.UserException;
-import com.chessmate.domain.user.User;
-import com.chessmate.infra_core.repositoryImpl.UserColorStatRepositoryImpl;
-import com.chessmate.infra_core.repositoryImpl.UserDailyStreakRepositoryImpl;
-import com.chessmate.infra_core.repositoryImpl.UserFirstMoveStatRepositoryImpl;
-import com.chessmate.infra_core.repositoryImpl.UserPerfRepositoryImpl;
-import com.chessmate.infra_core.repositoryImpl.UserRepositoryImpl;
-import com.chessmate.infra_redis.redis.CacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,12 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
 
-  private final UserRepositoryImpl userRepository;
-  private final UserPerfRepositoryImpl userPerfRepository;
-  private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
-  private final UserColorStatRepositoryImpl userColorStatRepository;
-  private final UserFirstMoveStatRepositoryImpl userFirstMoveStatRepository;
-  private final CacheService cacheService;
   private final ImageUtil imageUtil;
 
   public TotalUserCountResponse getTotalUserCount() {

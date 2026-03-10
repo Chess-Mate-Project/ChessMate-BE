@@ -1,9 +1,10 @@
 package com.chessmate.api.oauth;
 
-import com.chessmate.infra_core.entity.ChesscomProfile;
-import com.chessmate.infra_core.entity.LichessProfile;
-import com.chessmate.infra_core.repository.ChesscomProfileRepository;
-import com.chessmate.infra_core.repository.LichessProfileRepository;
+import com.chessmate.infra_core.entity.OAuthPlatForm;
+import com.chessmate.infra_core.entity.Profile;
+import com.chessmate.infra_core.entity.User;
+import com.chessmate.infra_core.repository.ProfileRepository;
+import com.chessmate.infra_core.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,14 +18,18 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * OAuth2 로그인 시 사용자 정보를 처리하는 서비스입니다.
+ * Lichess와 Chess.com 플랫폼을 지원합니다.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-  private final LichessProfileRepository lichessProfileRepository;
-  private final ChesscomProfileRepository chesscomProfileRepository;
-  private final RestTemplate restTemplate; // 추가 API 호출용
+  private final UserRepository userRepository;
+  private final ProfileRepository profileRepository;
+  private final RestTemplate restTemplate;
 
   @Override
   public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
@@ -37,13 +42,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     if (registrationId.equals("lichess")) {
       profileId = handleLichessLogin(attributes).getId();
     } else if (registrationId.equals("chesscom")) {
-      // 1. attributes나 id_token에서 username 추출 (Chess.com 설정에 따라 다름)
       String username = (String) attributes.get("username");
-
-      // 2. Username이 확보되었으니 PubAPI로 상세 정보 조회
       Map<String, Object> detailAttributes = fetchChessComPublicProfile(username);
-      attributes.putAll(detailAttributes); // 기존 정보와 합침
-
+      attributes.putAll(detailAttributes);
       profileId = handleChesscomLogin(attributes).getId();
     } else {
       throw new OAuth2AuthenticationException("Unsupported Provider");
@@ -52,6 +53,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     return new OAuth2PrincipalDetails(profileId, attributes);
   }
 
+  /**
+   * Chess.com Public API에서 사용자 상세 정보를 조회합니다.
+   *
+   * @param username Chess.com 사용자명
+   * @return API 응답 데이터
+   */
   private Map<String, Object> fetchChessComPublicProfile(String username) {
     String url = "https://api.chess.com/pub/player/" + username;
     try {
@@ -62,33 +69,69 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
   }
 
-  private LichessProfile handleLichessLogin(Map<String, Object> attributes) {
+  /**
+   * Lichess 로그인 처리: User와 Profile을 생성 또는 업데이트합니다.
+   *
+   * @param attributes OAuth2 응답 데이터
+   * @return 생성/업데이트된 Profile
+   */
+  private Profile handleLichessLogin(Map<String, Object> attributes) {
     String lichessId = (String) attributes.get("id");
     String username = (String) attributes.get("username");
 
-    return lichessProfileRepository.findByLichessId(lichessId)
+    return profileRepository.findByPlatformIdAndPlatform(lichessId, OAuthPlatForm.LICHESS)
         .map(profile -> {
+          // 기존 프로필 업데이트
           if (!username.equals(profile.getUsername())) {
             profile.setUsername(username);
-            profile.setUpdatedAt(LocalDateTime.now());
+            profile.setPlatformCreatedAt(LocalDateTime.now());
           }
-          return lichessProfileRepository.save(profile);
+          return profileRepository.save(profile);
         })
-        .orElseGet(() -> lichessProfileRepository.save(
-            LichessProfile.builder()
-                .lichessId(lichessId)
-                .username(username)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build()
-        ));
+        .orElseGet(() -> {
+          // 새 User 및 Profile 생성
+          User newUser = userRepository.save(User.builder().build());
+          Profile newProfile = Profile.builder()
+              .user(newUser)
+              .platform(OAuthPlatForm.LICHESS)
+              .platformId(lichessId)
+              .username(username)
+              .platformCreatedAt(LocalDateTime.now())
+              .build();
+          return profileRepository.save(newProfile);
+        });
   }
 
-  // handleChessComLogin 로직 내에서 attributes.get("player_id") 등을 활용해 DB 저장
-  public ChesscomProfile handleChesscomLogin(Map<String, Object> attributes) {
-    String chesscomId = (String) attributes.get("player_id");
+  /**
+   * Chess.com 로그인 처리: User와 Profile을 생성 또는 업데이트합니다.
+   *
+   * @param attributes OAuth2 응답 데이터
+   * @return 생성/업데이트된 Profile
+   */
+  private Profile handleChesscomLogin(Map<String, Object> attributes) {
+    String playerId = String.valueOf(attributes.get("player_id"));
     String username = (String) attributes.get("username");
 
-    return  null;
+    return profileRepository.findByPlatformIdAndPlatform(playerId, OAuthPlatForm.CHESSCOM)
+        .map(profile -> {
+          // 기존 프로필 업데이트
+          if (!username.equals(profile.getUsername())) {
+            profile.setUsername(username);
+            profile.setPlatformCreatedAt(LocalDateTime.now());
+          }
+          return profileRepository.save(profile);
+        })
+        .orElseGet(() -> {
+          // 새 User 및 Profile 생성
+          User newUser = userRepository.save(User.builder().build());
+          Profile newProfile = Profile.builder()
+              .user(newUser)
+              .platform(OAuthPlatForm.CHESSCOM)
+              .platformId(playerId)
+              .username(username)
+              .platformCreatedAt(LocalDateTime.now())
+              .build();
+          return profileRepository.save(newProfile);
+        });
   }
 }

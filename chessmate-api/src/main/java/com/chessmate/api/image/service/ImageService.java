@@ -28,10 +28,10 @@ public class ImageService {
       UserImageType type,
       String contentType
   ) {
-    String url = String.format("users/%d/%s.jpg", id, type.name().toLowerCase());
+    String key = String.format("users/%d/%s.jpg", id, type.name().toLowerCase());
     PutObjectRequest putRequest = PutObjectRequest.builder()
         .bucket(cloudflareProperties.getBucket())
-        .url(url)
+        .key(key)
         .contentType(contentType)
         .build();
 

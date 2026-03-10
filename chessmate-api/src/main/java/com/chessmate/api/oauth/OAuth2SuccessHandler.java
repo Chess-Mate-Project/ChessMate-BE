@@ -39,10 +39,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     // 1. OAuth2 인증된 사용자 정보 추출
     OAuth2PrincipalDetails oAuth2PrincipalDetails =
         (OAuth2PrincipalDetails) authentication.getPrincipal();
-    Profile profile = oAuth2PrincipalDetails.getProfile();
+    Long id = oAuth2PrincipalDetails.getId();
 
-    jwtService.generateAccessToken(response, profile);
-    jwtService.generateRefreshToken(response, profile);
+    jwtService.generateAccessToken(response, id);
+    jwtService.generateRefreshToken(response, id);
 
     getRedirectStrategy().sendRedirect(request, response, clientUrl);
 

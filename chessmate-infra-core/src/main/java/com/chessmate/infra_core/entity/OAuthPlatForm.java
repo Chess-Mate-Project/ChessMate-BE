@@ -1,6 +1,6 @@
 package com.chessmate.infra_core.entity;
 
-public enum OauthPlatForm {
+public enum OAuthPlatForm {
   CHESSCOM,
    LICHESS
 }
