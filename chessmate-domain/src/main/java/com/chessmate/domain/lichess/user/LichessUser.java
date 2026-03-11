@@ -1,0 +1,134 @@
+package com.chessmate.domain.lichess.user;
+
+import java.time.LocalDateTime;
+
+public class LichessUser {
+  private Long id;
+  private String lichessId;
+  private String username;
+  private String dsscription;
+  private String banner;
+  private String profile;
+  private LocalDateTime createdAt;
+
+  // Getters
+  public Long getId() {
+    return id;
+  }
+
+  public String getLichessId() {
+    return lichessId;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public String getDsscription() {
+    return dsscription;
+  }
+
+  public String getBanner() {
+    return banner;
+  }
+
+  public String getProfile() {
+    return profile;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  // Setters
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public void setLichessId(String lichessId) {
+    this.lichessId = lichessId;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public void setDsscription(String dsscription) {
+    this.dsscription = dsscription;
+  }
+
+  public void setBanner(String banner) {
+    this.banner = banner;
+  }
+
+  public void setProfile(String profile) {
+    this.profile = profile;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  // Builder
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private Long id;
+    private String lichessId;
+    private String username;
+    private String dsscription;
+    private String banner;
+    private String profile;
+    private LocalDateTime createdAt;
+
+    public Builder id(Long id) {
+      this.id = id;
+      return this;
+    }
+
+    public Builder lichessId(String lichessId) {
+      this.lichessId = lichessId;
+      return this;
+    }
+
+    public Builder username(String username) {
+      this.username = username;
+      return this;
+    }
+
+    public Builder dsscription(String dsscription) {
+      this.dsscription = dsscription;
+      return this;
+    }
+
+    public Builder banner(String banner) {
+      this.banner = banner;
+      return this;
+    }
+
+    public Builder profile(String profile) {
+      this.profile = profile;
+      return this;
+    }
+
+    public Builder createdAt(LocalDateTime createdAt) {
+      this.createdAt = createdAt;
+      return this;
+    }
+
+    public LichessUser build() {
+      LichessUser user = new LichessUser();
+      user.id = this.id;
+      user.lichessId = this.lichessId;
+      user.username = this.username;
+      user.dsscription = this.dsscription;
+      user.banner = this.banner;
+      user.profile = this.profile;
+      user.createdAt = this.createdAt;
+      return user;
+    }
+  }
+}
+

@@ -1,7 +1,5 @@
 package com.chessmate.api.auth;
 
-
-import com.chessmate.domain.user.User;
 import java.util.Collection;
 import java.util.List;
 import lombok.Getter;
@@ -9,13 +7,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
-public class UserPrincipal implements UserDetails {
-    private final User user;
+public class UserPrincipal implements UserDetails, OAuth2User {
     private final Long id;
+    private String username;
+    private OAuth2Provider provider;
 
-    public UserPrincipal(User u) {
-        this.user = u;
-        this.id = u.getId();
+    public UserPrincipal(Long id, String username, OAuth2Provider provider) {
+      this.id = id;
+      this.username = username;
+      this.provider = provider;
     }
 
     @Override

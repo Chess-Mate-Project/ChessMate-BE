@@ -6,8 +6,6 @@ import com.chessmate.api.rank.dto.RankerDto;
 import com.chessmate.api.rank.dto.RankingResponse;
 import com.chessmate.common.type.GameType;
 import com.chessmate.domain.user.User;
-import com.chessmate.domain.userPerf.UserPerf;
-import com.chessmate.domain.userPerf.UserPerfRepository;
 import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
 import com.chessmate.infra_redis.redis.CacheService;
 import java.util.ArrayList;

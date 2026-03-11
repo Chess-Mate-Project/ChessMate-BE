@@ -3,7 +3,6 @@ package com.chessmate.worker.batch.service;
 
 import com.chessmate.common.service.UserBatchService;
 import com.chessmate.domain.user.User;
-import com.chessmate.domain.userDailyStreak.UserDailyStreak;
 import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
 import java.util.List;

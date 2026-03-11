@@ -1,8 +1,5 @@
 package com.chessmate.worker.batch.write;
 
-import com.chessmate.domain.userColorStat.UserColorStat;
-import com.chessmate.domain.userDailyStreak.UserDailyStreak;
-import com.chessmate.domain.userFirstMoveStat.UserFirstMoveStat;
 import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
 import com.chessmate.infra_persistence.repositoryImpl.UserFirstMoveStatRepositoryImpl;
