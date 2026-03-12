@@ -22,24 +22,20 @@ public class LichessUserMapper {
       return null;
     }
 
-    return LichessUserEntity.builder()
-        .id(user.getId())
+    LichessUserEntity entity = LichessUserEntity.builder()
         .lichessId(user.getLichessId())
         .username(user.getUsername())
         .description(user.getDescription())
-        .bannerImage(user.getBannerImage())
-        .profileImage(user.getProfileImage())
-        .title(user.getTitle())
+        .bannerImage(user.getBanner())
+        .profileImage(user.getProfile())
         .createdAt(user.getCreatedAt())
-        .lichessCreatedAt(user.getLichessCreatedAt())
-        .lastLoginAt(user.getLastLoginAt())
-        .allGames(user.getAllGames())
-        .ratedGames(user.getRatedGames())
-        .wins(user.getWins())
-        .losses(user.getLosses())
-        .draws(user.getDraws())
-        .totalSeconds(user.getTotalSeconds())
         .build();
+
+    if (user.getId() != null) {
+      entity.setId(user.getId());
+    }
+
+    return entity;
   }
 
   /**
@@ -58,18 +54,9 @@ public class LichessUserMapper {
         .lichessId(entity.getLichessId())
         .username(entity.getUsername())
         .description(entity.getDescription())
-        .bannerImage(entity.getBannerImage())
-        .profileImage(entity.getProfileImage())
-        .title(entity.getTitle())
+        .banner(entity.getBannerImage())
+        .profile(entity.getProfileImage())
         .createdAt(entity.getCreatedAt())
-        .lichessCreatedAt(entity.getLichessCreatedAt())
-        .lastLoginAt(entity.getLastLoginAt())
-        .allGames(entity.getAllGames())
-        .ratedGames(entity.getRatedGames())
-        .wins(entity.getWins())
-        .losses(entity.getLosses())
-        .draws(entity.getDraws())
-        .totalSeconds(entity.getTotalSeconds())
         .build();
   }
 }

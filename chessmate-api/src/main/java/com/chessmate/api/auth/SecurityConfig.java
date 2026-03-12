@@ -2,6 +2,7 @@ package com.chessmate.api.auth;
 
 
 import com.chessmate.api.auth.jwt.JwtAuthenticationFilter;
+import com.chessmate.api.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +21,8 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final CustomOAuth2UserService customOAuth2UserService;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -43,6 +45,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
@@ -57,9 +61,20 @@ public class SecurityConfig {
                             "/api/user/count",
                             "/api/auth/refresh",
                             "/api/auth/logout",
-                            "/api/rank/ranking"
+                            "/api/rank/ranking",
+                            "/oauth2/authorization/lichess",
+                            "/oauth2/authorization/chesscom",
+                            "/login/oauth/code/chesscom",
+                            "/login/oauth/code/lichess",
+                            "/api/oauth/chesscom/callback",
+                            "/api/oauth/lichess/callback"
+
                         ).permitAll()
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2 // 이게 있어야 /oauth2/authorization/...
+                    .loginProcessingUrl("/api/oauth/*/callback")// 경로가 활성화됨
+                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

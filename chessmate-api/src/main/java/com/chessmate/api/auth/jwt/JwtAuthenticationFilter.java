@@ -34,7 +34,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/oauth/oauth-url",
             "/api/oauth/callback",
             "/api/auth/refresh",
-            "/api/user/count"
+            "/api/user/count",
+            "/oauth2/authorization/lichess",
+            "/oauth2/authorization/chesscom",
+            "/login/oauth/code/chesscom",
+            "/login/oauth/code/lichess",
+            "/api/oauth/chesscom/callback",
+            "/api/oauth/lichess/callback"
         };
 
         for (String path : excluded) {
@@ -88,9 +94,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 토큰 검증
             log.info("[JWT Filter] 토큰 검증 시작 - uri={}", uri);
             if (jwtService.validateAccessToken(accessToken)) {
-                SecurityContextHolder.getContext().setAuthentication(
-                        jwtService.getAuthentication(accessToken)
-                );
+//                SecurityContextHolder.getContext().setAuthentication(
+//                        jwtService.getAuthentication(accessToken)
+//                );
                 log.info("[JWT Filter] 엑세스 토큰 검증 성공, 인증 객체 설정 완료 - uri={}", uri);
                 chain.doFilter(request, response);
                 return;

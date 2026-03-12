@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(
     scanBasePackages = "com.chessmate"
 )
-@EnableJpaRepositories(basePackages = "com.chessmate.infra_persistence.jpaRepository")
-@EntityScan(basePackages = "com.chessmate.infra_persistence.entity")
+@EnableJpaRepositories(basePackages = "com.chessmate.infra_persistence")
+@EntityScan(basePackages = "com.chessmate.infra_persistence")
 public class ChessmateApiApplication {
 
   public static void main(String[] args) {

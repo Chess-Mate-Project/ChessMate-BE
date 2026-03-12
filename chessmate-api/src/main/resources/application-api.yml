@@ -2,7 +2,38 @@ spring:
   config:
     activate:
       on-profile: api
-
+  security:
+    oauth2:
+      client:
+        registration:
+          lichess:
+            client-id: ChessLadder
+            client-authentication-method: none #PCKE 자동 활성화 하기
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/api/oauth/lichess/callback
+            scope:
+              - "preference:read"
+              - "email:read"
+            client-name: Lichess
+          chesscom:
+            client-id: 0cb23ccc-127e-11f1-9e9f-011b3c0d4706
+            client-authentication-method: none
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/api/oauth/chesscom/callback
+            scope:
+              - "openid"
+              - "profile"
+              - "email"
+            client-name: Chess.com
+        provider:
+          lichess:
+            authorization-uri: https://lichess.org/oauth
+            token-uri: https://lichess.org/api/token
+            user-name-attribute: id
+          chesscom:
+            authorization-uri: https://oauth.chess.com/authorize
+            token-uri: https://oauth.chess.com/token
+            user-name-attribute: sub # OIDC 표준 식별자
   application:
     name: ChessMate-api
 
@@ -35,3 +66,9 @@ cloudflare:
     secretKey: 06ee2c6f82726bb26b97cf2fabbfafd8224f7073fd0c87d68a3cf3383ee4d903
     bucket: chessladder
     cdn: https://pub-1e7b1be2d4da472a936752a572ed0419.r2.dev
+
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG

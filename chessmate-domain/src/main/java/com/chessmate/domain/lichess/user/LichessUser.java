@@ -6,10 +6,22 @@ public class LichessUser {
   private Long id;
   private String lichessId;
   private String username;
-  private String dsscription;
+  private String description;
   private String banner;
   private String profile;
   private LocalDateTime createdAt;
+
+  public static LichessUser newUser(String lichessId, String username) {
+    return LichessUser.builder()
+        .lichessId(lichessId)
+        .username(username)
+        .createdAt(LocalDateTime.now())
+        .profile(null)
+        .banner(null)
+        .description(null)
+        .id(null) // domain에서 id를 정의해야하는가?
+        .build();
+  }
 
   // Getters
   public Long getId() {
@@ -24,8 +36,8 @@ public class LichessUser {
     return username;
   }
 
-  public String getDsscription() {
-    return dsscription;
+  public String getDescription() {
+    return description;
   }
 
   public String getBanner() {
@@ -53,8 +65,8 @@ public class LichessUser {
     this.username = username;
   }
 
-  public void setDsscription(String dsscription) {
-    this.dsscription = dsscription;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
   public void setBanner(String banner) {
@@ -78,7 +90,7 @@ public class LichessUser {
     private Long id;
     private String lichessId;
     private String username;
-    private String dsscription;
+    private String description;
     private String banner;
     private String profile;
     private LocalDateTime createdAt;
@@ -98,8 +110,8 @@ public class LichessUser {
       return this;
     }
 
-    public Builder dsscription(String dsscription) {
-      this.dsscription = dsscription;
+    public Builder description(String description) {
+      this.description = description;
       return this;
     }
 
@@ -123,7 +135,7 @@ public class LichessUser {
       user.id = this.id;
       user.lichessId = this.lichessId;
       user.username = this.username;
-      user.dsscription = this.dsscription;
+      user.description = this.description;
       user.banner = this.banner;
       user.profile = this.profile;
       user.createdAt = this.createdAt;

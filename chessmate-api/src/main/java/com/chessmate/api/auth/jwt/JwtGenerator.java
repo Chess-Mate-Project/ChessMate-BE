@@ -1,6 +1,6 @@
 package com.chessmate.api.auth.jwt;
 
-import com.chessmate.domain.user.User;
+import com.chessmate.api.auth.OAuth2Provider;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.security.Key;
@@ -11,31 +11,36 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtGenerator {
 
-    // 공통 헤더
-    private static final Map<String, Object> HEADER = Map.of(
-            "typ", "JWT",
-            "alg", "HS256"
-    );
-
-    // 1) Access Token 생성
-    public String generateAccessToken(Key secret, long expMillis, User user) {
+    /**
+    * AccessToken을 생성하는 메서드
+    * - subject에는 사용자 고유 Id를 담음.
+    * - claim에는 각각 Provider(Oauth제공자) 와 Provider의 고유 Id를 저장함
+    * - 반환은 String Type의 AccessToken
+    * **/
+    public String generateAccessToken(Key secret, long expMillis, Long id, OAuth2Provider provider, Object providerId) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
-                .setHeader(HEADER)
-                .setSubject(String.valueOf(user.getId()))      // sub: 사용자 PK(Id)
-                .setExpiration(new Date(now + expMillis))       // 만료시간
-                .signWith(secret, SignatureAlgorithm.HS256)     // 서명
-                .compact(); // JWT 생성
+                .setSubject(String.valueOf(id))
+                .claim("provider", provider)
+                .claim("providerId" , providerId)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expMillis))
+                .signWith(secret, SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    // 2) Refresh Token 생성
-    public String generateRefreshToken(Key secret, long expMillis, User user) {
+  /**
+   * RefreshToken을 생성하는 메서드
+   * - subject에는 사용자 고유 Id를 담음.
+   * - 반환은 String Type의 RefreshToken
+   * **/
+    public String generateRefreshToken(Key secret, long expMillis, Long id) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
-                .setHeader(HEADER)
-                .setSubject(String.valueOf(user.getId()))             // sub: 사용자 PK(Id)
-                .setExpiration(new Date(now + expMillis)) // 만료시간
-                .signWith(secret, SignatureAlgorithm.HS256) // 서명
-                .compact(); // JWT 생성
+                .setSubject(String.valueOf(id))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expMillis))
+                .signWith(secret, SignatureAlgorithm.HS256)
+                .compact();
     }
 }

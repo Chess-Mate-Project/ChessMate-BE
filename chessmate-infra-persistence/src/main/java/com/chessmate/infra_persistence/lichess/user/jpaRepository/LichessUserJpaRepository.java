@@ -7,11 +7,13 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 /**
  * Lichess 사용자 JPA Repository
  * - LichessUserEntity에 대한 데이터베이스 접근을 담당
  */
+@Repository
 public interface LichessUserJpaRepository extends JpaRepository<LichessUserEntity, Long> {
 
   /**
