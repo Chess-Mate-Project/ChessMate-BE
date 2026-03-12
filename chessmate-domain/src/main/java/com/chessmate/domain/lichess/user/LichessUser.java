@@ -12,14 +12,15 @@ public class LichessUser {
   private LocalDateTime createdAt;
 
   public static LichessUser newUser(String lichessId, String username) {
+
     return LichessUser.builder()
+        .id(null) // domain에서 id를 정의해야하는가?
         .lichessId(lichessId)
         .username(username)
         .createdAt(LocalDateTime.now())
         .profile(null)
         .banner(null)
         .description(null)
-        .id(null) // domain에서 id를 정의해야하는가?
         .build();
   }
 

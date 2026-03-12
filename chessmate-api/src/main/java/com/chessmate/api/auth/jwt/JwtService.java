@@ -6,6 +6,7 @@ import static com.chessmate.api.auth.jwt.JwtRule.JWT_ISSUE_HEADER;
 import static com.chessmate.api.auth.jwt.JwtRule.REFRESH_PREFIX;
 
 import com.chessmate.api.auth.OAuth2Provider;
+import com.chessmate.api.auth.dto.TokenResponse;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.infra_redis.redis.RedisService;
@@ -31,10 +32,9 @@ public class JwtService {
     private final long REFRESH_EXP;
     @Value("${spring.data.redis.key.refresh_token_base}")
     private String REFRESH_TOKEN_KEY;
-    @Value("${cookie.domain}")
-    private String cookieDomain;
+  private String refreshToken;
 
-    public JwtService(
+  public JwtService(
             JwtGenerator jwtGenerator,
             JwtUtil jwtUtil,
             RedisService redisService,
@@ -55,41 +55,25 @@ public class JwtService {
 
     @Transactional
     public String generateAccessToken(
-        HttpServletResponse res,
         Long id,
         OAuth2Provider provider,
         String providerId
     ) {
-        String accessToken = generator.generateAccessToken(ACCESS_KEY, ACCESS_EXP, id, provider, providerId);
-
-        ResponseCookie cookie = ResponseCookie.from(ACCESS_PREFIX.getValue(), accessToken)
-                .path("/")
-                .domain(cookieDomain)
-                .httpOnly(false)
-                .secure(true)
-                .sameSite("Lax")
-                .maxAge(60) // 프론트 단에서 바로 읽고 저장소 저장 후 삭제할것이기때문에 짧은 maxAge설정하기.
-                .build();
-
-        res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());
-        return accessToken;
+        return generator.generateAccessToken(ACCESS_KEY, ACCESS_EXP, id, provider, providerId);
     }
 
     @Transactional
-    public String generateRefreshToken(HttpServletResponse res, Long id) {
+    public String generateRefreshToken(Long id) {
         String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id);
-        ResponseCookie cookie = ResponseCookie.from(REFRESH_PREFIX.getValue(), rt)
-                .path("/")
-                .domain(cookieDomain)
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("Lax")
-                .maxAge(REFRESH_EXP / 1000)
-                .build();
-        res.addHeader(JWT_ISSUE_HEADER.getValue(), cookie.toString());
 
         redisService.save(REFRESH_TOKEN_KEY + id, rt, REFRESH_EXP);
         return rt;
+    }
+
+    public TokenResponse generateTokenResponse(Long id, OAuth2Provider provider, String providerId) {
+        String accessToken = generateAccessToken(id, provider, providerId);
+        String refreshToken = generateRefreshToken(id);
+        return new TokenResponse(accessToken, ACCESS_EXP, refreshToken, REFRESH_EXP, "Bearer");
     }
 
     // 3) Access Token 검증
@@ -107,19 +91,6 @@ public class JwtService {
         String stored = redisService.get(key, String.class);
         return t.equals(stored);
     }
-//
-//    // 5) Authentication 객체 생성
-//    public Authentication getAuthentication(String token) {
-//        String userId = Jwts.parserBuilder()
-//                .setSigningKey(ACCESS_KEY)
-//                .build()
-//                .parseClaimsJws(token)
-//                .getBody()
-//                .getSubject();
-//        UserDetails principal = userDetailsService.loadUserByUsername(userId);
-//        return new UsernamePasswordAuthenticationToken(
-//                principal, "", principal.getAuthorities());
-//    }
 
     public String resolveToken(HttpServletRequest req, JwtRule p) {
         Cookie[] cs = req.getCookies();

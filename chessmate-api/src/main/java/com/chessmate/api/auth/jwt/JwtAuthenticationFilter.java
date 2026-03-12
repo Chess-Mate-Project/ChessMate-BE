@@ -40,7 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/login/oauth/code/chesscom",
             "/login/oauth/code/lichess",
             "/api/oauth/chesscom/callback",
-            "/api/oauth/lichess/callback"
+            "/api/oauth/lichess/callback",
+            "/api/auth/token"
         };
 
         for (String path : excluded) {

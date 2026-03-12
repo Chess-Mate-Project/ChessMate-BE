@@ -9,10 +9,14 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class OAuth2RedisRepository {
 
-  private RedisService redisService;
+  private final RedisService redisService;
 
-  public void saveProviderToken(Long id, OAuth2Provider provider, String providerToken, Long expiration) {
-    String key = Oauth2RedisPrefix.CHESSCOM_TOKEN.getCompleteKey(id);
-
+  public void saveProviderToken(Long id, OAuth2Provider provider, String providerToken, int expiration) {
+    String key = "";
+    switch(provider) {
+      case LICHESS -> key = Oauth2RedisPrefix.LICHESS_TOKEN.getCompleteKey(id);
+      case CHESSCOM -> key = Oauth2RedisPrefix.CHESSCOM_TOKEN.getCompleteKey(id);
+    }
+    redisService.save(key, providerToken, expiration);
   }
 }

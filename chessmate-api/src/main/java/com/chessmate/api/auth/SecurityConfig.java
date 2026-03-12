@@ -1,6 +1,7 @@
 package com.chessmate.api.auth;
 
 
+import com.chessmate.api.auth.handler.OAuth2AuthenticationSuccessHandler;
 import com.chessmate.api.auth.jwt.JwtAuthenticationFilter;
 import com.chessmate.api.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class SecurityConfig {
 
   private final CustomOAuth2UserService customOAuth2UserService;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -67,7 +69,8 @@ public class SecurityConfig {
                             "/login/oauth/code/chesscom",
                             "/login/oauth/code/lichess",
                             "/api/oauth/chesscom/callback",
-                            "/api/oauth/lichess/callback"
+                            "/api/oauth/lichess/callback",
+                            "/api/auth/token"
 
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -75,6 +78,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2 // 이게 있어야 /oauth2/authorization/...
                     .loginProcessingUrl("/api/oauth/*/callback")// 경로가 활성화됨
                     .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                    .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

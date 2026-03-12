@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 @Getter
 public class LichessTokenResponse {
   private String accessToken;
-  private Long expiresIn;
+  private int expiresIn;
   private String tokenType;
 }
