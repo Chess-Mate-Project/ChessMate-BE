@@ -51,10 +51,6 @@ spring:
 cookie:
   domain: localhost
 
-oauth:
-  lichess:
-    redirect-url: http://localhost:8080/api/oauth/callback
-
 client:
   url: http://localhost:5173
 

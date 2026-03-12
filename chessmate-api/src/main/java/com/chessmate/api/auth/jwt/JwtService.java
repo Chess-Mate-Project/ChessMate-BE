@@ -6,17 +6,27 @@ import static com.chessmate.api.auth.jwt.JwtRule.JWT_ISSUE_HEADER;
 import static com.chessmate.api.auth.jwt.JwtRule.REFRESH_PREFIX;
 
 import com.chessmate.api.auth.OAuth2Provider;
+import com.chessmate.api.auth.UserPrincipal;
 import com.chessmate.api.auth.dto.TokenResponse;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.infra_redis.redis.RedisService;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.security.Key;
+import java.util.Collection;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +90,25 @@ public class JwtService {
     public boolean validateAccessToken(String t) {
         boolean result = util.getTokenStatus(t, ACCESS_KEY) == TokenStatus.AUTHENTICATED;
         return result;
+    }
+
+    public Authentication getAuthentication(String t) {
+      Claims claims = Jwts.parserBuilder()
+          .setSigningKey(ACCESS_KEY)
+          .build()
+          .parseClaimsJws(t)
+          .getBody();
+
+      Long id = Long.valueOf(claims.getSubject());
+      String ProviderId = claims.get("providerId", String.class);
+      OAuth2Provider provider = claims.get("provider", OAuth2Provider.class);
+
+      return new UsernamePasswordAuthenticationToken(
+          new UserPrincipal(id, provider),
+          null,
+          List.of(new SimpleGrantedAuthority("ROLE_USER"))
+      );
+
     }
 
     // 4) Refresh Token 검증 (서명 + Redis 일치 여부)

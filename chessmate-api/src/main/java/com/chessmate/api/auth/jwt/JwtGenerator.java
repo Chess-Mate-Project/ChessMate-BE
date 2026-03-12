@@ -17,7 +17,7 @@ public class JwtGenerator {
     * - claim에는 각각 Provider(Oauth제공자) 와 Provider의 고유 Id를 저장함
     * - 반환은 String Type의 AccessToken
     * **/
-    public String generateAccessToken(Key secret, long expMillis, Long id, OAuth2Provider provider, Object providerId) {
+    public String generateAccessToken(Key secret, long expMillis, Long id, OAuth2Provider provider, String providerId) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setSubject(String.valueOf(id))
