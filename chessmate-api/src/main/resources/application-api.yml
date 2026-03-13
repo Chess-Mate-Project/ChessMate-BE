@@ -10,7 +10,7 @@ spring:
             client-id: ChessLadder
             client-authentication-method: none #PCKE 자동 활성화 하기
             authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8080/api/oauth/lichess/callback
+            redirect-uri: http://localhost:8080/login/oauth2/code/lichess
             scope:
               - "preference:read"
               - "email:read"
@@ -18,8 +18,9 @@ spring:
           chesscom:
             client-id: 0cb23ccc-127e-11f1-9e9f-011b3c0d4706
             client-authentication-method: none
+            client-secret: wjdansrudwjdnasrud
             authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8080/api/oauth/chesscom/callback
+            redirect-uri: http://localhost:8080/login/oauth2/code/chesscom
             scope:
               - "openid"
               - "profile"
@@ -34,6 +35,7 @@ spring:
             authorization-uri: https://oauth.chess.com/authorize
             token-uri: https://oauth.chess.com/token
             user-name-attribute: sub # OIDC 표준 식별자
+            jwk-set-uri: https://oauth.chess.com/certs
   application:
     name: ChessMate-api
 

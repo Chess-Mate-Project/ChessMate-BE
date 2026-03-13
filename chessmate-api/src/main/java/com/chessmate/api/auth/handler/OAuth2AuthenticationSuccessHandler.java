@@ -59,7 +59,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
 
     } else if (principal.getProvider().equals(OAuth2Provider.CHESSCOM)) {
+      String tempCode = UUID.randomUUID().toString();
+      String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/login/callback")
+          .queryParam("code", tempCode)
+          .build().toUriString();
 
+      getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
 
