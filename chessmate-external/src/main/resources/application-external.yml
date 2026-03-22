@@ -1,19 +1,7 @@
-oauth:
-  lichess:
-    client-id: ChessMate
-    oauth-url: https://lichess.org/oauth
-    token-url: https://lichess.org/api/token
-    base-api-url: https://lichess.org/api
+# 이 파일은 공통 기본값만 포함합니다
+# 환경별 설정은 application-external-{env}.yml을 참고하세요
+# - application-external-local.yml (로컬 개발)
+# - application-external-prod.yml (프로덕션)
 
-  ttl:
-    account: 36000
-    perf: 36000
-    games: 36000
-
-spring:
-  jackson:
-    property-naming-strategy: SNAKE_CASE
-  config:
-    activate:
-      on-profile: external
-
+# 프로덕션 배포시 다음과 같이 실행합니다:
+# java -jar app.jar --spring.profiles.active=external-prod
