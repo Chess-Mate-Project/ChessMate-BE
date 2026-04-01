@@ -1,8 +1,10 @@
 package com.chessmate.api.global.auth.oauth.lichess;
 
 import com.chessmate.api.global.auth.dto.TokenResponse;
+import com.chessmate.api.global.auth.oauth.common.CookieManager;
 import com.chessmate.api.global.auth.oauth.common.PlatFormOAuthController;
 import com.chessmate.api.global.auth.oauth.common.dto.OAuthUrlResponse;
+import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.response.SuccessResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class LichessOauthController implements PlatFormOAuthController {
 
-  private final LichessOAuthService lichessOAuthService;
   @Value("${client.url}")
   private String clientUrl;
+
+  private final LichessOAuthService lichessOAuthService;
+  private final CookieManager cookieManager;
 
   @GetMapping("/lichess/url")
   public ResponseEntity<SuccessResponse<OAuthUrlResponse>> getOAuthUrl() {
@@ -40,22 +44,7 @@ public class LichessOauthController implements PlatFormOAuthController {
   ) throws IOException {
     TokenResponse response = lichessOAuthService.callback(code, state);
 
-    Cookie accessCookie = new Cookie("chessladder_lichess_access_token", response.accessToken());
-    accessCookie.setHttpOnly(true);
-    accessCookie.setSecure(true);
-    accessCookie.setPath("/");
-    accessCookie.setMaxAge((int) response.accessTokenExpiresIn());
-    accessCookie.setAttribute("SameSite", "Lax");
-
-    Cookie refreshCookie = new Cookie("chessladder_lichess_refresh_token", response.refreshToken());
-    refreshCookie.setHttpOnly(true);
-    refreshCookie.setSecure(true);
-    refreshCookie.setPath("/api/auth/refresh");
-    refreshCookie.setMaxAge((int) response.refreshTokenExpiresIn());
-    refreshCookie.setAttribute("SameSite", "Lax");
-
-    res.addCookie(accessCookie);
-    res.addCookie(refreshCookie);
+    cookieManager.addAuthCookies(res, response, OAuthPlatForm.CHESSCOM);
 
     res.sendRedirect(clientUrl);
   }

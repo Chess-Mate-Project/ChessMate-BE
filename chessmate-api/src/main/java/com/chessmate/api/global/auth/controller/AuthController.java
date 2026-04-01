@@ -1,20 +1,14 @@
 package com.chessmate.api.global.auth.controller;
 
-import static com.chessmate.api.global.auth.jwt.JwtRule.REFRESH_PREFIX;
 
-import com.chessmate.api.global.auth.dto.TokenResponse;
+import com.chessmate.api.global.auth.dto.UserPrincipal;
 import com.chessmate.api.global.auth.service.AuthService;
-
 import com.chessmate.common.response.SuccessResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.repository.query.Param;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,7 +28,7 @@ public class AuthController {
       @AuthenticationPrincipal UserPrincipal userPrincipal,
       HttpServletResponse res
   ) {
-      authService.logout(userPrincipal.getUser(), res);
+      authService.logout(userPrincipal, res);
 
       return ResponseEntity.ok(
           new SuccessResponse<>("로그아웃 성공", null)

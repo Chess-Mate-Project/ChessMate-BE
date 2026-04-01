@@ -2,6 +2,7 @@ package com.chessmate.api.global.auth.oauth.lichess;
 
 import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.api.global.auth.jwt.JwtService;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import com.chessmate.infra_redis.repository.OAuth2RedisRepository;
 import com.chessmate.api.global.auth.oauth.common.PlatFormOAuthService;
 import com.chessmate.api.global.auth.oauth.common.dto.OAuthUrlResponse;
@@ -16,7 +17,6 @@ import com.chessmate.external.dto.account.LichessAccountDto;
 import com.chessmate.external.dto.lichess.LichessTokenResponse;
 import com.chessmate.external.service.OAuthService;
 import com.chessmate.common.dto.OAuthPlatForm;
-import com.chessmate.infra_redis.repository.LichessRedisRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +37,7 @@ public class LichessOAuthService implements PlatFormOAuthService {
   private final LichessApi lichessApi;
   private final JwtService jwtService;
   private final LichessUserRepository lichessUserRepository;
-  private final LichessRedisRepository lichessRedisRepository;
-
+  private final AuthRedisRepository authRedisRepository;
   /**
    * Lichess OAuth URL 생성
    *
@@ -92,9 +91,7 @@ public class LichessOAuthService implements PlatFormOAuthService {
 
       LichessUser saveUser = lichessUserRepository.save(lichessUser);
 
-
-      lichessRedisRepository.saveAccessToken(saveUser.getLichessId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
-      log.info("[OAuth Callback] lichessId={} accesstoken={} expiresIn={}", saveUser.getLichessId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
+      authRedisRepository.saveLichessAccessToken(saveUser.getId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
 
       // 4. 새로운 사용자인 경우 게임 동기화 작업 큐에 추가
       if (isNewUser) {

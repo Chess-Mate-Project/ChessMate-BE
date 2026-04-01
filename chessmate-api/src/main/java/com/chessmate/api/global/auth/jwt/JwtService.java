@@ -4,7 +4,7 @@ package com.chessmate.api.global.auth.jwt;
 import static com.chessmate.api.global.auth.jwt.JwtRule.ACCESS_PREFIX;
 import static com.chessmate.api.global.auth.jwt.JwtRule.REFRESH_PREFIX;
 
-import com.chessmate.api.global.auth.UserPrincipal;
+import com.chessmate.api.global.auth.dto.UserPrincipal;
 import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.dto.OAuthPlatForm;

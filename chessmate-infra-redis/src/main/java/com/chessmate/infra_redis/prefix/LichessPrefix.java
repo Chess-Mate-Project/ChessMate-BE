@@ -17,10 +17,10 @@ public enum LichessPrefix {
 
   /**
    * providerId를 결합하여 Redis에서 사용할 최종 Key를 생성합니다.
-   * @param providerId 정수형 ID
+   * @param userId 정수형 ID
    * @return 완성된 Redis Key 문자열
    */
-  public String createKey(String providerId) {
-    return this.prefix + providerId;
+  public String createKey(Long userId) {
+    return this.prefix + userId;
   }
 }

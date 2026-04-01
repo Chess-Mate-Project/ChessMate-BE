@@ -2,6 +2,7 @@ package com.chessmate.api.global.auth.oauth.chesscom;
 
 import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.api.global.auth.jwt.JwtService;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import com.chessmate.infra_redis.repository.OAuth2RedisRepository;
 import com.chessmate.api.global.auth.oauth.common.PlatFormOAuthService;
 import com.chessmate.api.global.auth.oauth.common.dto.OAuthUrlResponse;
@@ -15,7 +16,6 @@ import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.infra_persistence.chesscom.user.repositoryImpl.ChesscomUserRepositoryImpl;
-import com.chessmate.infra_redis.repository.ChesscomRedisRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
   private final ChesscomUtil chesscomUtil;
   private final GameTaskProducer gameTaskProducer;
   private final JwtService jwtService;
-  private final ChesscomRedisRepository chesscomRedisRepository;
+  private final AuthRedisRepository authRedisRepository;
 
 
   /**
@@ -91,11 +91,8 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
       boolean isNewUser = chesscomUser.getId() == null;
 
       ChesscomUser saveUser = chesscomUserRepository.save(chesscomUser);
-      chesscomRedisRepository.saveAccessToken(saveUser.getChesscomId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
-      log.info("[OAuth Callback] lichessId={} accesstoken={} expiresIn={}", saveUser.getChesscomId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
-
-      String status = isNewUser ? "신규 사용자 회원가입" : "기존 사용자 재로그인";
-      log.info("[OAuth Callback] {} - username={}, chesscomId={}", status, chesscomUserInfo.getUsername(), chesscomUserInfo.getUserId());
+      authRedisRepository.saveChesscomAccessToken(saveUser.getId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
+      authRedisRepository.saveChesscomRefreshToken(saveUser.getId(), tokenResponse.getRefreshToken(), tokenResponse.getExpiresIn());
 
       // 4. 새로운 사용자인 경우 게임 동기화 작업 큐에 추가
       if (isNewUser) {

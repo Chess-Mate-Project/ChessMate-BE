@@ -1,4 +1,4 @@
-package com.chessmate.api.global.auth;
+package com.chessmate.api.global.config;
 
 
 import com.chessmate.api.global.auth.jwt.JwtAuthenticationFilter;
