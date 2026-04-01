@@ -99,13 +99,13 @@ public class LichessOAuthService implements PlatFormOAuthService {
       // 4. 새로운 사용자인 경우 게임 동기화 작업 큐에 추가
       if (isNewUser) {
         gameTaskProducer.enqueueNewUserGameSync(
-            OAuthPlatForm.CHESSCOM,
+            OAuthPlatForm.LICHESS,
             saveUser.getUsername(),
             saveUser.getId()
         );
       }
 
-      TokenResponse response = jwtService.generateTokenResponse(saveUser.getId(), OAuthPlatForm.CHESSCOM, saveUser.getLichessId());
+      TokenResponse response = jwtService.generateTokenResponse(saveUser.getId(), OAuthPlatForm.LICHESS, saveUser.getLichessId());
 
       return response;
 
