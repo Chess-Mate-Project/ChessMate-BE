@@ -1,8 +1,6 @@
 package com.chessmate.worker.batch.service;
 
 import com.chessmate.common.type.GameType;
-import com.chessmate.domain.userPerf.UserPerf;
-import com.chessmate.domain.userPerf.UserPerfRepository;
 import com.chessmate.infra_redis.redis.CacheService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

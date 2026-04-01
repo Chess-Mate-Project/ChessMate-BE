@@ -38,3 +38,6 @@ out/
 
 src/**/resources/application*.yml
 src/**/resources/application*.yaml
+
+
+/copilot/

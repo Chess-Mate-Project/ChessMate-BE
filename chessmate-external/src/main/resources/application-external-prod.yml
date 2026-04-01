@@ -1,0 +1,25 @@
+oauth:
+  lichess:
+    client-id: ${LICHESS_CLIENT_ID}
+    oauth-url: https://lichess.org/oauth
+    token-url: https://lichess.org/api/token
+    base-api-url: https://lichess.org/api
+    redirect-uri: ${LICHESS_REDIRECT_URL}
+
+  chesscom:
+    client-id: ${CHESSCOM_CLIENT_ID}
+    oauth-url: https://oauth.chess.com/authorize
+    token-url: https://oauth.chess.com/token
+    base-api-url: https://api.chess.com/pub
+    redirect-uri: ${CHESSCOM_REDIRECT_URL}
+
+  ttl:
+    account: 36000
+    perf: 36000
+    games: 36000
+
+spring:
+  config:
+    activate:
+      on-profile: external-prod
+
