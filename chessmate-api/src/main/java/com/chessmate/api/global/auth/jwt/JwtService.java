@@ -4,10 +4,10 @@ package com.chessmate.api.global.auth.jwt;
 import static com.chessmate.api.global.auth.jwt.JwtRule.ACCESS_PREFIX;
 import static com.chessmate.api.global.auth.jwt.JwtRule.REFRESH_PREFIX;
 
-import com.chessmate.api.global.auth.OAuth2Provider;
 import com.chessmate.api.global.auth.UserPrincipal;
 import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.common.code.AuthErrorCode;
+import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.infra_redis.redis.RedisService;
 import io.jsonwebtoken.Claims;
@@ -60,7 +60,7 @@ public class JwtService {
     @Transactional
     public String generateAccessToken(
         Long id,
-        OAuth2Provider provider,
+        OAuthPlatForm provider,
         String providerId
     ) {
         return generator.generateAccessToken(ACCESS_KEY, ACCESS_EXP, id, provider, providerId);
@@ -74,7 +74,7 @@ public class JwtService {
         return rt;
     }
 
-    public TokenResponse generateTokenResponse(Long id, OAuth2Provider provider, String providerId) {
+    public TokenResponse generateTokenResponse(Long id, OAuthPlatForm provider, String providerId) {
         String accessToken = generateAccessToken(id, provider, providerId);
         String refreshToken = generateRefreshToken(id);
         return new TokenResponse(accessToken, ACCESS_EXP, refreshToken, REFRESH_EXP, "Bearer");
@@ -95,7 +95,7 @@ public class JwtService {
 
       Long id = Long.valueOf(claims.getSubject());
       String ProviderId = claims.get("providerId", String.class);
-      OAuth2Provider provider = claims.get("provider", OAuth2Provider.class);
+      OAuthPlatForm provider = claims.get("provider", OAuthPlatForm.class);
 
       return new UsernamePasswordAuthenticationToken(
           new UserPrincipal(id, provider),

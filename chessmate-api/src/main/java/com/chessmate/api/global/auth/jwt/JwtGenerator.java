@@ -1,6 +1,6 @@
 package com.chessmate.api.global.auth.jwt;
 
-import com.chessmate.api.global.auth.OAuth2Provider;
+import com.chessmate.common.dto.OAuthPlatForm;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.security.Key;
@@ -16,7 +16,7 @@ public class JwtGenerator {
     * - claim에는 각각 Provider(Oauth제공자) 와 Provider의 고유 Id를 저장함
     * - 반환은 String Type의 AccessToken
     * **/
-    public String generateAccessToken(Key secret, long expMillis, Long id, OAuth2Provider provider, String providerId) {
+    public String generateAccessToken(Key secret, long expMillis, Long id, OAuthPlatForm provider, String providerId) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .setSubject(String.valueOf(id))

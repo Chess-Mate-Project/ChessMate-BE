@@ -3,42 +3,73 @@ package com.chessmate.domain.chesscom.user;
 import java.util.Optional;
 
 /**
- * ChesscomUser 도메인 리포지토리 인터페이스
- * Chess.com 사용자 계정 정보 관리
+ * Chess.com 사용자 도메인 Repository 인터페이스
+ * - 사용자 데이터 접근 계약 정의
+ * - 구현체는 infra_persistence에서 제공
  */
 public interface ChesscomUserRepository {
 
   /**
-   * 사용자 ID로 ChesscomUser 조회
-   * @param id 사용자 ID
-   * @return Optional<ChesscomUser> 조회된 사용자
+   * Chess.com ID로 사용자 존재 여부 확인
+   *
+   * @param chesscomId Chess.com 사용자 ID
+   * @return 존재 여부 (true: 존재, false: 미존재)
    */
-  Optional<ChesscomUser> findById(Long id);
+  boolean existsByChesscomId(Long chesscomId);
 
   /**
-   * Chess.com ID로 ChesscomUser 조회
-   * @param chesscomId Chess.com ID
-   * @return Optional<ChesscomUser> 조회된 사용자
+   * Chess.com ID로 사용자 조회
+   *
+   * @param chesscomId Chess.com 사용자 ID
+   * @return Optional<ChesscomUser> 사용자 도메인 객체
    */
   Optional<ChesscomUser> findByChesscomId(Long chesscomId);
 
   /**
-   * 사용자명으로 ChesscomUser 조회
-   * @param username Chess.com 사용자명
-   * @return Optional<ChesscomUser> 조회된 사용자
+   * 사용자명으로 사용자 조회
+   *
+   * @param username 사용자명
+   * @return Optional<ChesscomUser> 사용자 도메인 객체
    */
   Optional<ChesscomUser> findByUsername(String username);
 
   /**
-   * ChesscomUser 저장
-   * @param user 저장할 사용자
-   * @return ChesscomUser 저장된 사용자
+   * ID로 사용자 조회
+   *
+   * @param id 사용자 ID (Primary Key)
+   * @return Optional<ChesscomUser> 사용자 도메인 객체
+   */
+  Optional<ChesscomUser> findById(Long id);
+
+  /**
+   * 사용자 저장 또는 업데이트
+   *
+   * @param user 저장할 사용자 도메인 객체
+   * @return 저장된 사용자 도메인 객체 (ID가 설정됨)
    */
   ChesscomUser save(ChesscomUser user);
 
   /**
-   * 사용자 ID로 ChesscomUser 삭제
-   * @param id 사용자 ID
+   * 전체 사용자 수 조회
+   *
+   * @return 총 사용자 수
    */
-  void deleteById(Long id);
+  int count();
+
+  /**
+   * 프로필 이미지 URL 업데이트
+   *
+   * @param userId 사용자 ID
+   * @param profileImageUrl 프로필 이미지 URL
+   */
+  void updateProfileImage(Long userId, String profileImageUrl);
+
+  /**
+   * 배너 이미지 URL 업데이트
+   *
+   * @param userId 사용자 ID
+   * @param bannerImageUrl 배너 이미지 URL
+   */
+  void updateBannerImage(Long userId, String bannerImageUrl);
 }
+

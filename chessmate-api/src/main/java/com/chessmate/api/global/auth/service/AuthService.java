@@ -1,10 +1,10 @@
 package com.chessmate.api.global.auth.service;
 
-import com.chessmate.api.global.auth.OAuth2Provider;
 import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.api.global.auth.jwt.JwtService;
-import com.chessmate.api.global.auth.repository.AuthRedisRepository;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import com.chessmate.common.code.AuthErrorCode;
+import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.domain.lichess.user.LichessUser;
 import com.chessmate.infra_persistence.lichess.user.repositoryImpl.LichessUserRepositoryImpl;
@@ -23,26 +23,6 @@ public class AuthService {
   //private final ChesscomUserRepositoryImpl chesscomUserRepository;
 
 
-  public TokenResponse getToken(String code) {
-    AuthCodeInfo authCodeInfo = authRedisRepository.getAuthCode(code);
-    Long userId = authCodeInfo.userId();
-    OAuth2Provider provider = authCodeInfo.provider();
-
-    if (provider.equals(OAuth2Provider.CHESSCOM)) {
-
-    } else if (provider.equals(OAuth2Provider.LICHESS)) {
-      LichessUser luser = lichessUserRepository.findById(userId)
-          .orElseThrow(() -> new AuthException(AuthErrorCode.FAILD_GET_USER_ACCOUNT));
-
-
-      return jwtService.generateTokenResponse(luser.getId(), provider, luser.getLichessId());
-    } else {
-      throw new AuthException(AuthErrorCode.INVALID_PROVIDER);
-    }
-
-    log.info("시발 머고 ㅋㅋ");
-    return null;
-  }
 /*
   public void logout(User user, HttpServletResponse res) {
     jwtService.logout(res); //쿠키 만료

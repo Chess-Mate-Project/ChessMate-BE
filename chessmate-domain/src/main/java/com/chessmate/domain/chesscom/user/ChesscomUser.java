@@ -6,7 +6,7 @@ public class ChesscomUser {
   private Long id;
   private Long chesscomId;
   private String username;
-  private String dsscription;
+  private String description;
   private String banner;
   private String profile;
   private LocalDateTime createdAt;
@@ -24,8 +24,8 @@ public class ChesscomUser {
     return username;
   }
 
-  public String getDsscription() {
-    return dsscription;
+  public String getDescription() {
+    return description;
   }
 
   public String getBanner() {
@@ -53,8 +53,8 @@ public class ChesscomUser {
     this.username = username;
   }
 
-  public void setDsscription(String dsscription) {
-    this.dsscription = dsscription;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
   public void setBanner(String banner) {
@@ -78,7 +78,7 @@ public class ChesscomUser {
     private Long id;
     private Long chesscomId;
     private String username;
-    private String dsscription;
+    private String description;
     private String banner;
     private String profile;
     private LocalDateTime createdAt;
@@ -98,8 +98,8 @@ public class ChesscomUser {
       return this;
     }
 
-    public Builder dsscription(String dsscription) {
-      this.dsscription = dsscription;
+    public Builder description(String description) {
+      this.description = description;
       return this;
     }
 
@@ -123,11 +123,12 @@ public class ChesscomUser {
       user.id = this.id;
       user.chesscomId = this.chesscomId;
       user.username = this.username;
-      user.dsscription = this.dsscription;
+      user.description = this.description;
       user.banner = this.banner;
       user.profile = this.profile;
       user.createdAt = this.createdAt;
       return user;
     }
   }
+
 }

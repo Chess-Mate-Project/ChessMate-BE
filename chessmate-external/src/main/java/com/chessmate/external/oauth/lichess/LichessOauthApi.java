@@ -1,6 +1,6 @@
 package com.chessmate.external.oauth.lichess;
 
-import java.util.Map;
+import com.chessmate.external.dto.lichess.LichessTokenResponse;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -14,12 +14,12 @@ import org.springframework.web.service.annotation.PostExchange;
 public interface LichessOauthApi {
 
   /**
-   * Lichess OAuth 토큰 요청
+   * Authorization Code를 이용해 Access Token 발급
    *
-   * @param body 토큰 요청 본문 (grant_type, code, client_id, redirect_uri 등)
-   * @return 토큰 응답 맵 (access_token, token_type, expires_in 등)
+   * @param body grant_type, code, code_verifier, redirect_uri, client_id 포함
+   * @return LichessTokenResponse
    */
   @PostExchange("/api/token")
-  Map<String, Object> getToken(@RequestBody MultiValueMap<String, String> body);
+  LichessTokenResponse getToken(@RequestBody MultiValueMap<String, String> body);
 }
 

@@ -16,9 +16,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 
 @Entity
-@Table(name = "lichess_users", indexes = {
-    @Index(name = "idx_last_login", columnList = "last_login_at")
-})
+@Table(name = "lichess_users")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

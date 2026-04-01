@@ -3,9 +3,11 @@ package com.chessmate.external.service;
 import com.chessmate.external.config.LichessProperties;
 import com.chessmate.external.config.ChesscomProperties;
 import com.chessmate.external.dto.OAuthUrlInfoDTO;
+import com.chessmate.external.dto.chesscom.ChesscomTokenResponse;
+import com.chessmate.external.dto.lichess.LichessTokenResponse;
 import com.chessmate.external.oauth.chesscom.ChesscomOauthApi;
 import com.chessmate.external.oauth.lichess.LichessOauthApi;
-import com.chessmate.external.type.OAuthPlatForm;
+import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.external.util.PkceUtil;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -79,29 +81,57 @@ public class OAuthService {
     return new OAuthUrlInfoDTO(codeVerifier, state, oauthUrl + "?" + parameterString);
   }
 
-  public Map<String, Object> getTokenApiResponse(OAuthPlatForm platForm, String code, String codeVerifier) {
+  /**
+   * Chess.com 플랫폼에서 Authorization Code를 이용해 토큰을 발급받습니다.
+   *
+   * @param code Authorization Code
+   * @param codeVerifier PKCE Code Verifier
+   * @return ChesscomTokenResponse
+   */
+  public ChesscomTokenResponse getChesscomToken(String code, String codeVerifier) {
     MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
     body.add("code", code);
     body.add("grant_type", "authorization_code");
     body.add("code_verifier", codeVerifier);
+    body.add("redirect_uri", chesscomProperties.getRedirectUri());
+    body.add("client_id", chesscomProperties.getClientId());
 
-    if (platForm == OAuthPlatForm.CHESSCOM) {
-
-      body.add("redirect_uri", chesscomProperties.getRedirectUri());
-      body.add("client_id", chesscomProperties.getClientId());
-
-      return chesscomOauthApi.getToken(body);
-    } else if (platForm == OAuthPlatForm.LICHESS) {
-      body.add("redirect_uri", lichessProperties.getRedirectUri());
-      body.add("client_id", lichessProperties.getClientId());
-
-      return lichessOauthApi.getToken(body);
-    } else {
-      throw new IllegalArgumentException("지원하지 않는 플랫폼입니다: " + platForm);
-    }
-
-
+    return chesscomOauthApi.getToken(body);
   }
+
+  /**
+   * Lichess 플랫폼에서 Authorization Code를 이용해 토큰을 발급받습니다.
+   *
+   * @param code Authorization Code
+   * @param codeVerifier PKCE Code Verifier
+   * @return LichessTokenResponse
+   */
+  public LichessTokenResponse getLichessToken(String code, String codeVerifier) {
+    MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+    body.add("code", code);
+    body.add("grant_type", "authorization_code");
+    body.add("code_verifier", codeVerifier);
+    body.add("redirect_uri", lichessProperties.getRedirectUri());
+    body.add("client_id", lichessProperties.getClientId());
+
+    return lichessOauthApi.getToken(body);
+  }
+
+  /**
+   * Chess.com 플랫폼에서 Refresh Token을 이용해 새로운 토큰을 발급받습니다.
+   *
+   * @param refreshToken Refresh Token
+   * @return ChesscomTokenResponse
+   */
+  public ChesscomTokenResponse refreshChesscomToken(String refreshToken) {
+    MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+    body.add("grant_type", "refresh_token");
+    body.add("refresh_token", refreshToken);
+    body.add("client_id", chesscomProperties.getClientId());
+
+    return chesscomOauthApi.refreshToken(body);
+  }
+
   /**
    * Map의 파라미터들을 URL 인코딩된 쿼리 스트링으로 변환합니다.
    *

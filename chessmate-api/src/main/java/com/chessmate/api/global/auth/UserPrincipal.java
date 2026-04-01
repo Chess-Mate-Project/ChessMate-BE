@@ -1,5 +1,6 @@
 package com.chessmate.api.global.auth;
 
+import com.chessmate.common.dto.OAuthPlatForm;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -10,9 +11,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Getter
 public class UserPrincipal implements UserDetails {
     private final Long id;
-    private OAuth2Provider provider;
+    private OAuthPlatForm provider;
 
-    public UserPrincipal(Long id, OAuth2Provider provider) {
+    public UserPrincipal(Long id, OAuthPlatForm provider) {
       this.id = id;
       this.provider = provider;
     }
