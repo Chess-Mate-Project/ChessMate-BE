@@ -69,7 +69,7 @@ public class JwtService {
     @Transactional
     public String generateRefreshToken(Long id) {
         String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id);
-        authRedisRepository.saveRefreshToken(id, rt, (int) REFRESH_EXP);
+        authRedisRepository.saveRefreshToken(id, rt, (int) (REFRESH_EXP / 1000));
         return rt;
     }
 
