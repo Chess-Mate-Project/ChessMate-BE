@@ -38,8 +38,6 @@ public class JwtService {
     private final Key REFRESH_KEY;
     private final long ACCESS_EXP;
     private final long REFRESH_EXP;
-    @Value("${spring.data.redis.key.refresh_token_base}")
-    private String REFRESH_TOKEN_KEY;
 
     public JwtService(
             JwtGenerator jwtGenerator,
