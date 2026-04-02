@@ -5,8 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.security.Key;
 import java.util.Date;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class JwtGenerator {
 
@@ -18,12 +20,17 @@ public class JwtGenerator {
     * **/
     public String generateAccessToken(Key secret, long expMillis, Long id, OAuthPlatForm provider, String providerId) {
         long now = System.currentTimeMillis();
+        long expiration = now + expMillis;
+
+        log.info("AccessToken 생성 - ID: {}, Provider: {}, 만료시간: {}ms ({}초), 현재시간: {}ms",
+            id, provider, expMillis, expMillis / 1000, now);
+
         return Jwts.builder()
                 .setSubject(String.valueOf(id))
                 .claim("provider", provider)
                 .claim("providerId" , providerId)
                 .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + expMillis))
+                .setExpiration(new Date(expiration))
                 .signWith(secret, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -35,10 +42,15 @@ public class JwtGenerator {
    * **/
     public String generateRefreshToken(Key secret, long expMillis, Long id) {
         long now = System.currentTimeMillis();
+        long expiration = now + expMillis;
+
+        log.info("RefreshToken 생성 - ID: {}, 만료시간: {}ms ({}초), 현재시간: {}ms",
+            id, expMillis, expMillis / 1000, now);
+
         return Jwts.builder()
                 .setSubject(String.valueOf(id))
                 .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + expMillis))
+                .setExpiration(new Date(expiration))
                 .signWith(secret, SignatureAlgorithm.HS256)
                 .compact();
     }

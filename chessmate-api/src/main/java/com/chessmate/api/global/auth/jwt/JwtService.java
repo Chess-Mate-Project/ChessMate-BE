@@ -4,12 +4,14 @@ package com.chessmate.api.global.auth.jwt;
 import static com.chessmate.api.global.auth.jwt.JwtRule.ACCESS_PREFIX;
 import static com.chessmate.api.global.auth.jwt.JwtRule.REFRESH_PREFIX;
 
-import com.chessmate.api.global.auth.UserPrincipal;
+import com.chessmate.api.global.auth.dto.UserPrincipal;
 import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.AuthException;
+import com.chessmate.infra_redis.prefix.AuthRedisPrefix;
 import com.chessmate.infra_redis.redis.RedisService;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.Cookie;
@@ -17,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.security.Key;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,24 +27,21 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class JwtService {
     private final JwtGenerator generator;
     private final JwtUtil util;
-    private final RedisService redisService;
+    private final AuthRedisRepository authRedisRepository;
 
     private final Key ACCESS_KEY;
     private final Key REFRESH_KEY;
     private final long ACCESS_EXP;
     private final long REFRESH_EXP;
-    @Value("${spring.data.redis.key.refresh_token_base}")
-    private String REFRESH_TOKEN_KEY;
-  private String refreshToken;
 
-  public JwtService(
+    public JwtService(
             JwtGenerator jwtGenerator,
-            JwtUtil jwtUtil,
-            RedisService redisService,
+            JwtUtil jwtUtil, AuthRedisRepository authRedisRepository,
             @Value("${spring.jwt.access-token.secret}") String accessSecret,
             @Value("${spring.jwt.refresh-token.secret}") String refreshSecret,
             @Value("${spring.jwt.access-token.expiration}") long accessExpiration,
@@ -49,8 +49,8 @@ public class JwtService {
     ) {
         this.generator = jwtGenerator;
         this.util = jwtUtil;
-        this.redisService = redisService;
-        this.ACCESS_KEY = jwtUtil.getSigningKey(accessSecret);
+      this.authRedisRepository = authRedisRepository;
+      this.ACCESS_KEY = jwtUtil.getSigningKey(accessSecret);
         this.REFRESH_KEY = jwtUtil.getSigningKey(refreshSecret);
         this.ACCESS_EXP = accessExpiration;
         this.REFRESH_EXP = refreshExpiration;
@@ -69,21 +69,25 @@ public class JwtService {
     @Transactional
     public String generateRefreshToken(Long id) {
         String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id);
-
-        redisService.save(REFRESH_TOKEN_KEY + id, rt, REFRESH_EXP);
+        authRedisRepository.saveRefreshToken(id, rt, (int) (REFRESH_EXP / 1000));
         return rt;
     }
 
+    @Transactional
     public TokenResponse generateTokenResponse(Long id, OAuthPlatForm provider, String providerId) {
-        String accessToken = generateAccessToken(id, provider, providerId);
-        String refreshToken = generateRefreshToken(id);
+        String accessToken = this.generateAccessToken(id, provider, providerId);
+        String refreshToken = this.generateRefreshToken(id);
         return new TokenResponse(accessToken, ACCESS_EXP, refreshToken, REFRESH_EXP, "Bearer");
     }
 
     // 3) Access Token 검증
     public boolean validateAccessToken(String t) {
-        boolean result = util.getTokenStatus(t, ACCESS_KEY) == TokenStatus.AUTHENTICATED;
-        return result;
+        TokenStatus status = util.getTokenStatus(t, ACCESS_KEY);
+        if (status != TokenStatus.AUTHENTICATED) {
+            log.warn("JWT 토큰 검증 실패 - 상태: {}, ACCESS_EXP: {}ms", status, ACCESS_EXP);
+            return false;
+        }
+        return true;
     }
 
     public Authentication getAuthentication(String t) {
@@ -94,7 +98,6 @@ public class JwtService {
           .getBody();
 
       Long id = Long.valueOf(claims.getSubject());
-      String ProviderId = claims.get("providerId", String.class);
       OAuthPlatForm provider = claims.get("provider", OAuthPlatForm.class);
 
       return new UsernamePasswordAuthenticationToken(
@@ -110,8 +113,7 @@ public class JwtService {
         boolean ok = util.getTokenStatus(t, REFRESH_KEY) == TokenStatus.AUTHENTICATED;
         if (!ok) return false;
 
-        String key = REFRESH_TOKEN_KEY + identifier;
-        String stored = redisService.get(key, String.class);
+        String stored = authRedisRepository.getRefreshToken(identifier);
         return t.equals(stored);
     }
 
@@ -130,8 +132,7 @@ public class JwtService {
         res.addCookie(util.resetToken(REFRESH_PREFIX));
     }
 
-
-  public String getSubject(String refreshToken) {
+    public String getSubject(String refreshToken) {
     return Jwts.parserBuilder()
         .setSigningKey(REFRESH_KEY)
         .build()

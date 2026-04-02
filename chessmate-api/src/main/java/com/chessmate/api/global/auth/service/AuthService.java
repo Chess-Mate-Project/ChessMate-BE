@@ -1,26 +1,49 @@
 package com.chessmate.api.global.auth.service;
 
-import com.chessmate.api.global.auth.dto.TokenResponse;
+import com.chessmate.api.global.auth.dto.UserPrincipal;
 import com.chessmate.api.global.auth.jwt.JwtService;
-import com.chessmate.infra_redis.repository.AuthRedisRepository;
-import com.chessmate.common.code.AuthErrorCode;
+import com.chessmate.api.global.auth.service.strategy.LogoutStrategy;
 import com.chessmate.common.dto.OAuthPlatForm;
-import com.chessmate.common.exception.AuthException;
-import com.chessmate.domain.lichess.user.LichessUser;
+import com.chessmate.infra_persistence.chesscom.user.repositoryImpl.ChesscomUserRepositoryImpl;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import com.chessmate.infra_persistence.lichess.user.repositoryImpl.LichessUserRepositoryImpl;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
   private final JwtService jwtService;
   private final AuthRedisRepository authRedisRepository;
-  private final LichessUserRepositoryImpl lichessUserRepository;
-  //private final ChesscomUserRepositoryImpl chesscomUserRepository;
+  private final Map<OAuthPlatForm, LogoutStrategy> logoutStrategyMap;
+
+  // 생성자 주입 시점에 모든 전략을 Map으로 변환하여 저장
+  public AuthService(JwtService jwtService, AuthRedisRepository authRedisRepository, List<LogoutStrategy> strategies) {
+    this.jwtService = jwtService;
+    this.authRedisRepository = authRedisRepository;
+    this.logoutStrategyMap = strategies.stream()
+        .collect(Collectors.toMap(LogoutStrategy::getProvider, s -> s));
+  }
+
+  public void logout(UserPrincipal userPrincipal, HttpServletResponse res) {
+
+    LogoutStrategy strategy = logoutStrategyMap.get(userPrincipal.getProvider());
+
+    if (strategy == null) {
+      throw new IllegalArgumentException("지원하지 않는 플랫폼입니다.");
+    }
+
+    strategy.logout(userPrincipal.getId(), res);
+
+    authRedisRepository.deleteRefreshToken(userPrincipal.getId());
+  }
+
 
 
 /*

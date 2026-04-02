@@ -13,9 +13,12 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(Exception ex) {
-    ex.printStackTrace();  // 로그 남기기
+    log.error("예상치 못한 서버 에러 발생", ex);
+    String message = "서버 에러 발생";
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(new ErrorResponse(null, "서버 에러 발생" + ex.getMessage()));
+        .body(new ErrorResponse(500, message));
   }
 }
+
+
 
