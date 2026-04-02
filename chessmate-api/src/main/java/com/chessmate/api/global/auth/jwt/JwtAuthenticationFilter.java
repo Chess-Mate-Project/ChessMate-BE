@@ -47,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.debug("ACCESS_TOKEN 쿠키를 찾을 수 없습니다");
             log.debug("현재 쿠키: {}",
                 Arrays.stream(request.getCookies())
-                    .map(c -> c.getName() + "=" + c.getValue().substring(0, Math.min(20, c.getValue().length())) + "...")
+                    .map(c -> c.getName())
                     .collect(java.util.stream.Collectors.joining(", ")));
         }
 
