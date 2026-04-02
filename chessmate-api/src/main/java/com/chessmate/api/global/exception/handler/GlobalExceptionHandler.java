@@ -15,9 +15,6 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleException(Exception ex) {
     log.error("예상치 못한 서버 에러 발생", ex);
     String message = "서버 에러 발생";
-    if (ex.getMessage() != null && !ex.getMessage().isEmpty()) {
-      message += ": " + ex.getMessage();
-    }
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(new ErrorResponse(500, message));
   }
