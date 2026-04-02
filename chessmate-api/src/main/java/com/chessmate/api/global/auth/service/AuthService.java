@@ -40,6 +40,8 @@ public class AuthService {
     }
 
     strategy.logout(userPrincipal.getId(), res);
+
+    authRedisRepository.deleteRefreshToken(userPrincipal.getId());
   }
 
 

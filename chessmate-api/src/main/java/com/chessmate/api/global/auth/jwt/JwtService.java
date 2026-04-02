@@ -9,7 +9,9 @@ import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.AuthException;
+import com.chessmate.infra_redis.prefix.AuthRedisPrefix;
 import com.chessmate.infra_redis.redis.RedisService;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.Cookie;
@@ -30,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class JwtService {
     private final JwtGenerator generator;
     private final JwtUtil util;
-    private final RedisService redisService;
+    private final AuthRedisRepository authRedisRepository;
 
     private final Key ACCESS_KEY;
     private final Key REFRESH_KEY;
@@ -41,8 +43,7 @@ public class JwtService {
 
     public JwtService(
             JwtGenerator jwtGenerator,
-            JwtUtil jwtUtil,
-            RedisService redisService,
+            JwtUtil jwtUtil, AuthRedisRepository authRedisRepository,
             @Value("${spring.jwt.access-token.secret}") String accessSecret,
             @Value("${spring.jwt.refresh-token.secret}") String refreshSecret,
             @Value("${spring.jwt.access-token.expiration}") long accessExpiration,
@@ -50,8 +51,8 @@ public class JwtService {
     ) {
         this.generator = jwtGenerator;
         this.util = jwtUtil;
-        this.redisService = redisService;
-        this.ACCESS_KEY = jwtUtil.getSigningKey(accessSecret);
+      this.authRedisRepository = authRedisRepository;
+      this.ACCESS_KEY = jwtUtil.getSigningKey(accessSecret);
         this.REFRESH_KEY = jwtUtil.getSigningKey(refreshSecret);
         this.ACCESS_EXP = accessExpiration;
         this.REFRESH_EXP = refreshExpiration;
@@ -70,7 +71,7 @@ public class JwtService {
     @Transactional
     public String generateRefreshToken(Long id) {
         String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id);
-        redisService.save(REFRESH_TOKEN_KEY + id, rt, REFRESH_EXP);
+        authRedisRepository.saveRefreshToken(id, rt, (int) REFRESH_EXP);
         return rt;
     }
 
@@ -114,8 +115,7 @@ public class JwtService {
         boolean ok = util.getTokenStatus(t, REFRESH_KEY) == TokenStatus.AUTHENTICATED;
         if (!ok) return false;
 
-        String key = REFRESH_TOKEN_KEY + identifier;
-        String stored = redisService.get(key, String.class);
+        String stored = authRedisRepository.getRefreshToken(identifier);
         return t.equals(stored);
     }
 

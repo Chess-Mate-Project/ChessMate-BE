@@ -1,7 +1,12 @@
 package com.chessmate.infra_redis.prefix;
 
+/**
+ * 인증 관련 Redis 키 접두사를 관리하는 Enum입니다.
+ */
 public enum AuthRedisPrefix {
-  AUTH_CODE("auth:code:%s");
+
+  // 리프레시 토큰 저장 (예: auth:refresh:123)
+  REFRESH_TOKEN("auth:refresh:%d");
 
   private final String prefix;
 
@@ -10,12 +15,12 @@ public enum AuthRedisPrefix {
   }
 
   /**
-   * 주어진 값을 패턴에 따라 Redis 키로 변환합니다.
+   * 사용자 ID를 받아 Redis 키를 생성합니다.
    *
-   * @param value 키에 포함될 값 (String, Long, 또는 다른 타입)
-   * @return 완성된 Redis 키
+   * @param userId 사용자의 고유 식별자 (Long)
+   * @return 완성된 Redis 키 (예: auth:refresh:1)
    */
-  public String getCompleteKey(Object value) {
-    return String.format(this.prefix, value);
+  public String createKey(Long userId) {
+    return String.format(this.prefix, userId);
   }
 }

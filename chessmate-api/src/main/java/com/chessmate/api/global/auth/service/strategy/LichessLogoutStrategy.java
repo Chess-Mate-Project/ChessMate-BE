@@ -16,7 +16,6 @@ public class LichessLogoutStrategy extends AbstractLogoutStrategy {
   public void logout(Long userId, HttpServletResponse response) {
     deleteCookie(response, CookieName.ACCESS_TOKEN.of(OAuthPlatForm.LICHESS), "/");
     deleteCookie(response, CookieName.REFRESH_TOKEN.of(OAuthPlatForm.LICHESS), "/api/auth/refresh");
-
   }
 
   @Override
