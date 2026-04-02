@@ -13,8 +13,7 @@ public class ChesscomLogoutStrategy extends AbstractLogoutStrategy {
   @Override
   public void logout(Long userId, HttpServletResponse response) {
     deleteCookie(response, CookieName.ACCESS_TOKEN.of(OAuthPlatForm.CHESSCOM), "/");
-    deleteCookie(response, CookieName.REFRESH_TOKEN.of(OAuthPlatForm.CHESSCOM),
-        "/api/auth/refresh");
+    deleteCookie(response, CookieName.REFRESH_TOKEN.of(OAuthPlatForm.CHESSCOM), "/api/auth/refresh");
   }
 
   @Override
