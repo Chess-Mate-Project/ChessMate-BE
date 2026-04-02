@@ -43,7 +43,7 @@ public class LichessOauthController implements PlatFormOAuthController {
   ) throws IOException {
     TokenResponse response = lichessOAuthService.callback(code, state);
 
-    cookieManager.addAuthCookies(res, response, OAuthPlatForm.CHESSCOM);
+    cookieManager.addAuthCookies(res, response, OAuthPlatForm.LICHESS);
 
     res.sendRedirect(clientUrl);
   }
