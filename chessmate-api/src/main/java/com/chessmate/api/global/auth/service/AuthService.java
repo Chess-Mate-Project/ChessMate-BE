@@ -32,6 +32,13 @@ public class AuthService {
   }
 
   public void logout(UserPrincipal userPrincipal, HttpServletResponse res) {
+    // userPrincipal이 null인 경우 처리 (토큰이 만료되었거나 유효하지 않은 경우)
+    if (userPrincipal == null) {
+      log.warn("로그아웃 요청에서 UserPrincipal이 null입니다. 쿠키만 만료 처리합니다.");
+      jwtService.logout(res);
+      return;
+    }
+
     LogoutStrategy strategy = logoutStrategyMap.get(userPrincipal.getProvider());
 
     if (strategy == null) {

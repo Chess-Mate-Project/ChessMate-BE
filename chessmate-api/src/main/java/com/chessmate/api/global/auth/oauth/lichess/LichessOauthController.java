@@ -6,7 +6,6 @@ import com.chessmate.api.global.auth.oauth.common.PlatFormOAuthController;
 import com.chessmate.api.global.auth.oauth.common.dto.OAuthUrlResponse;
 import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.response.SuccessResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;

@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.security.Key;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +25,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class JwtService {
     private final JwtGenerator generator;
@@ -36,9 +38,8 @@ public class JwtService {
     private final long REFRESH_EXP;
     @Value("${spring.data.redis.key.refresh_token_base}")
     private String REFRESH_TOKEN_KEY;
-  private String refreshToken;
 
-  public JwtService(
+    public JwtService(
             JwtGenerator jwtGenerator,
             JwtUtil jwtUtil,
             RedisService redisService,
@@ -69,21 +70,25 @@ public class JwtService {
     @Transactional
     public String generateRefreshToken(Long id) {
         String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id);
-
         redisService.save(REFRESH_TOKEN_KEY + id, rt, REFRESH_EXP);
         return rt;
     }
 
+    @Transactional
     public TokenResponse generateTokenResponse(Long id, OAuthPlatForm provider, String providerId) {
-        String accessToken = generateAccessToken(id, provider, providerId);
-        String refreshToken = generateRefreshToken(id);
+        String accessToken = this.generateAccessToken(id, provider, providerId);
+        String refreshToken = this.generateRefreshToken(id);
         return new TokenResponse(accessToken, ACCESS_EXP, refreshToken, REFRESH_EXP, "Bearer");
     }
 
     // 3) Access Token 검증
     public boolean validateAccessToken(String t) {
-        boolean result = util.getTokenStatus(t, ACCESS_KEY) == TokenStatus.AUTHENTICATED;
-        return result;
+        TokenStatus status = util.getTokenStatus(t, ACCESS_KEY);
+        if (status != TokenStatus.AUTHENTICATED) {
+            log.warn("JWT 토큰 검증 실패 - 상태: {}, ACCESS_EXP: {}ms", status, ACCESS_EXP);
+            return false;
+        }
+        return true;
     }
 
     public Authentication getAuthentication(String t) {
@@ -94,7 +99,6 @@ public class JwtService {
           .getBody();
 
       Long id = Long.valueOf(claims.getSubject());
-      String ProviderId = claims.get("providerId", String.class);
       OAuthPlatForm provider = claims.get("provider", OAuthPlatForm.class);
 
       return new UsernamePasswordAuthenticationToken(
@@ -130,8 +134,7 @@ public class JwtService {
         res.addCookie(util.resetToken(REFRESH_PREFIX));
     }
 
-
-  public String getSubject(String refreshToken) {
+    public String getSubject(String refreshToken) {
     return Jwts.parserBuilder()
         .setSigningKey(REFRESH_KEY)
         .build()

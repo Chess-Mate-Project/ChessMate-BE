@@ -7,7 +7,7 @@ public class ErrorResponse {
   private final String message; // 사용자한테 보여줄 문구
 
   public ErrorResponse(Integer code, String message) {
-    this.code = code;
+    this.code = code != null ? code : 500;
     this.message = message;
   }
 
