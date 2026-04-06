@@ -69,4 +69,17 @@ public class JwtUtil {
         c.setMaxAge(0); // 즉시 만료
         return c;
     }
+
+    /**
+     * 5) 토큰을 쿠키로 설정 (밀리초 단위의 expiresIn을 초 단위로 변환)
+     */
+    public Cookie createTokenCookie(JwtRule rule, String tokenValue, long expiresInMillis) {
+        Cookie cookie = new Cookie(rule.getValue(), tokenValue);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setAttribute("SameSite", "Lax");
+        cookie.setMaxAge((int) (expiresInMillis / 1000)); // 밀리초 → 초 변환
+        return cookie;
+    }
 }
