@@ -77,7 +77,8 @@ public class JwtUtil {
         Cookie cookie = new Cookie(rule.getValue(), tokenValue);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // 프로덕션에서는 true로 변경
+        cookie.setSecure(true);
+        cookie.setAttribute("SameSite", "Lax");
         cookie.setMaxAge((int) (expiresInMillis / 1000)); // 밀리초 → 초 변환
         return cookie;
     }
