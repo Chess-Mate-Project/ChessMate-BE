@@ -70,15 +70,23 @@ public class AuthService {
     String refreshToken = null;
     OAuthPlatForm detectedProvider = null;
 
-    outer:
-    for (OAuthPlatForm platform : OAuthPlatForm.values()) {
-      String cookieName = CookieName.REFRESH_TOKEN.of(platform);
-      for (Cookie cookie : cookies) {
-        if (cookie.getName().equals(cookieName) && cookie.getValue() != null && !cookie.getValue().isEmpty()) {
-          refreshToken = cookie.getValue();
-          detectedProvider = platform;
-          break outer;
+    for (Cookie cookie : cookies) {
+      if (cookie.getValue() == null || cookie.getValue().isEmpty()) {
+        continue;
+      }
+
+      for (OAuthPlatForm platform : OAuthPlatForm.values()) {
+        String cookieName = CookieName.REFRESH_TOKEN.of(platform);
+        if (!cookie.getName().equals(cookieName)) {
+          continue;
         }
+
+        if (detectedProvider != null && detectedProvider != platform) {
+          throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        refreshToken = cookie.getValue();
+        detectedProvider = platform;
       }
     }
 
