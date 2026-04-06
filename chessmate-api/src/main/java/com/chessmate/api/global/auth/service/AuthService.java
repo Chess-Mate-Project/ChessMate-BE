@@ -1,17 +1,23 @@
 package com.chessmate.api.global.auth.service;
 
+import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.api.global.auth.dto.UserPrincipal;
 import com.chessmate.api.global.auth.jwt.JwtService;
+import com.chessmate.api.global.auth.oauth.common.CookieManager;
+import com.chessmate.api.global.auth.oauth.common.CookieName;
 import com.chessmate.api.global.auth.service.strategy.LogoutStrategy;
+import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.dto.OAuthPlatForm;
-import com.chessmate.infra_persistence.chesscom.user.repositoryImpl.ChesscomUserRepositoryImpl;
+import com.chessmate.common.exception.AuthException;
+import com.chessmate.domain.chesscom.user.ChesscomUserRepository;
+import com.chessmate.domain.lichess.user.LichessUserRepository;
 import com.chessmate.infra_redis.repository.AuthRedisRepository;
-import com.chessmate.infra_persistence.lichess.user.repositoryImpl.LichessUserRepositoryImpl;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,18 +27,29 @@ public class AuthService {
 
   private final JwtService jwtService;
   private final AuthRedisRepository authRedisRepository;
+  private final CookieManager cookieManager;
+  private final LichessUserRepository lichessUserRepository;
+  private final ChesscomUserRepository chesscomUserRepository;
   private final Map<OAuthPlatForm, LogoutStrategy> logoutStrategyMap;
 
-  // 생성자 주입 시점에 모든 전략을 Map으로 변환하여 저장
-  public AuthService(JwtService jwtService, AuthRedisRepository authRedisRepository, List<LogoutStrategy> strategies) {
+  public AuthService(
+      JwtService jwtService,
+      AuthRedisRepository authRedisRepository,
+      CookieManager cookieManager,
+      LichessUserRepository lichessUserRepository,
+      ChesscomUserRepository chesscomUserRepository,
+      List<LogoutStrategy> strategies
+  ) {
     this.jwtService = jwtService;
     this.authRedisRepository = authRedisRepository;
+    this.cookieManager = cookieManager;
+    this.lichessUserRepository = lichessUserRepository;
+    this.chesscomUserRepository = chesscomUserRepository;
     this.logoutStrategyMap = strategies.stream()
         .collect(Collectors.toMap(LogoutStrategy::getProvider, s -> s));
   }
 
   public void logout(UserPrincipal userPrincipal, HttpServletResponse res) {
-
     LogoutStrategy strategy = logoutStrategyMap.get(userPrincipal.getProvider());
 
     if (strategy == null) {
@@ -40,41 +57,63 @@ public class AuthService {
     }
 
     strategy.logout(userPrincipal.getId(), res);
-
     authRedisRepository.deleteRefreshToken(userPrincipal.getId());
   }
 
+  public void refresh(HttpServletRequest req, HttpServletResponse res) {
+    Cookie[] cookies = req.getCookies();
+    if (cookies == null) {
+      throw new AuthException(AuthErrorCode.JWT_TOKEN_NOT_FOUND);
+    }
 
+    // 1. 플랫폼별 refresh 쿠키 탐색
+    String refreshToken = null;
+    OAuthPlatForm detectedProvider = null;
 
-/*
-  public void logout(User user, HttpServletResponse res) {
-    jwtService.logout(res); //쿠키 만료
-    cacheService.deleteRefreshToken(user.getId());
+    outer:
+    for (OAuthPlatForm platform : OAuthPlatForm.values()) {
+      String cookieName = CookieName.REFRESH_TOKEN.of(platform);
+      for (Cookie cookie : cookies) {
+        if (cookie.getName().equals(cookieName) && cookie.getValue() != null && !cookie.getValue().isEmpty()) {
+          refreshToken = cookie.getValue();
+          detectedProvider = platform;
+          break outer;
+        }
+      }
+    }
 
-    cacheService.deleteLichessToken(user.getId());
+    if (refreshToken == null) {
+      throw new AuthException(AuthErrorCode.JWT_TOKEN_NOT_FOUND);
+    }
+
+    // 2. userId 파싱
+    Long userId = Long.parseLong(jwtService.getSubject(refreshToken));
+
+    // 3. Redis 서명 + 저장값 검증
+    if (!jwtService.validateRefreshToken(refreshToken, userId)) {
+      throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
+    // 4. providerId 조회
+    String providerId = resolveProviderId(userId, detectedProvider);
+
+    // 5. 새 토큰 발급 (Refresh Token Rotation)
+    TokenResponse tokenResponse = jwtService.generateTokenResponse(userId, detectedProvider, providerId);
+
+    // 6. 쿠키 갱신
+    cookieManager.addAuthCookies(res, tokenResponse, detectedProvider);
+
+    log.info("[Token Refresh] userId={}, provider={}", userId, detectedProvider);
   }
 
-  public void refresh(HttpServletRequest req, HttpServletResponse res) {
-    String refreshToken = jwtService.resolveToken(req, JwtRule.REFRESH_PREFIX);
-    String userId = jwtService.getSubject(refreshToken);
-    log.info("[토큰 재발급 요청] userId={}, refreshToken={}", userId, refreshToken);
-
-    if (refreshToken == null || !jwtService.validateRefreshToken(refreshToken, Long.valueOf(userId))) {
-      throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
-    }
-
-    User user = userRepository.findById(Long.valueOf(userId))
-        .orElseThrow(() -> new RuntimeException("유저 없음"));
-
-
-    if (!cacheService.getRefreshToken(user.getId()).equals(refreshToken)) {
-      throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
-    }
-
-    // 마지막 접속 시간 갱신
-    user.setLastLoginAt(java.time.LocalDateTime.now());
-    userRepository.save(user);
-
-    jwtService.generateAccessToken(res, user);
-  }*/
+  private String resolveProviderId(Long userId, OAuthPlatForm provider) {
+    return switch (provider) {
+      case LICHESS -> lichessUserRepository.findById(userId)
+          .map(u -> u.getLichessId())
+          .orElseThrow(() -> new AuthException(AuthErrorCode.FAILD_GET_USER_ACCOUNT));
+      case CHESSCOM -> chesscomUserRepository.findById(userId)
+          .map(u -> String.valueOf(u.getChesscomId()))
+          .orElseThrow(() -> new AuthException(AuthErrorCode.FAILD_GET_USER_ACCOUNT));
+    };
+  }
 }
