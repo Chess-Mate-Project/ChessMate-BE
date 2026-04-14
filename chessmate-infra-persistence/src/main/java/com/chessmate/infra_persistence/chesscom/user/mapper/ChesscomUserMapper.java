@@ -29,6 +29,7 @@ public class ChesscomUserMapper {
         .banner(user.getBanner())
         .profile(user.getProfile())
         .createdAt(user.getCreatedAt())
+        .platformJoinedAt(user.getPlatformJoinedAt())
         .build();
 
     if (user.getId() != null) {
@@ -57,6 +58,7 @@ public class ChesscomUserMapper {
         .banner(entity.getBanner())
         .profile(entity.getProfile())
         .createdAt(entity.getCreatedAt())
+        .platformJoinedAt(entity.getPlatformJoinedAt())
         .build();
   }
 }

@@ -1,6 +1,7 @@
 package com.chessmate.api.global.auth.controller;
 
 
+import com.chessmate.api.global.auth.dto.MeResponse;
 import com.chessmate.api.global.auth.dto.UserPrincipal;
 import com.chessmate.api.global.auth.service.AuthService;
 import com.chessmate.common.response.SuccessResponse;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,13 +51,20 @@ public class AuthController {
       );
 
   }
-//
-//  @GetMapping("/me")
-//  public ResponseEntity<SuccessResponse<User>> me(
-//      @AuthenticationPrincipal UserPrincipal userPrincipal
-//  ) {
-//      return ResponseEntity.ok(
-//          new SuccessResponse<>("인증되어 있습니다.", userPrincipal.getUser())
-//      );
-//  }
+  /**
+   * GET /api/auth/me
+   *
+   * 현재 인증 상태 확인 및 사용자 정보 반환.
+   * 200 → 인증됨, 401 → 미인증 (쿠키 없음 또는 만료)
+   */
+  @GetMapping("/me")
+  public ResponseEntity<SuccessResponse<MeResponse>> getMe(
+      @AuthenticationPrincipal UserPrincipal userPrincipal
+  ) {
+    if (userPrincipal == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    MeResponse response = authService.getMe(userPrincipal);
+    return ResponseEntity.ok(new SuccessResponse<>("사용자 정보 조회 성공", response));
+  }
 }

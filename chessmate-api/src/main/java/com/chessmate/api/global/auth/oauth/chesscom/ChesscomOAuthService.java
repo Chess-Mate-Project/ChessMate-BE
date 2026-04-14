@@ -4,10 +4,14 @@ import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.api.global.auth.jwt.JwtService;
 import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import com.chessmate.infra_redis.repository.OAuth2RedisRepository;
+import com.chessmate.infra_redis.sync.SyncJobProducer;
 import com.chessmate.api.global.auth.oauth.common.PlatFormOAuthService;
 import com.chessmate.api.global.auth.oauth.common.dto.OAuthUrlResponse;
-import com.chessmate.api.redis.GameTaskProducer;
 import com.chessmate.domain.chesscom.user.ChesscomUser;
+import com.chessmate.domain.sync.SyncJob;
+import com.chessmate.domain.sync.SyncJobRepository;
+import com.chessmate.external.api.chesscom.ChesscomApi;
+import com.chessmate.external.dto.chesscom.ChesscomPublicProfileResponse;
 import com.chessmate.external.dto.chesscom.ChesscomTokenResponse;
 import com.chessmate.external.dto.OAuthUrlInfoDTO;
 import com.chessmate.external.dto.chesscom.ChesscomUserInfo;
@@ -16,7 +20,9 @@ import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.infra_persistence.chesscom.user.repositoryImpl.ChesscomUserRepositoryImpl;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,9 +41,11 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
   private final OAuth2RedisRepository oAuth2RedisRepository;
   private final OAuthService oAuthService;
   private final ChesscomUtil chesscomUtil;
-  private final GameTaskProducer gameTaskProducer;
+  private final SyncJobProducer syncJobProducer;
+  private final SyncJobRepository syncJobRepository;
   private final JwtService jwtService;
   private final AuthRedisRepository authRedisRepository;
+  private final ChesscomApi chesscomApi;
 
 
   /**
@@ -76,7 +84,20 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
       // 2. ID Token 파싱하여 사용자 정보 추출
       ChesscomUserInfo chesscomUserInfo = chesscomUtil.parseIdToken(tokenResponse.getIdToken());
 
-      // 3. 기존 사용자 조회 또는 신규 사용자 생성
+      // 3. Chess.com 공개 프로필에서 가입일 조회
+      LocalDateTime chesscomJoinedAt = null;
+      try {
+          ChesscomPublicProfileResponse profile = chesscomApi.getPlayerProfile(chesscomUserInfo.getUsername());
+          if (profile.joined() != null && profile.joined() > 0) {
+              chesscomJoinedAt = LocalDateTime.ofInstant(Instant.ofEpochSecond(profile.joined()), ZoneOffset.UTC);
+          }
+      } catch (Exception e) {
+          log.warn("[OAuth Callback] Chess.com 공개 프로필 조회 실패 (가입일 없음) username={} error={}",
+              chesscomUserInfo.getUsername(), e.getMessage());
+      }
+      final LocalDateTime finalJoinedAt = chesscomJoinedAt;
+
+      // 4. 기존 사용자 조회 또는 신규 사용자 생성
       ChesscomUser chesscomUser = chesscomUserRepository.findByChesscomId(Long.valueOf(chesscomUserInfo.getUserId()))
               .orElseGet(() -> ChesscomUser.builder()
                     .id(null)
@@ -86,6 +107,7 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
                     .description(null)
                     .username(chesscomUserInfo.getUsername())
                     .createdAt(LocalDateTime.now())
+                    .platformJoinedAt(finalJoinedAt)
                     .build());
 
       boolean isNewUser = chesscomUser.getId() == null;
@@ -94,14 +116,12 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
       authRedisRepository.saveChesscomAccessToken(saveUser.getId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
       authRedisRepository.saveChesscomRefreshToken(saveUser.getId(), tokenResponse.getRefreshToken(), tokenResponse.getExpiresIn());
 
-      // 4. 새로운 사용자인 경우 게임 동기화 작업 큐에 추가
+      // 5. 새로운 사용자인 경우 SyncJob 생성 후 큐 등록
       if (isNewUser) {
-        gameTaskProducer.enqueueNewUserGameSync(
-            OAuthPlatForm.CHESSCOM,
-            chesscomUserInfo.getUsername(),
-            saveUser.getId()
-        );
-        log.info("[OAuth Callback] Game sync task enqueued for new user - username={}", chesscomUserInfo.getUsername());
+        SyncJob syncJob = SyncJob.create(saveUser.getId(), OAuthPlatForm.CHESSCOM, chesscomUserInfo.getUsername());
+        SyncJob savedJob = syncJobRepository.save(syncJob);
+        syncJobProducer.enqueue(OAuthPlatForm.CHESSCOM, savedJob.getId());
+        log.info("[OAuth Callback] Chess.com SyncJob 등록 userId={} jobId={}", saveUser.getId(), savedJob.getId());
       }
 
       TokenResponse response = jwtService.generateTokenResponse(saveUser.getId(), OAuthPlatForm.CHESSCOM, String.valueOf(saveUser.getChesscomId()));

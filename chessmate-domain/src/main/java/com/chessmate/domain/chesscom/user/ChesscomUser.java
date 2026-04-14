@@ -10,6 +10,7 @@ public class ChesscomUser {
   private String banner;
   private String profile;
   private LocalDateTime createdAt;
+  private LocalDateTime platformJoinedAt;
 
   // Getters
   public Long getId() {
@@ -38,6 +39,10 @@ public class ChesscomUser {
 
   public LocalDateTime getCreatedAt() {
     return createdAt;
+  }
+
+  public LocalDateTime getPlatformJoinedAt() {
+    return platformJoinedAt;
   }
 
   // Setters
@@ -69,6 +74,10 @@ public class ChesscomUser {
     this.createdAt = createdAt;
   }
 
+  public void setPlatformJoinedAt(LocalDateTime platformJoinedAt) {
+    this.platformJoinedAt = platformJoinedAt;
+  }
+
   // Builder
   public static Builder builder() {
     return new Builder();
@@ -82,6 +91,7 @@ public class ChesscomUser {
     private String banner;
     private String profile;
     private LocalDateTime createdAt;
+    private LocalDateTime platformJoinedAt;
 
     public Builder id(Long id) {
       this.id = id;
@@ -118,6 +128,11 @@ public class ChesscomUser {
       return this;
     }
 
+    public Builder platformJoinedAt(LocalDateTime platformJoinedAt) {
+      this.platformJoinedAt = platformJoinedAt;
+      return this;
+    }
+
     public ChesscomUser build() {
       ChesscomUser user = new ChesscomUser();
       user.id = this.id;
@@ -127,6 +142,7 @@ public class ChesscomUser {
       user.banner = this.banner;
       user.profile = this.profile;
       user.createdAt = this.createdAt;
+      user.platformJoinedAt = this.platformJoinedAt;
       return user;
     }
   }

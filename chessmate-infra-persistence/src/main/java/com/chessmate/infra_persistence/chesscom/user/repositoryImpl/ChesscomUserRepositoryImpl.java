@@ -4,7 +4,9 @@ import com.chessmate.domain.chesscom.user.ChesscomUser;
 import com.chessmate.domain.chesscom.user.ChesscomUserRepository;
 import com.chessmate.infra_persistence.chesscom.user.jpaRepository.ChesscomUserJpaRepository;
 import com.chessmate.infra_persistence.chesscom.user.mapper.ChesscomUserMapper;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -126,6 +128,13 @@ public class ChesscomUserRepositoryImpl implements ChesscomUserRepository {
       entity.setBanner(bannerImageUrl);
       jpaRepository.save(entity);
     });
+  }
+
+  @Override
+  public List<ChesscomUser> findAll() {
+    return jpaRepository.findAll().stream()
+        .map(mapper::toDomain)
+        .collect(Collectors.toList());
   }
 }
 

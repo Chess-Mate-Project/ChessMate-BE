@@ -1,12 +1,11 @@
 package com.chessmate.infra_redis.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -80,8 +79,8 @@ public class RedisService {
    * @param <T>  데이터 타입 파라미터
    * @return 꺼낸 데이터 (없으면 null)
    */
-  public <T> T dequeue(String key, Class<T> type, long timeout, TimeUnit unit) {
-    Object obj = redisTemplate.opsForList().rightPop(key, timeout, unit);
+  public <T> T dequeue(String key, Class<T> type) {
+    Object obj = redisTemplate.opsForList().rightPop(key);
     return convert(obj, type);
   }
 

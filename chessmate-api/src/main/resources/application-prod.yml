@@ -1,4 +1,20 @@
 spring:
-  profiles:
-    active: api,persistence,external-prod,common,domain,redis
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
 
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+    org.springframework.security.oauth2: WARN
+    org.apache.coyote.http11.Http11Processor: WARN
+    org.springframework.security.oauth2.client.oidc.authentication: WARN
+    org.springframework.security.oauth2.client.web: WARN
+    org.springframework.session: WARN
+    org.apache.catalina.session: WARN
+    org.springframework.security.web.context: WARN

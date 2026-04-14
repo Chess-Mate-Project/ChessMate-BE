@@ -32,6 +32,9 @@ public class ChesscomUserEntity {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  @Column(name = "platform_joined_at")
+  private LocalDateTime platformJoinedAt;
+
   // Constructors
   public ChesscomUserEntity() {}
 
@@ -68,6 +71,10 @@ public class ChesscomUserEntity {
     return updatedAt;
   }
 
+  public LocalDateTime getPlatformJoinedAt() {
+    return platformJoinedAt;
+  }
+
   // Setters
   public void setId(Long id) {
     this.id = id;
@@ -101,6 +108,10 @@ public class ChesscomUserEntity {
     this.updatedAt = updatedAt;
   }
 
+  public void setPlatformJoinedAt(LocalDateTime platformJoinedAt) {
+    this.platformJoinedAt = platformJoinedAt;
+  }
+
   // Builder
   public static Builder builder() {
     return new Builder();
@@ -115,6 +126,7 @@ public class ChesscomUserEntity {
     private String profile;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime platformJoinedAt;
 
     public Builder id(Long id) {
       this.id = id;
@@ -156,6 +168,11 @@ public class ChesscomUserEntity {
       return this;
     }
 
+    public Builder platformJoinedAt(LocalDateTime platformJoinedAt) {
+      this.platformJoinedAt = platformJoinedAt;
+      return this;
+    }
+
     public ChesscomUserEntity build() {
       ChesscomUserEntity entity = new ChesscomUserEntity();
       entity.id = this.id;
@@ -166,6 +183,7 @@ public class ChesscomUserEntity {
       entity.profile = this.profile;
       entity.createdAt = this.createdAt;
       entity.updatedAt = this.updatedAt;
+      entity.platformJoinedAt = this.platformJoinedAt;
       return entity;
     }
   }

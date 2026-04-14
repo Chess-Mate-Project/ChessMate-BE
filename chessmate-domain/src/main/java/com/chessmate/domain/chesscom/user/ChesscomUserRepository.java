@@ -1,5 +1,6 @@
 package com.chessmate.domain.chesscom.user;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -71,5 +72,10 @@ public interface ChesscomUserRepository {
    * @param bannerImageUrl 배너 이미지 URL
    */
   void updateBannerImage(Long userId, String bannerImageUrl);
+
+  /**
+   * 전체 Chess.com 사용자 목록 조회 (정기 증분 수집 스케쥴러용)
+   */
+  List<ChesscomUser> findAll();
 }
 

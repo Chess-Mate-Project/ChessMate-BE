@@ -98,7 +98,7 @@ public class JwtService {
         .getBody();
 
     Long id = Long.valueOf(claims.getSubject());
-    OAuthPlatForm provider = claims.get("provider", OAuthPlatForm.class);
+    OAuthPlatForm provider = OAuthPlatForm.valueOf(claims.get("provider", String.class));
 
     return new UsernamePasswordAuthenticationToken(
         new UserPrincipal(id, provider),

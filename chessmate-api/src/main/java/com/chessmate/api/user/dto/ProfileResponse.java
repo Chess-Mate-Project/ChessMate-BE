@@ -1,30 +1,16 @@
 package com.chessmate.api.user.dto;
 
+import com.chessmate.common.dto.OAuthPlatForm;
 import java.time.LocalDateTime;
 
-public record ProfileResponse (
-    // 기본 정보
+public record ProfileResponse(
     Long id,
     String username,
-    String lichessId,
-    String title,
+    OAuthPlatForm platform,
     String description,
-
-    // 프로필 이미지
-    String profileImage,
-    String bannerImage,
-
-    // 날짜
+    String profileImageUrl,
+    String bannerImageUrl,
     LocalDateTime createdAt,
-    LocalDateTime lichessCreatedAt,
-
-    // 게임 통계 (전체)
-    int allGames,
-    int ratedGames,
-    int wins,
-    int losses,
-    int draws,
-    int totalSeconds
-) {
-
-}
+    /** 플랫폼(Lichess/Chess.com) 계정 가입일 — 스트릭 콤보박스 기준점 */
+    LocalDateTime platformJoinedAt
+) {}
