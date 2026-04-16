@@ -42,4 +42,9 @@ public class UserDailyGameStatRepositoryImpl implements UserDailyGameStatReposit
         return jpaRepository.findByUserIdAndPlatformAndYear(userId, platform, year).stream()
             .map(mapper::toDomain).collect(Collectors.toList());
     }
+
+    @Override
+    public boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
+        return jpaRepository.existsByUserIdAndPlatform(userId, platform);
+    }
 }

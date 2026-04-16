@@ -9,4 +9,6 @@ public interface UserFirstMoveStatRepository {
     List<UserFirstMoveStat> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
 
     List<UserFirstMoveStat> findByUserIdAndPlatformAndTimeClass(Long userId, OAuthPlatForm platform, String timeClass);
+
+    boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
 }

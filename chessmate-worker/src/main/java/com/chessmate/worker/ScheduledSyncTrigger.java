@@ -10,13 +10,15 @@ import com.chessmate.infra_redis.sync.SyncJobProducer;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * 4시간 간격 전체 사용자 증분 수집 스케쥴러.
+ * 30분 간격 전체 사용자 증분 수집 스케쥴러.
  *
  * 동작 방식:
  * 1. DB에서 전체 Lichess / Chess.com 사용자 목록 조회
@@ -44,21 +46,51 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ScheduledSyncTrigger {
+public class ScheduledSyncTrigger implements SmartLifecycle {
+
+    // LettuceConnectionFactory(DEFAULT_PHASE = Integer.MAX_VALUE)보다 먼저 종료되도록
+    // 더 낮은 phase 부여 → 종료 순서: ScheduledSyncTrigger → LettuceConnectionFactory
+    private static final int PHASE = Integer.MAX_VALUE - 100;
 
     private static final DateTimeFormatter YEAR_MONTH_FMT = DateTimeFormatter.ofPattern("yyyy/MM");
+
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
     private final LichessUserRepository lichessUserRepository;
     private final ChesscomUserRepository chesscomUserRepository;
     private final SyncJobRepository syncJobRepository;
     private final SyncJobProducer syncJobProducer;
 
+    @Override
+    public void start() {
+        running.set(true);
+    }
+
+    @Override
+    public void stop() {
+        running.set(false);
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running.get();
+    }
+
+    @Override
+    public int getPhase() {
+        return PHASE;
+    }
+
     /**
-     * 4시간마다 전체 사용자 증분 수집 트리거.
-     * cron: 0시 / 4시 / 8시 / 12시 / 16시 / 20시 정각 실행
+     * 30분마다 전체 사용자 증분 수집 트리거.
+     * cron: 매 시각 :00 / :30 실행
      */
-    @Scheduled(cron = "0 0 */4 * * *")
+    @Scheduled(cron = "0 0/30 * * * *")
     public void triggerAllUsers() {
+        if (!running.get()) {
+            log.info("[ScheduledSyncTrigger] 종료 중 — enqueue 건너뜀");
+            return;
+        }
         log.info("[ScheduledSyncTrigger] 정기 증분 수집 시작");
         int lichessCount = scheduleLichessUsers();
         int chesscomCount = scheduleChesscomUsers();

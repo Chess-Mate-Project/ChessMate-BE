@@ -55,7 +55,9 @@ public class SyncJob {
 
     public void fail(String errorMsg) {
         this.status = SyncStatus.FAILED;
-        this.errorMsg = errorMsg;
+        this.errorMsg = errorMsg != null && errorMsg.length() > 500
+            ? errorMsg.substring(0, 500)
+            : errorMsg;
         this.updatedAt = LocalDateTime.now();
     }
 

@@ -46,6 +46,16 @@ public class GameStatAggregator {
     private final UserColorStatRepository colorStatRepository;
     private final UserFirstMoveStatRepository firstMoveStatRepository;
 
+    /**
+     * 해당 유저/플랫폼에 대해 stat 테이블 중 하나라도 비어 있으면 true.
+     * 신규 게임 없이도 강제 재집계가 필요한 상황(수동 삭제, 집계 실패 등) 감지용.
+     */
+    public boolean isAnyStatEmpty(Long userId, OAuthPlatForm platform) {
+        return !firstMoveStatRepository.existsByUserIdAndPlatform(userId, platform)
+            || !colorStatRepository.existsByUserIdAndPlatform(userId, platform)
+            || !dailyStatRepository.existsByUserIdAndPlatform(userId, platform);
+    }
+
     @Transactional
     public void aggregate(Long userId, OAuthPlatForm platform) {
         log.info("[Aggregator] 집계 시작 userId={} platform={}", userId, platform);
@@ -199,8 +209,11 @@ public class GameStatAggregator {
             ? pgn.substring(movesStart).trim()
             : pgn.trim();
 
-        String cleaned = movesSection.replaceAll("\\d+\\.", "").trim();
-        String[] tokens = cleaned.split("\\s+");
+        // {[%clk ...]} 같은 중괄호 주석 제거
+        String cleaned = movesSection.replaceAll("\\{[^}]*\\}", "");
+        // "1." 또는 "1..." 형식의 수 번호 제거
+        cleaned = cleaned.replaceAll("\\d+\\.{1,3}", "").trim();
+        String[] tokens = cleaned.trim().split("\\s+");
 
         if ("WHITE".equals(playerColor)) {
             return isValidMove(tokens, 0) ? tokens[0] : null;

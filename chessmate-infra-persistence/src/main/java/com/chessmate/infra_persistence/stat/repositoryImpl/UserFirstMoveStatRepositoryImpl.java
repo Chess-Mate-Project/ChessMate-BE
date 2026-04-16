@@ -42,4 +42,9 @@ public class UserFirstMoveStatRepositoryImpl implements UserFirstMoveStatReposit
         return jpaRepository.findByUserIdAndPlatformAndTimeClass(userId, platform, timeClass).stream()
             .map(mapper::toDomain).collect(Collectors.toList());
     }
+
+    @Override
+    public boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
+        return jpaRepository.existsByUserIdAndPlatform(userId, platform);
+    }
 }

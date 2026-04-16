@@ -40,6 +40,7 @@ public interface GameJpaRepository extends JpaRepository<GameJpaEntity, Long> {
         WHERE g.userId = :userId
           AND g.platform = :platform
           AND (:timeClass IS NULL OR g.timeClass = :timeClass)
+          AND g.rated = true
           AND g.rating IS NOT NULL
           AND g.playedAt >= :since
           AND g.playedAt = (

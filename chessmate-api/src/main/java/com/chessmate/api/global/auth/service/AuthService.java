@@ -73,36 +73,26 @@ public class AuthService {
       throw new AuthException(AuthErrorCode.JWT_TOKEN_NOT_FOUND);
     }
 
-    // 1. 플랫폼별 refresh 쿠키 탐색
+    // 1. 플랫폼 무관하게 refresh 쿠키 탐색
     String refreshToken = null;
-    OAuthPlatForm detectedProvider = null;
-
     for (Cookie cookie : cookies) {
-      if (cookie.getValue() == null || cookie.getValue().isEmpty()) {
-        continue;
-      }
-
+      if (cookie.getValue() == null || cookie.getValue().isEmpty()) continue;
       for (OAuthPlatForm platform : OAuthPlatForm.values()) {
-        String cookieName = CookieName.REFRESH_TOKEN.of(platform);
-        if (!cookie.getName().equals(cookieName)) {
-          continue;
+        if (cookie.getName().equals(CookieName.REFRESH_TOKEN.of(platform))) {
+          refreshToken = cookie.getValue();
+          break;
         }
-
-        if (detectedProvider != null && detectedProvider != platform) {
-          throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
-        refreshToken = cookie.getValue();
-        detectedProvider = platform;
       }
+      if (refreshToken != null) break;
     }
 
     if (refreshToken == null) {
       throw new AuthException(AuthErrorCode.JWT_TOKEN_NOT_FOUND);
     }
 
-    // 2. userId 파싱
+    // 2. 토큰 클레임에서 userId, provider 직접 추출
     Long userId = Long.parseLong(jwtService.getSubject(refreshToken));
+    OAuthPlatForm provider = jwtService.getProviderFromRefreshToken(refreshToken);
 
     // 3. Redis 서명 + 저장값 검증
     if (!jwtService.validateRefreshToken(refreshToken, userId)) {
@@ -110,15 +100,15 @@ public class AuthService {
     }
 
     // 4. providerId 조회
-    String providerId = resolveProviderId(userId, detectedProvider);
+    String providerId = resolveProviderId(userId, provider);
 
     // 5. 새 토큰 발급 (Refresh Token Rotation)
-    TokenResponse tokenResponse = jwtService.generateTokenResponse(userId, detectedProvider, providerId);
+    TokenResponse tokenResponse = jwtService.generateTokenResponse(userId, provider, providerId);
 
     // 6. 쿠키 갱신
-    cookieManager.addAuthCookies(res, tokenResponse, detectedProvider);
+    cookieManager.addAuthCookies(res, tokenResponse, provider);
 
-    log.info("[Token Refresh] userId={}, provider={}", userId, detectedProvider);
+    log.info("[Token Refresh] userId={}, provider={}", userId, provider);
   }
 
   public MeResponse getMe(UserPrincipal principal) {

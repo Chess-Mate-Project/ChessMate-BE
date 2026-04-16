@@ -136,5 +136,13 @@ public class ChesscomUserRepositoryImpl implements ChesscomUserRepository {
         .map(mapper::toDomain)
         .collect(Collectors.toList());
   }
+
+  @Override
+  public List<ChesscomUser> searchByUsernameContaining(String keyword) {
+    log.debug("[ChesscomUserRepository] username 검색: {}", keyword);
+    return jpaRepository.findTop10ByUsernameContainingIgnoreCase(keyword).stream()
+        .map(mapper::toDomain)
+        .collect(Collectors.toList());
+  }
 }
 

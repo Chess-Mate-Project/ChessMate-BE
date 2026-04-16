@@ -63,27 +63,33 @@ public class LichessGameSyncWorker {
         Long userId = job.getUserId();
         String username = job.getPlatformUsername();
 
-        String accessToken = tokenStore.getLichessAccessToken(userId);
-        if (accessToken == null) {
-            log.warn("[LichessWorker] 토큰 없음 userId={}", userId);
-            job.expireToken();
+        try {
+            String accessToken = tokenStore.getLichessAccessToken(userId);
+            if (accessToken == null) {
+                log.warn("[LichessWorker] 토큰 없음 userId={}", userId);
+                job.expireToken();
+                syncJobRepository.save(job);
+                return;
+            }
+
+            job.start();
             syncJobRepository.save(job);
-            return;
-        }
 
-        job.start();
-        syncJobRepository.save(job);
+            // DB에 게임이 있으면 증분 수집, 없으면 전체 수집
+            Optional<LocalDateTime> latestPlayedAt =
+                gameRepository.findLatestPlayedAtByUserIdAndPlatform(userId, OAuthPlatForm.LICHESS);
 
-        // DB에 게임이 있으면 증분 수집, 없으면 전체 수집
-        Optional<LocalDateTime> latestPlayedAt =
-            gameRepository.findLatestPlayedAtByUserIdAndPlatform(userId, OAuthPlatForm.LICHESS);
-
-        if (latestPlayedAt.isPresent()) {
-            log.info("[LichessWorker] 증분 수집 시작 userId={} username={} since={}", userId, username, latestPlayedAt.get());
-            processIncremental(job, userId, username, latestPlayedAt.get());
-        } else {
-            log.info("[LichessWorker] 전체 수집 시작 userId={} username={}", userId, username);
-            processFullSync(job, userId, username);
+            if (latestPlayedAt.isPresent()) {
+                log.info("[LichessWorker] 증분 수집 시작 userId={} username={} since={}", userId, username, latestPlayedAt.get());
+                processIncremental(job, userId, username, latestPlayedAt.get());
+            } else {
+                log.info("[LichessWorker] 전체 수집 시작 userId={} username={}", userId, username);
+                processFullSync(job, userId, username);
+            }
+        } catch (Exception e) {
+            log.error("[LichessWorker] 수집 실패 userId={} error={}", userId, e.getMessage(), e);
+            job.fail(e.getMessage());
+            syncJobRepository.save(job);
         }
     }
 
@@ -101,13 +107,14 @@ public class LichessGameSyncWorker {
 
                 String ndjson = lichessApi.getGames(
                     "Bearer " + token, NDJSON, username,
-                    CHUNK_SIZE, untilGameId, null, "dateDesc", true
+                    CHUNK_SIZE, untilGameId, null, "dateDesc", null
                 );
 
                 List<LichessGamesDto> games = parseNdjson(ndjson);
                 if (games.isEmpty()) break;
 
                 List<Game> toSave = games.stream()
+                    .filter(g -> g.rated())
                     .filter(g -> SUPPORTED_TIME_CLASSES.contains(g.perf()))
                     .filter(g -> g.createdAt() != null && g.createdAt() > 0)
                     .map(g -> toGame(userId, username, g))
@@ -162,13 +169,14 @@ public class LichessGameSyncWorker {
 
                 String ndjson = lichessApi.getGames(
                     "Bearer " + token, NDJSON, username,
-                    CHUNK_SIZE, null, since, "dateAsc", true
+                    CHUNK_SIZE, null, since, "dateAsc", null
                 );
 
                 List<LichessGamesDto> games = parseNdjson(ndjson);
                 if (games.isEmpty()) break;
 
                 List<Game> toSave = games.stream()
+                    .filter(g -> g.rated())
                     .filter(g -> SUPPORTED_TIME_CLASSES.contains(g.perf()))
                     .filter(g -> g.createdAt() != null && g.createdAt() > 0)
                     .map(g -> toGame(userId, username, g))
@@ -193,8 +201,8 @@ public class LichessGameSyncWorker {
             syncJobRepository.save(job);
             log.info("[LichessWorker] 증분 수집 완료 userId={} 신규={}건", userId, totalNewlySaved);
 
-            // 신규 게임이 실제로 저장됐을 때만 stat 재집계 (이미 집계된 데이터 재집계 방지)
-            if (totalNewlySaved > 0) {
+            // 신규 게임이 저장됐거나, stat 테이블 중 하나라도 비어 있으면 재집계
+            if (totalNewlySaved > 0 || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.LICHESS)) {
                 statAggregator.aggregate(userId, OAuthPlatForm.LICHESS);
                 perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username);
             }
@@ -234,7 +242,11 @@ public class LichessGameSyncWorker {
     private Integer resolveRating(LichessGamesDto dto, boolean isWhite) {
         if (dto.players() == null) return null;
         var player = isWhite ? dto.players().white() : dto.players().black();
-        return player != null ? player.rating() : null;
+        if (player == null || player.rating() == null) return null;
+        // rated 게임은 rating + ratingDiff = 게임 후 실제 레이팅
+        // casual 게임은 ratingDiff가 null이므로 entry rating 그대로
+        int diff = player.ratingDiff() != null ? player.ratingDiff() : 0;
+        return player.rating() + diff;
     }
 
     private boolean isWhitePlayer(LichessGamesDto dto, String username) {

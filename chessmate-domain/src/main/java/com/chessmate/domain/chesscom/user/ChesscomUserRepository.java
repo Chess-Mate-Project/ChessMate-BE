@@ -77,5 +77,13 @@ public interface ChesscomUserRepository {
    * 전체 Chess.com 사용자 목록 조회 (정기 증분 수집 스케쥴러용)
    */
   List<ChesscomUser> findAll();
+
+  /**
+   * username에 keyword가 포함된 사용자 목록 조회 (검색용)
+   *
+   * @param keyword 검색 키워드
+   * @return 매칭된 사용자 목록
+   */
+  List<ChesscomUser> searchByUsernameContaining(String keyword);
 }
 

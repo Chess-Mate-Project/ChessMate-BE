@@ -9,4 +9,6 @@ public interface UserColorStatRepository {
     List<UserColorStat> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
 
     List<UserColorStat> findByUserIdAndPlatformAndTimeClass(Long userId, OAuthPlatForm platform, String timeClass);
+
+    boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
 }

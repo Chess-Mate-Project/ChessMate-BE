@@ -39,7 +39,7 @@ public class AuthController {
       );
   }
 
-  @GetMapping("refresh")
+  @PostMapping("refresh")
   public ResponseEntity<SuccessResponse<Void>> refreshToken(
       HttpServletResponse res,
       HttpServletRequest req

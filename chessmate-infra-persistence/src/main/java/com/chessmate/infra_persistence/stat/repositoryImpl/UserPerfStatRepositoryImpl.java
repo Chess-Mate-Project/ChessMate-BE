@@ -6,6 +6,9 @@ import com.chessmate.domain.stat.UserPerfStatRepository;
 import com.chessmate.infra_persistence.stat.jpaRepository.UserPerfStatJpaRepository;
 import com.chessmate.infra_persistence.stat.mapper.UserPerfStatMapper;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,5 +36,25 @@ public class UserPerfStatRepositoryImpl implements UserPerfStatRepository {
     @Transactional
     public void deleteByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
         jpaRepository.deleteByUserIdAndPlatform(userId, platform);
+    }
+
+    @Override
+    public Optional<UserPerfStat> findTopRatingByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
+        return jpaRepository.findTopRatingByUserIdAndPlatform(userId, platform)
+            .map(mapper::toDomain);
+    }
+
+    @Override
+    public Map<Long, UserPerfStat> findTopRatingByUserIdsAndPlatform(List<Long> userIds, OAuthPlatForm platform) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return jpaRepository.findByUserIdInAndPlatform(userIds, platform).stream()
+            .map(mapper::toDomain)
+            .collect(Collectors.toMap(
+                UserPerfStat::getUserId,
+                stat -> stat,
+                (a, b) -> a.getRating() >= b.getRating() ? a : b
+            ));
     }
 }

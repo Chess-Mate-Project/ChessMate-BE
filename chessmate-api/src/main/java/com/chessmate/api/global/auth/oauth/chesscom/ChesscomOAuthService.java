@@ -19,7 +19,7 @@ import com.chessmate.external.service.OAuthService;
 import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.common.code.AuthErrorCode;
-import com.chessmate.infra_persistence.chesscom.user.repositoryImpl.ChesscomUserRepositoryImpl;
+import com.chessmate.domain.chesscom.user.ChesscomUserRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -37,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ChesscomOAuthService implements PlatFormOAuthService {
 
-  private final ChesscomUserRepositoryImpl chesscomUserRepository;
+  private final ChesscomUserRepository chesscomUserRepository;
   private final OAuth2RedisRepository oAuth2RedisRepository;
   private final OAuthService oAuthService;
   private final ChesscomUtil chesscomUtil;
@@ -114,7 +114,7 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
 
       ChesscomUser saveUser = chesscomUserRepository.save(chesscomUser);
       authRedisRepository.saveChesscomAccessToken(saveUser.getId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
-      authRedisRepository.saveChesscomRefreshToken(saveUser.getId(), tokenResponse.getRefreshToken(), tokenResponse.getExpiresIn());
+      authRedisRepository.saveChesscomRefreshToken(saveUser.getId(), tokenResponse.getRefreshToken(), 30 * 24 * 3600);
 
       // 5. 새로운 사용자인 경우 SyncJob 생성 후 큐 등록
       if (isNewUser) {

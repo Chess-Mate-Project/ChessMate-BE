@@ -84,4 +84,12 @@ public class LichessUserRepositoryImpl implements LichessUserRepository {
         .map(mapper::toDomain)
         .collect(Collectors.toList());
   }
+
+  @Override
+  public List<LichessUser> searchByUsernameContaining(String keyword) {
+    log.debug("[LichessUserRepository] username 검색: {}", keyword);
+    return jpaRepository.findTop10ByUsernameContainingIgnoreCase(keyword).stream()
+        .map(mapper::toDomain)
+        .collect(Collectors.toList());
+  }
 }

@@ -10,6 +10,7 @@ import java.util.Optional;
  */
 public interface LichessUserRepository {
 
+
   /**
    * Lichess ID로 사용자 존재 여부 확인
    *
@@ -84,4 +85,12 @@ public interface LichessUserRepository {
    * 전체 Lichess 사용자 목록 조회 (정기 증분 수집 스케쥴러용)
    */
   List<LichessUser> findAll();
+
+  /**
+   * username에 keyword가 포함된 사용자 목록 조회 (검색용)
+   *
+   * @param keyword 검색 키워드
+   * @return 매칭된 사용자 목록
+   */
+  List<LichessUser> searchByUsernameContaining(String keyword);
 }

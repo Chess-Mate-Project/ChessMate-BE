@@ -9,4 +9,6 @@ public interface UserDailyGameStatRepository {
     List<UserDailyGameStat> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
 
     List<UserDailyGameStat> findByUserIdAndPlatformAndYear(Long userId, OAuthPlatForm platform, int year);
+
+    boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
 }

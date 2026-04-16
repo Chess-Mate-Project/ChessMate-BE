@@ -111,8 +111,8 @@ public class ChessComGameSyncWorker {
             int newlySaved = job.getTotalFetched() - savedBefore;
             log.info("[ChesscomWorker] 수집 완료 userId={} 신규={}건 total={}건", userId, newlySaved, job.getTotalFetched());
 
-            // 신규 게임이 실제로 저장됐을 때만 stat 재집계 (이미 집계된 데이터 재집계 방지)
-            if (newlySaved > 0) {
+            // 신규 게임이 저장됐거나, stat 테이블 중 하나라도 비어 있으면 재집계
+            if (newlySaved > 0 || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.CHESSCOM)) {
                 statAggregator.aggregate(userId, OAuthPlatForm.CHESSCOM);
                 perfStatFetcher.fetch(userId, OAuthPlatForm.CHESSCOM, username);
             }
