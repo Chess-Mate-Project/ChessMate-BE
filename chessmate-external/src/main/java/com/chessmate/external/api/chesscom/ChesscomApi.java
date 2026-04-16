@@ -2,6 +2,11 @@ package com.chessmate.external.api.chesscom;
 
 import com.chessmate.external.dto.ChesscomMonthlyArchiveResponse;
 import com.chessmate.external.dto.chesscom.ChesscomGameArchivesResponse;
+import com.chessmate.external.dto.chesscom.ChesscomPlayerStatsResponse;
+import com.chessmate.external.dto.chesscom.ChesscomPublicProfileResponse;
+import java.net.URI;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -22,6 +27,8 @@ public interface ChesscomApi {
    *
    * @param username Chess.com 사용자명
    * @return 게임 아카이브 URL 목록을 포함하는 응답
+   * @see ChesscomGameArchivesResponse
+   *
    *         예: {
    *           "archives": [
    *             "https://api.chess.com/pub/player/hikaru/games/2014/01",
@@ -31,7 +38,23 @@ public interface ChesscomApi {
    *         }
    */
   @GetExchange("/pub/player/{username}/games/archives")
-  ChesscomGameArchivesResponse getGameArchives(String username);
+  ChesscomGameArchivesResponse getGameArchives(@PathVariable("username") String username);
+
+  /**
+   * Chess.com 공개 프로필 조회 (가입일 등)
+   *
+   * API Endpoint: GET /pub/player/{username}
+   */
+  @GetExchange("/pub/player/{username}")
+  ChesscomPublicProfileResponse getPlayerProfile(@PathVariable("username") String username);
+
+  /**
+   * 타임클래스별 통계 조회 (레이팅 + 승/무/패)
+   *
+   * API Endpoint: GET /pub/player/{username}/stats
+   */
+  @GetExchange("/pub/player/{username}/stats")
+  ChesscomPlayerStatsResponse getPlayerStats(@PathVariable("username") String username);
 
 //  /**
 //   * 특정 월의 월간 게임 아카이브 조회
@@ -52,16 +75,17 @@ public interface ChesscomApi {
 //  );
 
   /**
-   * 전체 URL을 이용한 게임 아카이브 조회
-   * 아카이브 URL 전체가 주어졌을 때 해당 월의 모든 게임 정보를 조회합니다.
-   * Chess.com API에서 반환된 아카이브 URL을 그대로 사용할 수 있습니다.
+   * 전체 URL을 이용한 게임 아카이브 조회 (토큰 선택적)
    *
-   * @param archiveUrl 전체 아카이브 URL
-   *                   예: https://api.chess.com/pub/player/hikaru/games/2014/01
+   * @param archiveUrl  전체 아카이브 URL
+   * @param authHeader  Authorization 헤더 ("Bearer {token}"). null 가능 — 없으면 Public API 사용
    * @return 해당 월의 모든 게임 정보를 포함하는 응답
    */
   @GetExchange
-  ChesscomMonthlyArchiveResponse getArchiveByUrl(String archiveUrl);
+  ChesscomMonthlyArchiveResponse getArchiveByUrl(
+      URI archiveUrl,
+      @RequestHeader(value = "Authorization", required = false) String authHeader
+  );
 }
 
 

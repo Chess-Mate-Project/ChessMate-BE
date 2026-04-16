@@ -4,20 +4,24 @@ import com.chessmate.api.global.auth.dto.TokenResponse;
 import com.chessmate.api.global.auth.jwt.JwtService;
 import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import com.chessmate.infra_redis.repository.OAuth2RedisRepository;
+import com.chessmate.infra_redis.sync.SyncJobProducer;
 import com.chessmate.api.global.auth.oauth.common.PlatFormOAuthService;
 import com.chessmate.api.global.auth.oauth.common.dto.OAuthUrlResponse;
-import com.chessmate.api.redis.GameTaskProducer;
 import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.exception.AuthException;
 import com.chessmate.domain.lichess.user.LichessUser;
 import com.chessmate.domain.lichess.user.LichessUserRepository;
+import com.chessmate.domain.sync.SyncJob;
+import com.chessmate.domain.sync.SyncJobRepository;
 import com.chessmate.external.api.lichess.LichessApi;
 import com.chessmate.external.dto.OAuthUrlInfoDTO;
 import com.chessmate.external.dto.account.LichessAccountDto;
 import com.chessmate.external.dto.lichess.LichessTokenResponse;
 import com.chessmate.external.service.OAuthService;
 import com.chessmate.common.dto.OAuthPlatForm;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +37,8 @@ public class LichessOAuthService implements PlatFormOAuthService {
 
   private final OAuth2RedisRepository oAuth2RedisRepository;
   private final OAuthService oAuthService;
-  private final GameTaskProducer gameTaskProducer;
+  private final SyncJobProducer syncJobProducer;
+  private final SyncJobRepository syncJobRepository;
   private final LichessApi lichessApi;
   private final JwtService jwtService;
   private final LichessUserRepository lichessUserRepository;
@@ -75,6 +80,10 @@ public class LichessOAuthService implements PlatFormOAuthService {
       LichessAccountDto account = lichessApi.getCurrentAccount(bearerToken);
 
       // 3. 기존 사용자 조회 또는 신규 사용자 생성
+      LocalDateTime lichessJoinedAt = account.createdAt() > 0
+          ? LocalDateTime.ofInstant(Instant.ofEpochMilli(account.createdAt()), ZoneOffset.UTC)
+          : null;
+
       LichessUser lichessUser = lichessUserRepository.findByLichessId(account.id())
           .orElseGet(() -> LichessUser.builder()
               .id(null)
@@ -83,6 +92,7 @@ public class LichessOAuthService implements PlatFormOAuthService {
               .profile(null)
               .username(account.username())
               .createdAt(LocalDateTime.now())
+              .platformJoinedAt(lichessJoinedAt)
               .description(null)
               .build());
 
@@ -93,13 +103,12 @@ public class LichessOAuthService implements PlatFormOAuthService {
 
       authRedisRepository.saveLichessAccessToken(saveUser.getId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
 
-      // 4. 새로운 사용자인 경우 게임 동기화 작업 큐에 추가
+      // 4. 새로운 사용자인 경우 SyncJob 생성 후 큐 등록
       if (isNewUser) {
-        gameTaskProducer.enqueueNewUserGameSync(
-            OAuthPlatForm.LICHESS,
-            saveUser.getUsername(),
-            saveUser.getId()
-        );
+        SyncJob syncJob = SyncJob.create(saveUser.getId(), OAuthPlatForm.LICHESS, saveUser.getUsername());
+        SyncJob savedJob = syncJobRepository.save(syncJob);
+        syncJobProducer.enqueue(OAuthPlatForm.LICHESS, savedJob.getId());
+        log.info("[OAuth Callback] Lichess SyncJob 등록 userId={} jobId={}", saveUser.getId(), savedJob.getId());
       }
 
       TokenResponse response = jwtService.generateTokenResponse(saveUser.getId(), OAuthPlatForm.LICHESS, saveUser.getLichessId());

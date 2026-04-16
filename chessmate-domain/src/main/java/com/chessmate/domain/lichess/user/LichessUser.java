@@ -10,6 +10,7 @@ public class LichessUser {
   private String banner;
   private String profile;
   private LocalDateTime createdAt;
+  private LocalDateTime platformJoinedAt;
 
   public static LichessUser newUser(String lichessId, String username) {
 
@@ -53,6 +54,10 @@ public class LichessUser {
     return createdAt;
   }
 
+  public LocalDateTime getPlatformJoinedAt() {
+    return platformJoinedAt;
+  }
+
   // Setters
   public void setId(Long id) {
     this.id = id;
@@ -82,6 +87,10 @@ public class LichessUser {
     this.createdAt = createdAt;
   }
 
+  public void setPlatformJoinedAt(LocalDateTime platformJoinedAt) {
+    this.platformJoinedAt = platformJoinedAt;
+  }
+
   // Builder
   public static Builder builder() {
     return new Builder();
@@ -95,6 +104,7 @@ public class LichessUser {
     private String banner;
     private String profile;
     private LocalDateTime createdAt;
+    private LocalDateTime platformJoinedAt;
 
     public Builder id(Long id) {
       this.id = id;
@@ -131,6 +141,11 @@ public class LichessUser {
       return this;
     }
 
+    public Builder platformJoinedAt(LocalDateTime platformJoinedAt) {
+      this.platformJoinedAt = platformJoinedAt;
+      return this;
+    }
+
     public LichessUser build() {
       LichessUser user = new LichessUser();
       user.id = this.id;
@@ -140,6 +155,7 @@ public class LichessUser {
       user.banner = this.banner;
       user.profile = this.profile;
       user.createdAt = this.createdAt;
+      user.platformJoinedAt = this.platformJoinedAt;
       return user;
     }
   }

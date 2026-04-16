@@ -1,6 +1,7 @@
 package com.chessmate.infra_persistence.chesscom.user.jpaRepository;
 
 import com.chessmate.infra_persistence.chesscom.user.entity.ChesscomUserEntity;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -25,5 +26,12 @@ public interface ChesscomUserJpaRepository extends JpaRepository<ChesscomUserEnt
    * @return 사용자 정보
    */
   Optional<ChesscomUserEntity> findByUsername(String username);
+
+  /**
+   * username에 keyword가 포함된 사용자 목록 조회
+   * @param keyword 검색 키워드
+   * @return 매칭된 사용자 엔티티 목록
+   */
+  List<ChesscomUserEntity> findTop10ByUsernameContainingIgnoreCase(String keyword);
 }
 

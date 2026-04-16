@@ -11,26 +11,26 @@ spring:
 
   jwt:
     access-token:
-      secret: chessMateGbswProjectAccessTokenSecret
-      expiration: 3600000
+      secret: ${SPRING_JWT_ACCESS_TOKEN_SECRET:chessMateGbswProjectAccessTokenSecret}
+      expiration: ${SPRING_JWT_ACCESS_TOKEN_EXPIRATION:3600000}
     refresh-token:
-      secret: chessMateGbswProjectRefreshTokenSecret
-      expiration: 604800000
+      secret: ${SPRING_JWT_REFRESH_TOKEN_SECRET:chessMateGbswProjectRefreshTokenSecret}
+      expiration: ${SPRING_JWT_REFRESH_TOKEN_EXPIRATION:604800000}
 
 cookie:
-  domain: localhost
+  domain: ${COOKIE_DOMAIN:localhost}
 
 client:
-  url: http://localhost:5173
+  url: ${CLIENT_URL:http://localhost:5173}
 
 
 cloudflare:
   r2:
-    endpoint: https://8abcc1ccfb278ca2c5b3e8ba07623e9e.r2.cloudflarestorage.com
-    accessKey: 599e880ffcface6a291030c9dbc2f0a1
-    secretKey: 06ee2c6f82726bb26b97cf2fabbfafd8224f7073fd0c87d68a3cf3383ee4d903
-    bucket: chessladder
-    cdn: https://pub-1e7b1be2d4da472a936752a572ed0419.r2.dev
+    endpoint: ${CLOUDFLARE_R2_ENDPOINT:https://8abcc1ccfb278ca2c5b3e8ba07623e9e.r2.cloudflarestorage.com}
+    accessKey: ${CLOUDFLARE_R2_ACCESS_KEY:599e880ffcface6a291030c9dbc2f0a1}
+    secretKey: ${CLOUDFLARE_R2_SECRET_KEY:06ee2c6f82726bb26b97cf2fabbfafd8224f7073fd0c87d68a3cf3383ee4d903}
+    bucket: ${CLOUDFLARE_R2_BUCKET:chessladder}
+    cdn: ${CLOUDFLARE_R2_CDN:https://pub-1e7b1be2d4da472a936752a572ed0419.r2.dev}
 
 
 logging:

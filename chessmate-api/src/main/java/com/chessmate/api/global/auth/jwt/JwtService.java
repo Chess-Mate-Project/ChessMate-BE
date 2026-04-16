@@ -1,22 +1,11 @@
 package com.chessmate.api.global.auth.jwt;
 
-
-import static com.chessmate.api.global.auth.jwt.JwtRule.ACCESS_PREFIX;
-import static com.chessmate.api.global.auth.jwt.JwtRule.REFRESH_PREFIX;
-
 import com.chessmate.api.global.auth.dto.UserPrincipal;
 import com.chessmate.api.global.auth.dto.TokenResponse;
-import com.chessmate.common.code.AuthErrorCode;
 import com.chessmate.common.dto.OAuthPlatForm;
-import com.chessmate.common.exception.AuthException;
-import com.chessmate.infra_redis.prefix.AuthRedisPrefix;
-import com.chessmate.infra_redis.redis.RedisService;
 import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.security.Key;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +14,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -57,7 +45,6 @@ public class JwtService {
   }
 
 
-  @Transactional
   public String generateAccessToken(
       Long id,
       OAuthPlatForm provider,
@@ -66,17 +53,15 @@ public class JwtService {
     return generator.generateAccessToken(ACCESS_KEY, ACCESS_EXP, id, provider, providerId);
   }
 
-  @Transactional
-  public String generateRefreshToken(Long id) {
-    String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id);
+  public String generateRefreshToken(Long id, OAuthPlatForm provider) {
+    String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id, provider);
     authRedisRepository.saveRefreshToken(id, rt, (int) (REFRESH_EXP / 1000));
     return rt;
   }
 
-  @Transactional
   public TokenResponse generateTokenResponse(Long id, OAuthPlatForm provider, String providerId) {
     String accessToken = this.generateAccessToken(id, provider, providerId);
-    String refreshToken = this.generateRefreshToken(id);
+    String refreshToken = this.generateRefreshToken(id, provider);
     return new TokenResponse(accessToken, ACCESS_EXP, refreshToken, REFRESH_EXP, "Bearer");
   }
 
@@ -98,7 +83,7 @@ public class JwtService {
         .getBody();
 
     Long id = Long.valueOf(claims.getSubject());
-    OAuthPlatForm provider = claims.get("provider", OAuthPlatForm.class);
+    OAuthPlatForm provider = OAuthPlatForm.valueOf(claims.get("provider", String.class));
 
     return new UsernamePasswordAuthenticationToken(
         new UserPrincipal(id, provider),
@@ -117,21 +102,6 @@ public class JwtService {
     return t.equals(stored);
   }
 
-  public String resolveToken(HttpServletRequest req, JwtRule p) {
-    Cookie[] cs = req.getCookies();
-    if (cs == null)
-      throw new AuthException(AuthErrorCode.JWT_TOKEN_NOT_FOUND);
-
-    return util.resolveTokenFromCookie(cs, p);
-  }
-
-  // 7) 로그아웃 처리: 쿠키 만료
-  @Transactional
-  public void logout(HttpServletResponse res) {
-    res.addCookie(util.resetToken(ACCESS_PREFIX));
-    res.addCookie(util.resetToken(REFRESH_PREFIX));
-  }
-
   public String getSubject(String refreshToken) {
     return Jwts.parserBuilder()
         .setSigningKey(REFRESH_KEY)
@@ -139,6 +109,16 @@ public class JwtService {
         .parseClaimsJws(refreshToken)
         .getBody()
         .getSubject();
+  }
+
+  public OAuthPlatForm getProviderFromRefreshToken(String refreshToken) {
+    String provider = Jwts.parserBuilder()
+        .setSigningKey(REFRESH_KEY)
+        .build()
+        .parseClaimsJws(refreshToken)
+        .getBody()
+        .get("provider", String.class);
+    return OAuthPlatForm.valueOf(provider);
   }
 
 }

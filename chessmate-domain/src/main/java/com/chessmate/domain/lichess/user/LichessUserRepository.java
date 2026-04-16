@@ -10,6 +10,7 @@ import java.util.Optional;
  */
 public interface LichessUserRepository {
 
+
   /**
    * Lichess ID로 사용자 존재 여부 확인
    *
@@ -74,16 +75,22 @@ public interface LichessUserRepository {
   void updateBannerImage(Long userId, String bannerImageUrl);
 
   /**
-   * 최근 3일 이내 로그인한 사용자 조회
-   *
-   * @return 지난 3일 이내 로그인 기록이 있는 사용자 목록
-   */
-  List<LichessUser> findRecentLoginUsersWithin3Days();
-
-  /**
    * ID로 사용자 삭제
    *
    * @param id 삭제할 사용자 ID
    */
   void deleteById(Long id);
+
+  /**
+   * 전체 Lichess 사용자 목록 조회 (정기 증분 수집 스케쥴러용)
+   */
+  List<LichessUser> findAll();
+
+  /**
+   * username에 keyword가 포함된 사용자 목록 조회 (검색용)
+   *
+   * @param keyword 검색 키워드
+   * @return 매칭된 사용자 목록
+   */
+  List<LichessUser> searchByUsernameContaining(String keyword);
 }

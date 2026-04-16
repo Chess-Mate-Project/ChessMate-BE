@@ -38,17 +38,19 @@ public class JwtGenerator {
   /**
    * RefreshToken을 생성하는 메서드
    * - subject에는 사용자 고유 Id를 담음.
+   * - claim에는 Provider(OAuth 제공자)를 저장하여 토큰만으로 플랫폼 판별 가능
    * - 반환은 String Type의 RefreshToken
    * **/
-    public String generateRefreshToken(Key secret, long expMillis, Long id) {
+    public String generateRefreshToken(Key secret, long expMillis, Long id, OAuthPlatForm provider) {
         long now = System.currentTimeMillis();
         long expiration = now + expMillis;
 
-        log.info("RefreshToken 생성 - ID: {}, 만료시간: {}ms ({}초), 현재시간: {}ms",
-            id, expMillis, expMillis / 1000, now);
+        log.info("RefreshToken 생성 - ID: {}, Provider: {}, 만료시간: {}ms ({}초), 현재시간: {}ms",
+            id, provider, expMillis, expMillis / 1000, now);
 
         return Jwts.builder()
                 .setSubject(String.valueOf(id))
+                .claim("provider", provider)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(expiration))
                 .signWith(secret, SignatureAlgorithm.HS256)
