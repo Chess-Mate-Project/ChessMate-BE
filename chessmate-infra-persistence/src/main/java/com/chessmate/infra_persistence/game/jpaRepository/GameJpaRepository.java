@@ -51,7 +51,9 @@ public interface GameJpaRepository extends JpaRepository<GameJpaEntity, Long> {
                 AND g2.timeClass = g.timeClass
                 AND YEAR(g2.playedAt) = YEAR(g.playedAt)
                 AND MONTH(g2.playedAt) = MONTH(g.playedAt)
+                AND g2.rated = true
                 AND g2.rating IS NOT NULL
+                AND g2.playedAt >= :since
           )
         ORDER BY YEAR(g.playedAt), MONTH(g.playedAt)
         """)
