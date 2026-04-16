@@ -35,7 +35,7 @@ public class PublicUserController {
    * GET /api/users?platform=LICHESS&username=username
    * 여기서 사용하는 username은 keyword임
    * */
-  @GetMapping()
+  @GetMapping
   public ResponseEntity<SuccessResponse<SearchUsersResponse>> getUser(
       @PathVariable String username,
       @RequestParam OAuthPlatForm platform,

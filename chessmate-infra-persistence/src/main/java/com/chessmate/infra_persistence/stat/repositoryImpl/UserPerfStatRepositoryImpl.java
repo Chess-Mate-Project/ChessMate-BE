@@ -40,7 +40,7 @@ public class UserPerfStatRepositoryImpl implements UserPerfStatRepository {
 
     @Override
     public Optional<UserPerfStat> findTopRatingByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
-        return jpaRepository.findTopRatingByUserIdAndPlatform(userId, platform)
+        return jpaRepository.findFirstByUserIdAndPlatformOrderByRatingDesc(userId, platform)
             .map(mapper::toDomain);
     }
 
