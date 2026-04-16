@@ -32,6 +32,6 @@ public class SyncJobRepositoryImpl implements SyncJobRepository {
 
     @Override
     public Optional<SyncJob> findLatestByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
-        return jpaRepository.findLatestByUserIdAndPlatform(userId, platform).map(mapper::toDomain);
+        return jpaRepository.findFirstByUserIdAndPlatformOrderByCreatedAtDesc(userId, platform).map(mapper::toDomain);
     }
 }
