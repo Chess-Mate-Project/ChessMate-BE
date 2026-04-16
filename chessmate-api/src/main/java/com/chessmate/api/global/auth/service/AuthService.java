@@ -67,32 +67,34 @@ public class AuthService {
     authRedisRepository.deleteRefreshToken(userPrincipal.getId());
   }
 
-  public void refresh(HttpServletRequest req, HttpServletResponse res) {
+  public void refresh(HttpServletRequest req, HttpServletResponse res, OAuthPlatForm provider) {
     Cookie[] cookies = req.getCookies();
     if (cookies == null) {
       throw new AuthException(AuthErrorCode.JWT_TOKEN_NOT_FOUND);
     }
 
-    // 1. 플랫폼 무관하게 refresh 쿠키 탐색
+    // 1. 요청된 provider의 refresh 쿠키만 탐색
+    String targetCookieName = CookieName.REFRESH_TOKEN.of(provider);
     String refreshToken = null;
     for (Cookie cookie : cookies) {
-      if (cookie.getValue() == null || cookie.getValue().isEmpty()) continue;
-      for (OAuthPlatForm platform : OAuthPlatForm.values()) {
-        if (cookie.getName().equals(CookieName.REFRESH_TOKEN.of(platform))) {
-          refreshToken = cookie.getValue();
-          break;
-        }
+      if (cookie.getName().equals(targetCookieName)
+          && cookie.getValue() != null
+          && !cookie.getValue().isEmpty()) {
+        refreshToken = cookie.getValue();
+        break;
       }
-      if (refreshToken != null) break;
     }
 
     if (refreshToken == null) {
       throw new AuthException(AuthErrorCode.JWT_TOKEN_NOT_FOUND);
     }
 
-    // 2. 토큰 클레임에서 userId, provider 직접 추출
+    // 2. 토큰 클레임에서 userId 추출, provider 교차 검증
     Long userId = Long.parseLong(jwtService.getSubject(refreshToken));
-    OAuthPlatForm provider = jwtService.getProviderFromRefreshToken(refreshToken);
+    OAuthPlatForm tokenProvider = jwtService.getProviderFromRefreshToken(refreshToken);
+    if (tokenProvider != provider) {
+      throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+    }
 
     // 3. Redis 서명 + 저장값 검증
     if (!jwtService.validateRefreshToken(refreshToken, userId)) {
