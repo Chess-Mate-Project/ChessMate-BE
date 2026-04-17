@@ -56,7 +56,7 @@ public class RankService {
 
     // 페이지네이션
     int total = allRankings.size();
-    int pageSize = pageable.getPageSize();
+    int pageSize = Math.max(pageable.getPageSize(), 1);
     int currentPage = pageable.getPageNumber();
     int startIndex = (int) pageable.getOffset();
     int endIndex = Math.min(startIndex + pageSize, total);
