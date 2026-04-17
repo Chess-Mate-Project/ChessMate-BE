@@ -57,4 +57,17 @@ public class UserPerfStatRepositoryImpl implements UserPerfStatRepository {
                 (a, b) -> a.getRating() >= b.getRating() ? a : b
             ));
     }
+
+    @Override
+    public List<UserPerfStat> findRankingByPlatformAndTimeClass(OAuthPlatForm platform, String timeClass) {
+        return jpaRepository.findRankingByPlatformAndTimeClass(platform, timeClass).stream()
+            .map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public Optional<UserPerfStat> findByUserIdAndPlatformAndTimeClass(
+            Long userId, OAuthPlatForm platform, String timeClass) {
+        return jpaRepository.findByUserIdAndPlatformAndTimeClass(userId, platform, timeClass)
+            .map(mapper::toDomain);
+    }
 }

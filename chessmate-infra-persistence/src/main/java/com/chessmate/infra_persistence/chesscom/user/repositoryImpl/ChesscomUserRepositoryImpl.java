@@ -144,5 +144,12 @@ public class ChesscomUserRepositoryImpl implements ChesscomUserRepository {
         .map(mapper::toDomain)
         .collect(Collectors.toList());
   }
+
+  @Override
+  public List<ChesscomUser> findByIdIn(List<Long> ids) {
+    return jpaRepository.findAllById(ids).stream()
+        .map(mapper::toDomain)
+        .collect(Collectors.toList());
+  }
 }
 

@@ -55,7 +55,7 @@ public class JwtService {
 
   public String generateRefreshToken(Long id, OAuthPlatForm provider) {
     String rt = generator.generateRefreshToken(REFRESH_KEY, REFRESH_EXP, id, provider);
-    authRedisRepository.saveRefreshToken(id, rt, (int) (REFRESH_EXP / 1000));
+    authRedisRepository.saveRefreshToken(id, provider, rt, (int) (REFRESH_EXP / 1000));
     return rt;
   }
 
@@ -94,11 +94,11 @@ public class JwtService {
   }
 
   // 4) Refresh Token 검증 (서명 + Redis 일치 여부)
-  public boolean validateRefreshToken(String t, Long identifier) {
+  public boolean validateRefreshToken(String t, Long userId, OAuthPlatForm provider) {
     boolean ok = util.getTokenStatus(t, REFRESH_KEY) == TokenStatus.AUTHENTICATED;
     if (!ok) return false;
 
-    String stored = authRedisRepository.getRefreshToken(identifier);
+    String stored = authRedisRepository.getRefreshToken(userId, provider);
     return t.equals(stored);
   }
 

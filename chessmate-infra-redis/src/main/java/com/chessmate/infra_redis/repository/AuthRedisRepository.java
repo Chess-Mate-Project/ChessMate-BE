@@ -1,6 +1,7 @@
 package com.chessmate.infra_redis.repository;
 
 
+import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.infra_redis.prefix.AuthRedisPrefix;
 import com.chessmate.infra_redis.prefix.ChesscomPrefix;
 import com.chessmate.infra_redis.prefix.LichessPrefix;
@@ -61,18 +62,18 @@ public class AuthRedisRepository {
 
 
 
-  public void saveRefreshToken(Long userId, String refreshToken, int expiration) {
-    String key = AuthRedisPrefix.REFRESH_TOKEN.createKey(userId);
+  public void saveRefreshToken(Long userId, OAuthPlatForm platform, String refreshToken, int expiration) {
+    String key = AuthRedisPrefix.REFRESH_TOKEN.createKey(platform.name(), userId);
     redisService.save(key, refreshToken, expiration);
   }
 
-  public String getRefreshToken(Long userId) {
-    String key = AuthRedisPrefix.REFRESH_TOKEN.createKey(userId);
+  public String getRefreshToken(Long userId, OAuthPlatForm platform) {
+    String key = AuthRedisPrefix.REFRESH_TOKEN.createKey(platform.name(), userId);
     return redisService.get(key, String.class);
   }
 
-  public void deleteRefreshToken(Long userId) {
-    String key = AuthRedisPrefix.REFRESH_TOKEN.createKey(userId);
+  public void deleteRefreshToken(Long userId, OAuthPlatForm platform) {
+    String key = AuthRedisPrefix.REFRESH_TOKEN.createKey(platform.name(), userId);
     redisService.delete(key);
   }
 

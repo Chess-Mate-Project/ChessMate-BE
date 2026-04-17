@@ -87,6 +87,11 @@ public interface LichessUserRepository {
   List<LichessUser> findAll();
 
   /**
+   * ID 목록으로 사용자 bulk 조회 (N+1 방지용)
+   */
+  List<LichessUser> findByIdIn(List<Long> ids);
+
+  /**
    * username에 keyword가 포함된 사용자 목록 조회 (검색용)
    *
    * @param keyword 검색 키워드

@@ -33,4 +33,16 @@ public interface UserPerfStatJpaRepository extends JpaRepository<UserPerfStatJpa
         @Param("userIds") List<Long> userIds,
         @Param("platform") OAuthPlatForm platform
     );
+
+    @Query("SELECT s FROM UserPerfStatJpaEntity s " +
+           "WHERE s.platform = :platform AND s.timeClass = :timeClass " +
+           "ORDER BY s.rating DESC, s.userId ASC")
+    List<UserPerfStatJpaEntity> findRankingByPlatformAndTimeClass(
+        @Param("platform") OAuthPlatForm platform,
+        @Param("timeClass") String timeClass
+    );
+
+    Optional<UserPerfStatJpaEntity> findByUserIdAndPlatformAndTimeClass(
+        Long userId, OAuthPlatForm platform, String timeClass
+    );
 }
