@@ -13,6 +13,7 @@ import lombok.Setter;
 @Getter
 public class MyRankInfo {
   private boolean loggedInUser;
+  private boolean platformMismatch;
 
   private int rank;
   private int rating;
@@ -23,6 +24,6 @@ public class MyRankInfo {
   private String description;
 
   public static MyRankInfo notLoggedIn() {
-    return new MyRankInfo(false, 0, 0, null, null, null, null, null);
+    return new MyRankInfo(false, false, 0, 0, null, null, null, null, null);
   }
 }

@@ -91,12 +91,12 @@ public class RankService {
                                      Optional<UserPerfStat> myPerfOpt,
                                      List<UserPerfStat> allRankings) {
     if (userProvider != platform) {
-      return MyRankInfo.notLoggedIn();
+      return buildUserInfoWithRank(userId, userProvider, 0, 0, true);
     }
 
     if (myPerfOpt.isEmpty()) {
       // 해당 gameType 게임 이력 없음 → rank 0
-      return buildUserInfoWithRank(userId, platform, 0, 0);
+      return buildUserInfoWithRank(userId, platform, 0, 0, false);
     }
 
     UserPerfStat myPerf = myPerfOpt.get();
@@ -111,16 +111,17 @@ public class RankService {
       }
     }
 
-    return buildUserInfoWithRank(userId, platform, myRank, myPerf.getRating());
+    return buildUserInfoWithRank(userId, platform, myRank, myPerf.getRating(), false);
   }
 
   private MyRankInfo buildUserInfoWithRank(Long userId, OAuthPlatForm platform,
-                                           int rank, int rating) {
+                                           int rank, int rating, boolean platformMismatch) {
     return switch (platform) {
       case LICHESS -> {
         LichessUser u = lichessUserRepository.findById(userId).orElse(null);
         yield MyRankInfo.builder()
             .loggedInUser(true)
+            .platformMismatch(platformMismatch)
             .rank(rank)
             .rating(rating)
             .userId(userId)
@@ -134,6 +135,7 @@ public class RankService {
         ChesscomUser u = chesscomUserRepository.findById(userId).orElse(null);
         yield MyRankInfo.builder()
             .loggedInUser(true)
+            .platformMismatch(platformMismatch)
             .rank(rank)
             .rating(rating)
             .userId(userId)
