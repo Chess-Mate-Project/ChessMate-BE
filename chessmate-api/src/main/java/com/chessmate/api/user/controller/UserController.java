@@ -1,6 +1,7 @@
 package com.chessmate.api.user.controller;
 
 import com.chessmate.api.global.auth.dto.UserPrincipal;
+import com.chessmate.api.rank.dto.PlatformUserCountResponse;
 import com.chessmate.api.user.dto.ProfileResponse;
 import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import com.chessmate.api.user.dto.UserCardResponse;
@@ -57,5 +58,11 @@ public class UserController {
     ) {
         userService.updateDescription(principal.getId(), principal.getProvider(), request.description());
         return ResponseEntity.ok(new SuccessResponse<>("자기소개 수정 성공", null));
+    }
+
+    @GetMapping("/platform-stats")
+    public ResponseEntity<SuccessResponse<PlatformUserCountResponse>> getPlatformStats() {
+        PlatformUserCountResponse response = userService.getPlatformUserCounts();
+        return ResponseEntity.ok(new SuccessResponse<>("플랫폼별 유저 수 조회 성공", response));
     }
 }

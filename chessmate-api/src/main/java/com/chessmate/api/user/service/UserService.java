@@ -4,6 +4,7 @@ import static com.chessmate.common.dto.OAuthPlatForm.CHESSCOM;
 import static com.chessmate.common.dto.OAuthPlatForm.LICHESS;
 
 import com.chessmate.api.image.ImageUtil;
+import com.chessmate.api.rank.dto.PlatformUserCountResponse;
 import com.chessmate.api.user.dto.ProfileResponse;
 import com.chessmate.api.user.dto.SearchUsersResponse;
 import com.chessmate.api.user.dto.UserSearchProfileResponse;
@@ -116,6 +117,17 @@ public class UserService {
                 );
             }
         };
+    }
+
+    @Transactional(readOnly = true)
+    public PlatformUserCountResponse getPlatformUserCounts() {
+        int lichessCount = lichessUserRepository.count();
+        int chesscomCount = chesscomUserRepository.count();
+        return PlatformUserCountResponse.builder()
+            .lichessCount(lichessCount)
+            .chesscomCount(chesscomCount)
+            .totalCount(lichessCount + chesscomCount)
+            .build();
     }
 
     @Transactional(readOnly = true)
