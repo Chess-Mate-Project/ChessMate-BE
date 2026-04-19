@@ -48,7 +48,7 @@ public class RankService {
     long total = userPerfStatRepository.countByPlatformAndTimeClass(platform, timeClass);
     MyRankInfo myRankInfo = buildMyRankInfo(userId, userProvider, platform, timeClass);
 
-    int startOffset = currentPage * pageSize;
+    long startOffset = (long) currentPage * pageSize;
 
     if (total == 0 || startOffset >= total) {
       return RankingResponse.builder()
