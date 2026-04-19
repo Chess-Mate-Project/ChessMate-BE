@@ -2,7 +2,6 @@ package com.chessmate.api.rank.service;
 
 import com.chessmate.api.image.ImageUtil;
 import com.chessmate.api.rank.dto.MyRankInfo;
-import com.chessmate.api.rank.dto.PlatformUserCountResponse;
 import com.chessmate.api.rank.dto.RankerDto;
 import com.chessmate.api.rank.dto.RankingResponse;
 import com.chessmate.common.dto.OAuthPlatForm;
@@ -181,17 +180,6 @@ public class RankService {
           .build());
     }
     return rankers;
-  }
-
-  @Transactional(readOnly = true)
-  public PlatformUserCountResponse getPlatformUserCounts() {
-    int lichessCount = lichessUserRepository.count();
-    int chesscomCount = chesscomUserRepository.count();
-    return PlatformUserCountResponse.builder()
-        .lichessCount(lichessCount)
-        .chesscomCount(chesscomCount)
-        .totalCount(lichessCount + chesscomCount)
-        .build();
   }
 
   private RankingResponse buildGuestResponse(Pageable pageable) {

@@ -1,7 +1,6 @@
 package com.chessmate.api.rank.controller;
 
 import com.chessmate.api.global.auth.dto.UserPrincipal;
-import com.chessmate.api.rank.dto.PlatformUserCountResponse;
 import com.chessmate.api.rank.dto.RankingResponse;
 import com.chessmate.api.rank.service.RankService;
 import com.chessmate.common.dto.OAuthPlatForm;
@@ -38,11 +37,5 @@ public class RankController {
 
     RankingResponse response = rankService.getRankers(userId, userProvider, platform, gameType, pageable);
     return ResponseEntity.ok(new SuccessResponse<>("Ranking 조회 성공", response));
-  }
-
-  @GetMapping("/platform-stats")
-  public ResponseEntity<SuccessResponse<PlatformUserCountResponse>> getPlatformStats() {
-    PlatformUserCountResponse response = rankService.getPlatformUserCounts();
-    return ResponseEntity.ok(new SuccessResponse<>("플랫폼별 유저 수 조회 성공", response));
   }
 }
