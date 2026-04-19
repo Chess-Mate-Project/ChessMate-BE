@@ -131,7 +131,7 @@ public class RankService {
   }
 
   private List<RankerDto> buildRankers(List<UserPerfStat> pageItems, List<Long> userIds,
-                                       OAuthPlatForm platform, int startOffset) {
+                                       OAuthPlatForm platform, long startOffset) {
     return switch (platform) {
       case LICHESS -> buildLichessRankers(pageItems, userIds, startOffset);
       case CHESSCOM -> buildChesscomRankers(pageItems, userIds, startOffset);
@@ -139,7 +139,7 @@ public class RankService {
   }
 
   private List<RankerDto> buildLichessRankers(List<UserPerfStat> pageItems,
-                                               List<Long> userIds, int startOffset) {
+                                               List<Long> userIds, long startOffset) {
     Map<Long, LichessUser> userMap = lichessUserRepository.findByIdIn(userIds)
         .stream().collect(Collectors.toMap(LichessUser::getId, u -> u));
 
@@ -151,7 +151,7 @@ public class RankService {
           .userId(stat.getUserId())
           .username(u != null ? u.getUsername() : "Unknown")
           .rating(stat.getRating())
-          .rank(startOffset + i + 1)
+          .rank((int) (startOffset + i + 1))
           .bannerImage(imageUtil.getBannerImageUrl(stat.getUserId(), u != null ? u.getBanner() : null))
           .profileImage(imageUtil.getProfileImageUrl(stat.getUserId(), u != null ? u.getProfile() : null))
           .description(u != null ? u.getDescription() : null)
@@ -161,7 +161,7 @@ public class RankService {
   }
 
   private List<RankerDto> buildChesscomRankers(List<UserPerfStat> pageItems,
-                                                List<Long> userIds, int startOffset) {
+                                                List<Long> userIds, long startOffset) {
     Map<Long, ChesscomUser> userMap = chesscomUserRepository.findByIdIn(userIds)
         .stream().collect(Collectors.toMap(ChesscomUser::getId, u -> u));
 
@@ -173,7 +173,7 @@ public class RankService {
           .userId(stat.getUserId())
           .username(u != null ? u.getUsername() : "Unknown")
           .rating(stat.getRating())
-          .rank(startOffset + i + 1)
+          .rank((int) (startOffset + i + 1))
           .bannerImage(imageUtil.getBannerImageUrl(stat.getUserId(), u != null ? u.getBanner() : null))
           .profileImage(imageUtil.getProfileImageUrl(stat.getUserId(), u != null ? u.getProfile() : null))
           .description(u != null ? u.getDescription() : null)
