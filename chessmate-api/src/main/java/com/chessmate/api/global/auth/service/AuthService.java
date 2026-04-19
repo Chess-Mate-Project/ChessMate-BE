@@ -64,7 +64,7 @@ public class AuthService {
     }
 
     strategy.logout(userPrincipal.getId(), res);
-    authRedisRepository.deleteRefreshToken(userPrincipal.getId());
+    authRedisRepository.deleteRefreshToken(userPrincipal.getId(), userPrincipal.getProvider());
   }
 
   public void refresh(HttpServletRequest req, HttpServletResponse res, OAuthPlatForm provider) {
@@ -97,7 +97,7 @@ public class AuthService {
     }
 
     // 3. Redis 서명 + 저장값 검증
-    if (!jwtService.validateRefreshToken(refreshToken, userId)) {
+    if (!jwtService.validateRefreshToken(refreshToken, userId, tokenProvider)) {
       throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
     }
 
