@@ -111,13 +111,19 @@ public class ChesscomOAuthService implements PlatFormOAuthService {
                     .build());
 
       boolean isNewUser = chesscomUser.getId() == null;
+      boolean isRestored = !isNewUser && chesscomUser.isDeleted();
+
+      if (isRestored) {
+        chesscomUser.restore(chesscomUserInfo.getUsername());
+        log.info("[OAuth Callback] Chess.com 탈퇴 계정 복원 chesscomId={}", chesscomUserInfo.getUserId());
+      }
 
       ChesscomUser saveUser = chesscomUserRepository.save(chesscomUser);
       authRedisRepository.saveChesscomAccessToken(saveUser.getId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
       authRedisRepository.saveChesscomRefreshToken(saveUser.getId(), tokenResponse.getRefreshToken(), 30 * 24 * 3600);
 
-      // 5. 새로운 사용자인 경우 SyncJob 생성 후 큐 등록
-      if (isNewUser) {
+      // 5. 신규 또는 복원 사용자의 경우 SyncJob 생성 후 큐 등록
+      if (isNewUser || isRestored) {
         SyncJob syncJob = SyncJob.create(saveUser.getId(), OAuthPlatForm.CHESSCOM, chesscomUserInfo.getUsername());
         SyncJob savedJob = syncJobRepository.save(syncJob);
         syncJobProducer.enqueue(OAuthPlatForm.CHESSCOM, savedJob.getId());

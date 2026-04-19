@@ -96,15 +96,20 @@ public class LichessOAuthService implements PlatFormOAuthService {
               .description(null)
               .build());
 
-
       boolean isNewUser = lichessUser.getId() == null;
+      boolean isRestored = !isNewUser && lichessUser.isDeleted();
+
+      if (isRestored) {
+        lichessUser.restore(account.username());
+        log.info("[OAuth Callback] Lichess 탈퇴 계정 복원 lichessId={}", account.id());
+      }
 
       LichessUser saveUser = lichessUserRepository.save(lichessUser);
 
       authRedisRepository.saveLichessAccessToken(saveUser.getId(), tokenResponse.getAccessToken(), tokenResponse.getExpiresIn());
 
-      // 4. 새로운 사용자인 경우 SyncJob 생성 후 큐 등록
-      if (isNewUser) {
+      // 4. 신규 또는 복원 사용자의 경우 SyncJob 생성 후 큐 등록
+      if (isNewUser || isRestored) {
         SyncJob syncJob = SyncJob.create(saveUser.getId(), OAuthPlatForm.LICHESS, saveUser.getUsername());
         SyncJob savedJob = syncJobRepository.save(syncJob);
         syncJobProducer.enqueue(OAuthPlatForm.LICHESS, savedJob.getId());

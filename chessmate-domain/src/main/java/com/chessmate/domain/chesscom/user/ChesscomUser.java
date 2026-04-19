@@ -11,6 +11,24 @@ public class ChesscomUser {
   private String profile;
   private LocalDateTime createdAt;
   private LocalDateTime platformJoinedAt;
+  private LocalDateTime deletedAt;
+
+  public boolean isDeleted() {
+    return this.deletedAt != null;
+  }
+
+  public void softDelete() {
+    this.deletedAt = LocalDateTime.now();
+    this.username = "deleted_" + this.id;
+    this.description = null;
+    this.banner = null;
+    this.profile = null;
+  }
+
+  public void restore(String freshUsername) {
+    this.deletedAt = null;
+    this.username = freshUsername;
+  }
 
   // Getters
   public Long getId() {
@@ -43,6 +61,10 @@ public class ChesscomUser {
 
   public LocalDateTime getPlatformJoinedAt() {
     return platformJoinedAt;
+  }
+
+  public LocalDateTime getDeletedAt() {
+    return deletedAt;
   }
 
   // Setters
@@ -78,6 +100,10 @@ public class ChesscomUser {
     this.platformJoinedAt = platformJoinedAt;
   }
 
+  public void setDeletedAt(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
   // Builder
   public static Builder builder() {
     return new Builder();
@@ -92,6 +118,7 @@ public class ChesscomUser {
     private String profile;
     private LocalDateTime createdAt;
     private LocalDateTime platformJoinedAt;
+    private LocalDateTime deletedAt;
 
     public Builder id(Long id) {
       this.id = id;
@@ -133,6 +160,11 @@ public class ChesscomUser {
       return this;
     }
 
+    public Builder deletedAt(LocalDateTime deletedAt) {
+      this.deletedAt = deletedAt;
+      return this;
+    }
+
     public ChesscomUser build() {
       ChesscomUser user = new ChesscomUser();
       user.id = this.id;
@@ -143,6 +175,7 @@ public class ChesscomUser {
       user.profile = this.profile;
       user.createdAt = this.createdAt;
       user.platformJoinedAt = this.platformJoinedAt;
+      user.deletedAt = this.deletedAt;
       return user;
     }
   }
