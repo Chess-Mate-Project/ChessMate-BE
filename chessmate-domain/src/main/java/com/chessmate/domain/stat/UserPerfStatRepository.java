@@ -31,4 +31,20 @@ public interface UserPerfStatRepository {
      * 특정 유저의 플랫폼 + 게임 타입 성능 조회
      */
     Optional<UserPerfStat> findByUserIdAndPlatformAndTimeClass(Long userId, OAuthPlatForm platform, String timeClass);
+
+    /**
+     * DB 레벨 페이지네이션 랭킹 조회 (rating DESC, userId ASC)
+     */
+    List<UserPerfStat> findRankingPageByPlatformAndTimeClass(OAuthPlatForm platform, String timeClass, int page, int size);
+
+    /**
+     * 플랫폼 + 게임 타입 전체 사용자 수
+     */
+    long countByPlatformAndTimeClass(OAuthPlatForm platform, String timeClass);
+
+    /**
+     * 현재 유저보다 순위가 높은(rating 높거나, 동점 시 userId 작은) 사용자 수
+     * 반환값 + 1 = 내 순위
+     */
+    long countRankAbove(Long userId, OAuthPlatForm platform, String timeClass, int rating);
 }

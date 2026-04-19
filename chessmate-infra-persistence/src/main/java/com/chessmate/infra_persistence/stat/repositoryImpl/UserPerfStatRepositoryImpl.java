@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,5 +70,23 @@ public class UserPerfStatRepositoryImpl implements UserPerfStatRepository {
             Long userId, OAuthPlatForm platform, String timeClass) {
         return jpaRepository.findByUserIdAndPlatformAndTimeClass(userId, platform, timeClass)
             .map(mapper::toDomain);
+    }
+
+    @Override
+    public List<UserPerfStat> findRankingPageByPlatformAndTimeClass(
+            OAuthPlatForm platform, String timeClass, int page, int size) {
+        return jpaRepository.findRankingPageByPlatformAndTimeClass(
+                platform, timeClass, PageRequest.of(page, size))
+            .stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    public long countByPlatformAndTimeClass(OAuthPlatForm platform, String timeClass) {
+        return jpaRepository.countByPlatformAndTimeClass(platform, timeClass);
+    }
+
+    @Override
+    public long countRankAbove(Long userId, OAuthPlatForm platform, String timeClass, int rating) {
+        return jpaRepository.countRankAbove(platform, timeClass, rating, userId);
     }
 }
