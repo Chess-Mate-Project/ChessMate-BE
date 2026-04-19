@@ -4,7 +4,6 @@ import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.infra_persistence.stat.entity.UserPerfStatJpaEntity;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -48,12 +47,10 @@ public interface UserPerfStatJpaRepository extends JpaRepository<UserPerfStatJpa
         Long userId, OAuthPlatForm platform, String timeClass
     );
 
-    @Query(value = "SELECT s FROM UserPerfStatJpaEntity s " +
-                   "WHERE s.platform = :platform AND s.timeClass = :timeClass " +
-                   "ORDER BY s.rating DESC, s.userId ASC",
-           countQuery = "SELECT COUNT(s) FROM UserPerfStatJpaEntity s " +
-                        "WHERE s.platform = :platform AND s.timeClass = :timeClass")
-    Page<UserPerfStatJpaEntity> findRankingPageByPlatformAndTimeClass(
+    @Query("SELECT s FROM UserPerfStatJpaEntity s " +
+           "WHERE s.platform = :platform AND s.timeClass = :timeClass " +
+           "ORDER BY s.rating DESC, s.userId ASC")
+    List<UserPerfStatJpaEntity> findRankingPageByPlatformAndTimeClass(
         @Param("platform") OAuthPlatForm platform,
         @Param("timeClass") String timeClass,
         Pageable pageable
