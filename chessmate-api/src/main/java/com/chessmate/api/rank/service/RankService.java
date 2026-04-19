@@ -41,27 +41,16 @@ public class RankService {
     }
 
     String timeClass = gameType.toTimeClass();
-
-    // 전체 랭킹 DB 직접 조회 (rating DESC, userId ASC)
-    List<UserPerfStat> allRankings =
-        userPerfStatRepository.findRankingByPlatformAndTimeClass(platform, timeClass);
-
-    // 로그인한 플랫폼과 조회 플랫폼이 다르면 내 랭킹 없음
-    Optional<UserPerfStat> myPerfOpt = userProvider == platform
-        ? userPerfStatRepository.findByUserIdAndPlatformAndTimeClass(userId, platform, timeClass)
-        : Optional.empty();
-
-    // 내 순위 정보 구성
-    MyRankInfo myRankInfo = buildMyRankInfo(userId, userProvider, platform, myPerfOpt, allRankings);
-
-    // 페이지네이션
-    int total = allRankings.size();
     int pageSize = Math.max(pageable.getPageSize(), 1);
     int currentPage = pageable.getPageNumber();
-    int startIndex = (int) pageable.getOffset();
-    int endIndex = Math.min(startIndex + pageSize, total);
 
-    if (total == 0 || startIndex >= total) {
+    // DB 레벨 페이지네이션: 요청된 페이지만 조회
+    long total = userPerfStatRepository.countByPlatformAndTimeClass(platform, timeClass);
+    MyRankInfo myRankInfo = buildMyRankInfo(userId, userProvider, platform, timeClass);
+
+    int startOffset = currentPage * pageSize;
+
+    if (total == 0 || startOffset >= total) {
       return RankingResponse.builder()
           .myRankInfo(myRankInfo)
           .ranking(List.of())
@@ -72,10 +61,10 @@ public class RankService {
           .build();
     }
 
-    // 페이지 내 유저 정보 bulk 조회 (N+1 방지)
-    List<UserPerfStat> pageItems = allRankings.subList(startIndex, endIndex);
+    List<UserPerfStat> pageItems =
+        userPerfStatRepository.findRankingPageByPlatformAndTimeClass(platform, timeClass, currentPage, pageSize);
     List<Long> pageUserIds = pageItems.stream().map(UserPerfStat::getUserId).toList();
-    List<RankerDto> rankers = buildRankers(pageItems, pageUserIds, platform, startIndex);
+    List<RankerDto> rankers = buildRankers(pageItems, pageUserIds, platform, startOffset);
 
     return RankingResponse.builder()
         .myRankInfo(myRankInfo)
@@ -87,29 +76,22 @@ public class RankService {
         .build();
   }
 
-  private MyRankInfo buildMyRankInfo(Long userId, OAuthPlatForm userProvider, OAuthPlatForm platform,
-                                     Optional<UserPerfStat> myPerfOpt,
-                                     List<UserPerfStat> allRankings) {
+  private MyRankInfo buildMyRankInfo(Long userId, OAuthPlatForm userProvider,
+                                     OAuthPlatForm platform, String timeClass) {
     if (userProvider != platform) {
       return buildUserInfoWithRank(userId, userProvider, 0, 0, true);
     }
 
+    Optional<UserPerfStat> myPerfOpt =
+        userPerfStatRepository.findByUserIdAndPlatformAndTimeClass(userId, platform, timeClass);
+
     if (myPerfOpt.isEmpty()) {
-      // 해당 gameType 게임 이력 없음 → rank 0
       return buildUserInfoWithRank(userId, platform, 0, 0, false);
     }
 
     UserPerfStat myPerf = myPerfOpt.get();
-
-    // allRankings는 DB에서 rating DESC, userId ASC로 정렬되어 옴
-    // 내 위치 = index + 1
-    int myRank = 0;
-    for (int i = 0; i < allRankings.size(); i++) {
-      if (allRankings.get(i).getUserId().equals(userId)) {
-        myRank = i + 1;
-        break;
-      }
-    }
+    // 나보다 높은 순위(rating 높거나 동점 시 userId 작은) 인원 수 + 1 = 내 순위
+    int myRank = (int) (userPerfStatRepository.countRankAbove(userId, platform, timeClass, myPerf.getRating()) + 1);
 
     return buildUserInfoWithRank(userId, platform, myRank, myPerf.getRating(), false);
   }
