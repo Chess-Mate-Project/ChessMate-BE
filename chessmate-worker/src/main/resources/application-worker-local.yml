@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: worker-local
+  application:
+    name: ChessMate-batch
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+
+chessmate:
+  sync:
+    chesscom:
+      parallelism: 5
+
+logging:
+  level:
+    org.springframework.batch: DEBUG
+    org.springframework.batch.core: DEBUG

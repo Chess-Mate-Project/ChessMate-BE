@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: api,persistence,external-prod,common,domain,redis,prod
+      SPRING_PROFILES_ACTIVE: api-prod,persistence-prod,external-prod,common,domain,redis-prod
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -36,7 +36,7 @@ services:
     ports:
       - "9000:9000"
     environment:
-      SPRING_PROFILES_ACTIVE: worker,persistence,external-prod,common,domain,redis,prod
+      SPRING_PROFILES_ACTIVE: worker-prod,persistence-prod,external-prod,common,domain,redis-prod
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
