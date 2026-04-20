@@ -13,6 +13,7 @@ import com.chessmate.external.dto.account.PerfsDto;
 import com.chessmate.external.dto.chesscom.ChesscomPlayerStatsResponse;
 import com.chessmate.external.dto.chesscom.ChesscomTimeClassStat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -101,11 +102,10 @@ public class PerfStatFetcher {
 
         perfStatRepository.deleteByUserIdAndPlatform(userId, OAuthPlatForm.CHESSCOM);
 
-        Map<String, ChesscomTimeClassStat> timeClassMap = Map.of(
-            "bullet",  statsResponse.chessBullet()  != null ? statsResponse.chessBullet()  : nullStat(),
-            "blitz",   statsResponse.chessBlitz()   != null ? statsResponse.chessBlitz()   : nullStat(),
-            "rapid",   statsResponse.chessRapid()   != null ? statsResponse.chessRapid()   : nullStat()
-        );
+        Map<String, ChesscomTimeClassStat> timeClassMap = new HashMap<>();
+        timeClassMap.put("bullet", statsResponse.chessBullet());
+        timeClassMap.put("blitz",  statsResponse.chessBlitz());
+        timeClassMap.put("rapid",  statsResponse.chessRapid());
 
         List<UserPerfStat> stats = new ArrayList<>();
         for (Map.Entry<String, ChesscomTimeClassStat> entry : timeClassMap.entrySet()) {
