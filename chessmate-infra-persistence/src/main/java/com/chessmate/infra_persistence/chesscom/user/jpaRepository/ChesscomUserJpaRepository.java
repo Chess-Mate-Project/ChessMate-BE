@@ -32,6 +32,8 @@ public interface ChesscomUserJpaRepository extends JpaRepository<ChesscomUserEnt
    * @param keyword 검색 키워드
    * @return 매칭된 사용자 엔티티 목록
    */
-  List<ChesscomUserEntity> findTop10ByUsernameContainingIgnoreCase(String keyword);
+  List<ChesscomUserEntity> findAllByDeletedAtIsNull();
+
+  List<ChesscomUserEntity> findTop10ByUsernameContainingIgnoreCaseAndDeletedAtIsNull(String keyword);
 }
 

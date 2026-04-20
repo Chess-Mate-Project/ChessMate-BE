@@ -15,5 +15,7 @@ public interface LichessUserJpaRepository extends JpaRepository<LichessUserEntit
 
   Optional<LichessUserEntity> findByUsername(String username);
 
-  List<LichessUserEntity> findTop10ByUsernameContainingIgnoreCase(String keyword);
+  List<LichessUserEntity> findAllByDeletedAtIsNull();
+
+  List<LichessUserEntity> findTop10ByUsernameContainingIgnoreCaseAndDeletedAtIsNull(String keyword);
 }
