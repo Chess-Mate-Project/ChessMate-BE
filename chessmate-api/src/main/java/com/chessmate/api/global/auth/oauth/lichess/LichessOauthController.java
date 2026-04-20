@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/login/oauth2")
+@RequestMapping("/api/oauth")
 @RequiredArgsConstructor
 public class LichessOauthController implements PlatFormOAuthController {
 
@@ -35,7 +35,7 @@ public class LichessOauthController implements PlatFormOAuthController {
     return ResponseEntity.ok(new SuccessResponse<>("Lichess의 OAuthUrl을 제공합니다.", response));
   }
 
-  @GetMapping("/code/lichess")
+  @GetMapping("/lichess/callback")
   public void getCode(
       @RequestParam(required = false) String code,
       @RequestParam(required = false) String state,

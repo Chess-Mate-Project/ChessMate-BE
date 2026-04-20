@@ -50,22 +50,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a -> a
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                          "/api/oauth/oauth-url",
-                          "/api/oauth/callback",
                             "/api/user/count",
                             "/api/auth/refresh",
                             "/api/auth/logout",
                             "/api/rank/ranking",
-                            "/oauth2/authorization/lichess",
-                            "/oauth2/authorization/chesscom",
-                            "/login/oauth/code/chesscom",
-                            "/login/oauth/code/lichess",
+                            "/api/oauth/chesscom/url",
+                            "/api/oauth/lichess/url",
                             "/api/oauth/chesscom/callback",
                             "/api/oauth/lichess/callback",
                             "/api/auth/token",
-                            "/login/oauth2/**",
                             "/api/user/platform-stats"
-
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
