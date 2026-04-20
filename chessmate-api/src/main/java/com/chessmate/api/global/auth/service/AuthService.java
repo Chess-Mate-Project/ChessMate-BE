@@ -56,6 +56,14 @@ public class AuthService {
         .collect(Collectors.toMap(LogoutStrategy::getProvider, s -> s));
   }
 
+  public void clearCookies(UserPrincipal userPrincipal, HttpServletResponse res) {
+    LogoutStrategy strategy = logoutStrategyMap.get(userPrincipal.getProvider());
+    if (strategy == null) {
+      throw new IllegalArgumentException("지원하지 않는 플랫폼입니다.");
+    }
+    strategy.logout(userPrincipal.getId(), res);
+  }
+
   public void logout(UserPrincipal userPrincipal, HttpServletResponse res) {
     LogoutStrategy strategy = logoutStrategyMap.get(userPrincipal.getProvider());
 

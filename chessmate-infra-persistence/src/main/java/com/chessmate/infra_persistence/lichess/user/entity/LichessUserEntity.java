@@ -49,4 +49,7 @@ public class LichessUserEntity {
 
   @Column(name = "platform_joined_at")
   private LocalDateTime platformJoinedAt;
+
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
 }

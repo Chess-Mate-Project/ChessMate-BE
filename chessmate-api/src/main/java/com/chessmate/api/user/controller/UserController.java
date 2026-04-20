@@ -1,15 +1,18 @@
 package com.chessmate.api.user.controller;
 
 import com.chessmate.api.global.auth.dto.UserPrincipal;
+import com.chessmate.api.global.auth.service.AuthService;
 import com.chessmate.api.rank.dto.PlatformUserCountResponse;
 import com.chessmate.api.user.dto.ProfileResponse;
 import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;
 import com.chessmate.api.user.dto.UserCardResponse;
 import com.chessmate.api.user.service.UserService;
 import com.chessmate.common.response.SuccessResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     /**
      * 내 프로필 조회
@@ -58,6 +62,16 @@ public class UserController {
     ) {
         userService.updateDescription(principal.getId(), principal.getProvider(), request.description());
         return ResponseEntity.ok(new SuccessResponse<>("자기소개 수정 성공", null));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<SuccessResponse<Void>> deleteAccount(
+        @AuthenticationPrincipal UserPrincipal principal,
+        HttpServletResponse response
+    ) {
+        userService.deleteAccount(principal.getId(), principal.getProvider());
+        authService.clearCookies(principal, response);
+        return ResponseEntity.ok(new SuccessResponse<>("회원 탈퇴 성공", null));
     }
 
     @GetMapping("/platform-stats")

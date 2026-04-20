@@ -63,7 +63,8 @@ public class SecurityConfig {
                             "/api/oauth/chesscom/callback",
                             "/api/oauth/lichess/callback",
                             "/api/auth/token",
-                            "/login/oauth2/**"
+                            "/login/oauth2/**",
+                            "/api/user/platform-stats"
 
                         ).permitAll()
                         .anyRequest().authenticated()

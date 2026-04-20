@@ -132,7 +132,7 @@ public class ChesscomUserRepositoryImpl implements ChesscomUserRepository {
 
   @Override
   public List<ChesscomUser> findAll() {
-    return jpaRepository.findAll().stream()
+    return jpaRepository.findAllByDeletedAtIsNull().stream()
         .map(mapper::toDomain)
         .collect(Collectors.toList());
   }
@@ -140,7 +140,7 @@ public class ChesscomUserRepositoryImpl implements ChesscomUserRepository {
   @Override
   public List<ChesscomUser> searchByUsernameContaining(String keyword) {
     log.debug("[ChesscomUserRepository] username 검색: {}", keyword);
-    return jpaRepository.findTop10ByUsernameContainingIgnoreCase(keyword).stream()
+    return jpaRepository.findTop10ByUsernameContainingIgnoreCaseAndDeletedAtIsNull(keyword).stream()
         .map(mapper::toDomain)
         .collect(Collectors.toList());
   }

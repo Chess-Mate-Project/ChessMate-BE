@@ -80,7 +80,7 @@ public class LichessUserRepositoryImpl implements LichessUserRepository {
 
   @Override
   public List<LichessUser> findAll() {
-    return jpaRepository.findAll().stream()
+    return jpaRepository.findAllByDeletedAtIsNull().stream()
         .map(mapper::toDomain)
         .collect(Collectors.toList());
   }
@@ -88,7 +88,7 @@ public class LichessUserRepositoryImpl implements LichessUserRepository {
   @Override
   public List<LichessUser> searchByUsernameContaining(String keyword) {
     log.debug("[LichessUserRepository] username 검색: {}", keyword);
-    return jpaRepository.findTop10ByUsernameContainingIgnoreCase(keyword).stream()
+    return jpaRepository.findTop10ByUsernameContainingIgnoreCaseAndDeletedAtIsNull(keyword).stream()
         .map(mapper::toDomain)
         .collect(Collectors.toList());
   }

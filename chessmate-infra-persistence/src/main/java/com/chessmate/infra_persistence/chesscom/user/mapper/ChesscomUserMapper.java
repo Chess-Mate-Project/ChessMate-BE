@@ -30,6 +30,7 @@ public class ChesscomUserMapper {
         .profile(user.getProfile())
         .createdAt(user.getCreatedAt())
         .platformJoinedAt(user.getPlatformJoinedAt())
+        .deletedAt(user.getDeletedAt())
         .build();
 
     if (user.getId() != null) {
@@ -59,6 +60,7 @@ public class ChesscomUserMapper {
         .profile(entity.getProfile())
         .createdAt(entity.getCreatedAt())
         .platformJoinedAt(entity.getPlatformJoinedAt())
+        .deletedAt(entity.getDeletedAt())
         .build();
   }
 }

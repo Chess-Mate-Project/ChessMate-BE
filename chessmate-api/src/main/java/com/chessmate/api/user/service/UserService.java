@@ -6,6 +6,7 @@ import static com.chessmate.common.dto.OAuthPlatForm.LICHESS;
 import com.chessmate.api.image.ImageUtil;
 import com.chessmate.api.rank.dto.PlatformUserCountResponse;
 import com.chessmate.api.user.dto.ProfileResponse;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
 import com.chessmate.api.user.dto.SearchUsersResponse;
 import com.chessmate.api.user.dto.UserSearchProfileResponse;
 import com.chessmate.common.code.UserErrorCode;
@@ -31,6 +32,7 @@ public class UserService {
     private final UserPerfStatRepository userPerfStatRepository;
     private final ChesscomUserRepository chesscomUserRepository;
     private final ImageUtil imageUtil;
+    private final AuthRedisRepository authRedisRepository;
 
   @Transactional(readOnly = true)
   public SearchUsersResponse searchUsers(String keyword, OAuthPlatForm platform, Long excludeUserId) {
@@ -140,6 +142,28 @@ public class UserService {
                 .map(ChesscomUser::getId)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
         };
+    }
+
+    @Transactional
+    public void deleteAccount(Long userId, OAuthPlatForm platform) {
+        switch (platform) {
+            case LICHESS -> {
+                LichessUser user = lichessUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                user.softDelete();
+                lichessUserRepository.save(user);
+                authRedisRepository.deleteLichessAccessToken(userId);
+            }
+            case CHESSCOM -> {
+                ChesscomUser user = chesscomUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                user.softDelete();
+                chesscomUserRepository.save(user);
+                authRedisRepository.deleteChesscomAccessToken(userId);
+                authRedisRepository.deleteChesscomRefreshToken(userId);
+            }
+        }
+        authRedisRepository.deleteRefreshToken(userId, platform);
     }
 
     @Transactional
