@@ -48,7 +48,7 @@ public class LichessUserRepositoryImpl implements LichessUserRepository {
 
   @Override
   public int count() {
-    return (int) jpaRepository.count();
+    return (int) jpaRepository.countByDeletedAtIsNull();
   }
 
   @Override

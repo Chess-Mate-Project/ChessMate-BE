@@ -97,7 +97,7 @@ public class ChesscomUserRepositoryImpl implements ChesscomUserRepository {
   @Override
   public int count() {
     log.debug("[ChesscomUserRepository] 전체 사용자 수 조회");
-    return (int) jpaRepository.count();
+    return (int) jpaRepository.countByDeletedAtIsNull();
   }
 
   /**
