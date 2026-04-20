@@ -1,28 +1,20 @@
-
 spring:
   config:
     activate:
       on-profile: prod
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: validate # 운영 서버에서 테이블 날려먹는 것 방지
-  batch:
-    jdbc:
-      initialize-schema: never # 운영 서버에서 배치 테이블 초기화 방지
+      ddl-auto: validate
+    show-sql: false
 
-oauth:
-  lichess:
-    client-id: ${LICHESS_CLIENT_ID}
-
-cookie:
-  domain: ${COOKIE_DOMAIN:.chessladder.org}
-
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+    org.springframework.security.oauth2: WARN
+    org.apache.coyote.http11.Http11Processor: WARN
+    org.springframework.security.oauth2.client.oidc.authentication: WARN
+    org.springframework.security.oauth2.client.web: WARN
+    org.springframework.session: WARN
+    org.apache.catalina.session: WARN
+    org.springframework.security.web.context: WARN

@@ -11,3 +11,8 @@ spring:
     jdbc:
       initialize-schema: always
 
+chessmate:
+  sync:
+    chesscom:
+      parallelism: 5
+

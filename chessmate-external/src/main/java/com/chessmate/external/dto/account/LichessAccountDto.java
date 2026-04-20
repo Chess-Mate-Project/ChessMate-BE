@@ -1,6 +1,7 @@
 package com.chessmate.external.dto.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Lichess 사용자 요약 DTO
@@ -21,11 +22,11 @@ public record LichessAccountDto(
 //    /** Lichess 후원자(patron) 여부 */
 //    boolean patron,
 
-    /** 계정 생성 시각 (epoch millis) */
-    long createdAt,
+    /** 계정 생성 시각 (epoch millis) — 전역 SNAKE_CASE 설정으로 인해 @JsonProperty 필수 */
+    @JsonProperty("createdAt") long createdAt,
 
     /** 마지막 접속 시각 (epoch millis) */
-    long seenAt,
+    @JsonProperty("seenAt") long seenAt,
 
     /** 전체 플레이 시간 정보 */
     PlayTimeDto playTime,

@@ -1,0 +1,22 @@
+spring:
+  config:
+    activate:
+      on-profile: worker-prod
+  application:
+    name: ChessMate-batch
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
+
+chessmate:
+  sync:
+    chesscom:
+      parallelism: 5
+
+logging:
+  level:
+    root: INFO
+    org.springframework.batch: WARN
+    org.springframework.batch.core: WARN

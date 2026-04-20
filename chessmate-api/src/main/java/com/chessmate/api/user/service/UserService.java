@@ -1,196 +1,186 @@
 package com.chessmate.api.user.service;
 
+import static com.chessmate.common.dto.OAuthPlatForm.CHESSCOM;
+import static com.chessmate.common.dto.OAuthPlatForm.LICHESS;
 
 import com.chessmate.api.image.ImageUtil;
+import com.chessmate.api.rank.dto.PlatformUserCountResponse;
 import com.chessmate.api.user.dto.ProfileResponse;
-import com.chessmate.api.user.dto.TotalUserCountResponse;
-import com.chessmate.api.user.dto.UpdateUserDescriptionRequest;
+import com.chessmate.infra_redis.repository.AuthRedisRepository;
+import com.chessmate.api.user.dto.SearchUsersResponse;
+import com.chessmate.api.user.dto.UserSearchProfileResponse;
 import com.chessmate.common.code.UserErrorCode;
+import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.common.exception.UserException;
-import com.chessmate.domain.user.User;
-import com.chessmate.infra_persistence.repositoryImpl.UserColorStatRepositoryImpl;
-import com.chessmate.infra_persistence.repositoryImpl.UserDailyStreakRepositoryImpl;
-import com.chessmate.infra_persistence.repositoryImpl.UserFirstMoveStatRepositoryImpl;
-import com.chessmate.infra_persistence.repositoryImpl.UserPerfRepositoryImpl;
-import com.chessmate.infra_persistence.repositoryImpl.UserRepositoryImpl;
-import com.chessmate.infra_redis.redis.CacheService;
+import com.chessmate.domain.chesscom.user.ChesscomUser;
+import com.chessmate.domain.chesscom.user.ChesscomUserRepository;
+import com.chessmate.domain.lichess.user.LichessUser;
+import com.chessmate.domain.lichess.user.LichessUserRepository;
+import com.chessmate.domain.stat.UserPerfStat;
+import com.chessmate.domain.stat.UserPerfStatRepository;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-  private final UserRepositoryImpl userRepository;
-  private final UserPerfRepositoryImpl userPerfRepository;
-  private final UserDailyStreakRepositoryImpl userDailyStreakRepository;
-  private final UserColorStatRepositoryImpl userColorStatRepository;
-  private final UserFirstMoveStatRepositoryImpl userFirstMoveStatRepository;
-  private final CacheService cacheService;
-  private final ImageUtil imageUtil;
+    private final LichessUserRepository lichessUserRepository;
+    private final UserPerfStatRepository userPerfStatRepository;
+    private final ChesscomUserRepository chesscomUserRepository;
+    private final ImageUtil imageUtil;
+    private final AuthRedisRepository authRedisRepository;
 
-  public TotalUserCountResponse getTotalUserCount() {
-    long totalUsers = userRepository.count();
-    return new TotalUserCountResponse((int) totalUsers);
+  @Transactional(readOnly = true)
+  public SearchUsersResponse searchUsers(String keyword, OAuthPlatForm platform, Long excludeUserId) {
+    return switch (platform) {
+      case LICHESS -> {
+        List<LichessUser> lichessUsers = lichessUserRepository.searchByUsernameContaining(keyword);
+        List<Long> userIds = lichessUsers.stream().map(LichessUser::getId).toList();
+        Map<Long, UserPerfStat> statMap =
+            userPerfStatRepository.findTopRatingByUserIdsAndPlatform(userIds, LICHESS);
+
+        List<UserSearchProfileResponse> users = lichessUsers.stream()
+            .filter(user -> !user.getId().equals(excludeUserId))
+            .map(user -> {
+              UserPerfStat top = statMap.get(user.getId());
+              return UserSearchProfileResponse.builder()
+                  .id(user.getId())
+                  .rating(top != null ? top.getRating() : 0)
+                  .profileImageUrl(imageUtil.getProfileImageUrl(user.getId(), user.getProfile()))
+                  .platform(LICHESS)
+                  .username(user.getUsername())
+                  .build();
+            })
+            .toList();
+
+        yield new SearchUsersResponse(users);
+      }
+
+      case CHESSCOM -> {
+        List<ChesscomUser> chesscomUsers = chesscomUserRepository.searchByUsernameContaining(keyword);
+        List<Long> userIds = chesscomUsers.stream().map(ChesscomUser::getId).toList();
+        Map<Long, UserPerfStat> statMap =
+            userPerfStatRepository.findTopRatingByUserIdsAndPlatform(userIds, CHESSCOM);
+
+        List<UserSearchProfileResponse> users = chesscomUsers.stream()
+            .filter(user -> !user.getId().equals(excludeUserId))
+            .map(user -> {
+              UserPerfStat top = statMap.get(user.getId());
+              return UserSearchProfileResponse.builder()
+                  .id(user.getId())
+                  .rating(top != null ? top.getRating() : 0)
+                  .profileImageUrl(imageUtil.getProfileImageUrl(user.getId(), user.getProfile()))
+                  .platform(CHESSCOM)
+                  .username(user.getUsername())
+                  .build();
+            })
+            .toList();
+
+        yield new SearchUsersResponse(users);
+      }
+    };
   }
 
-  /**
-   * 사용자 자기소개 업데이트
-   * @param user 현재 사용자
-   * @param updateUserDescriptionRequest 사용자 자기소개 업데이트 요청 DTO
-   */
-  @Transactional
-  public void updateUserDescription(User user,
-      UpdateUserDescriptionRequest updateUserDescriptionRequest) {
-    log.info("[자기소개 업데이트 시작] userId={}, newDescription={}",
-        user.getId(), updateUserDescriptionRequest.description());
 
-    User u = userRepository.findById(user.getId()).orElseThrow(
-        () -> new UserException(UserErrorCode.NOT_FOUND_USER)
-    );
 
-    String oldDescription = u.getDescription();
-    log.debug("[변경 전] userId={}, oldDescription={}", u.getId(), oldDescription);
-
-    u.setDescription(updateUserDescriptionRequest.description());
-    log.debug("[메모리 변경 완료] userId={}, newDescription={}", u.getId(), updateUserDescriptionRequest.description());
-
-    User savedUser = userRepository.save(u);
-    log.info("[DB 저장 완료] userId={}, savedDescription={}, 저장된 객체 id={}",
-        savedUser.getId(), savedUser.getDescription(), savedUser.getId());
-
-    // 캐시 무효화 - 프로필 정보가 변경되었으므로 캐시 삭제
-    String cacheKey = buildProfileCacheKey(u.getId());
-    cacheService.deleteCache(cacheKey);
-    log.info("[Cache-Invalidate] UserProfile - userId={}, reason=description_updated", u.getId());
-  }
-
-  /**
-   * 사용자 프로필 조회 (Cache-Aside Pattern 적용)
-   * - Cache-Hit: 캐시에서 즉시 반환
-   * - Cache-Miss: DB 조회 후 캐시 저장
-   */
-  public ProfileResponse getUserProfile(User user) {
-    log.info("[프로필 조회 시작] userId={}", user.getId());
-
-    // Cache-Aside Pattern 1단계: 캐시에서 조회
-    String cacheKey = buildProfileCacheKey(user.getId());
-    ProfileResponse cachedData = cacheService.getCache(cacheKey, ProfileResponse.class);
-
-    if (cachedData != null) {
-      log.info("[Cache-Hit] UserProfile - userId={}, cachedDescription={}, profileImageUrl={}, bannerImageUrl={}",
-          user.getId(), cachedData.description(), cachedData.profileImage(), cachedData.bannerImage());
-      return cachedData;
+    @Transactional(readOnly = true)
+    public ProfileResponse getProfile(Long userId, OAuthPlatForm platform) {
+        return switch (platform) {
+            case LICHESS -> {
+                LichessUser user = lichessUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                yield new ProfileResponse(
+                    user.getId(),
+                    user.getUsername(),
+                    LICHESS,
+                    user.getDescription(),
+                    imageUtil.getProfileImageUrl(user.getId(), user.getProfile()),
+                    imageUtil.getBannerImageUrl(user.getId(), user.getBanner()),
+                    user.getCreatedAt(),
+                    user.getPlatformJoinedAt()
+                );
+            }
+            case CHESSCOM -> {
+                ChesscomUser user = chesscomUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                yield new ProfileResponse(
+                    user.getId(),
+                    user.getUsername(),
+                    CHESSCOM,
+                    user.getDescription(),
+                    imageUtil.getProfileImageUrl(user.getId(), user.getProfile()),
+                    imageUtil.getBannerImageUrl(user.getId(), user.getBanner()),
+                    user.getCreatedAt(),
+                    user.getPlatformJoinedAt()
+                );
+            }
+        };
     }
 
-    log.info("[Cache-Miss] UserProfile - userId={}, DB 조회 시작", user.getId());
-
-    // Cache-Aside Pattern 2단계: 캐시 미스 시 DB에서 조회
-    User u = userRepository.findById(user.getId()).orElseThrow(
-        () -> new UserException(UserErrorCode.NOT_FOUND_USER)
-    );
-
-    log.debug("[DB 조회 완료] userId={}, dbDescription={}, profileImage={}, bannerImage={}",
-        u.getId(), u.getDescription(), u.getProfileImage(), u.getBannerImage());
-
-    // 이미지 URL 생성
-    String profileImageUrl = imageUtil.getProfileImageUrl(u);
-    String bannerImageUrl = imageUtil.getBannerImageUrl(u);
-
-    log.info("[이미지 URL 생성 완료] userId={}, profileUrl={}, bannerUrl={}",
-        u.getId(), profileImageUrl, bannerImageUrl);
-
-    ProfileResponse response = new ProfileResponse(
-        u.getId(),
-        u.getUsername(),
-        u.getLichessId(),
-        u.getTitle(),
-        u.getDescription(),
-        profileImageUrl,
-        bannerImageUrl,
-        u.getCreatedAt(),
-        u.getLichessCreatedAt(),
-        u.getAllGames(),
-        u.getRatedGames(),
-        u.getWins(),
-        u.getLosses(),
-        u.getDraws(),
-        u.getTotalSeconds()
-    );
-
-    log.debug("[ProfileResponse 객체 생성 완료] userId={}, description={}", u.getId(), response.description());
-
-    // Cache-Aside Pattern 3단계: 조회 결과를 캐시에 저장 (TTL: 1시간)
-    cacheService.saveCache(cacheKey, response, 3600);
-    log.info("[Cache-Set] UserProfile - userId={}, description={}, profileImageUrl={}, bannerImageUrl={}, TTL=3600s",
-        u.getId(), response.description(), profileImageUrl, bannerImageUrl);
-
-    log.info("[프로필 조회 완료] userId={}", u.getId());
-    return response;
-  }
-
-  /**
-   * 회원 탈퇴 (Hard Delete)
-   * 사용자와 관련된 모든 데이터를 삭제합니다.
-   * @param user 현재 사용자
-   */
-  @Transactional
-  public void withdraw(User user) {
-    Long userId = user.getId();
-    String lichessId = user.getLichessId();
-    log.info("[회원 탈퇴 시작] userId={}, lichessId={}", userId, lichessId);
-
-    // 1. 통계 데이터 삭제 (DB)
-    log.debug("[회원 탈퇴 - 데이터 삭제] UserPerf 삭제");
-    userPerfRepository.deleteAllByUserId(userId);
-
-    log.debug("[회원 탈퇴 - 데이터 삭제] UserDailyStreak 삭제");
-    userDailyStreakRepository.deleteAllByUserId(userId);
-
-    log.debug("[회원 탈퇴 - 데이터 삭제] UserColorStat 삭제");
-    userColorStatRepository.deleteAllByUserId(userId);
-
-    log.debug("[회원 탈퇴 - 데이터 삭제] UserFirstMoveStat 삭제");
-    userFirstMoveStatRepository.deleteAllByUserId(userId);
-
-    // 2. 사용자 정보 삭제 (DB)
-    log.debug("[회원 탈퇴 - 데이터 삭제] User 정보 삭제");
-    userRepository.deleteById(userId);
-
-    // 3. 캐시 및 보안 데이터 삭제 (Redis)
-    log.debug("[회원 탈퇴 - 캐시 삭제] Redis 데이터 청소 시작");
-
-    // 프로필 캐시 삭제
-    cacheService.deleteCache(buildProfileCacheKey(userId));
-
-    // 인증 관련 토큰 삭제
-    cacheService.deleteRefreshToken(userId);
-    cacheService.deleteLichessToken(userId);
-
-    // Lichess API 기반 캐시 삭제
-    if (lichessId != null) {
-      cacheService.deletePlayTime(lichessId);
-      cacheService.deletePerfs(lichessId);
-      cacheService.deleteUserCount(lichessId);
+    @Transactional(readOnly = true)
+    public PlatformUserCountResponse getPlatformUserCounts() {
+        int lichessCount = lichessUserRepository.count();
+        int chesscomCount = chesscomUserRepository.count();
+        return PlatformUserCountResponse.builder()
+            .lichessCount(lichessCount)
+            .chesscomCount(chesscomCount)
+            .totalCount(lichessCount + chesscomCount)
+            .build();
     }
 
-    // 모든 하위 통계 캐시 삭제 (stat:*:userId:* 패턴)
-    cacheService.deleteAllUserStats(userId);
+    @Transactional(readOnly = true)
+    public Long resolveUserId(String username, OAuthPlatForm platform) {
+        return switch (platform) {
+            case LICHESS -> lichessUserRepository.findByUsername(username)
+                .map(LichessUser::getId)
+                .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+            case CHESSCOM -> chesscomUserRepository.findByUsername(username)
+                .map(ChesscomUser::getId)
+                .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+        };
+    }
 
-    log.info("[회원 탈퇴 완료] userId={}", userId);
-  }
+    @Transactional
+    public void deleteAccount(Long userId, OAuthPlatForm platform) {
+        switch (platform) {
+            case LICHESS -> {
+                LichessUser user = lichessUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                user.softDelete();
+                lichessUserRepository.save(user);
+                authRedisRepository.deleteLichessAccessToken(userId);
+            }
+            case CHESSCOM -> {
+                ChesscomUser user = chesscomUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                user.softDelete();
+                chesscomUserRepository.save(user);
+                authRedisRepository.deleteChesscomAccessToken(userId);
+                authRedisRepository.deleteChesscomRefreshToken(userId);
+            }
+        }
+        authRedisRepository.deleteRefreshToken(userId, platform);
+    }
 
-  /**
-   * ============================
-   * Cache Key Builder Methods
-   * ============================
-   */
-  private String buildProfileCacheKey(Long userId) {
-    return String.format("user:profile:%d", userId);
-  }
-
+    @Transactional
+    public void updateDescription(Long userId, OAuthPlatForm platform, String description) {
+        switch (platform) {
+            case LICHESS -> {
+                LichessUser user = lichessUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                user.setDescription(description);
+                lichessUserRepository.save(user);
+            }
+            case CHESSCOM -> {
+                ChesscomUser user = chesscomUserRepository.findById(userId)
+                    .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+                user.setDescription(description);
+                chesscomUserRepository.save(user);
+            }
+        }
+    }
 }

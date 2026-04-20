@@ -11,27 +11,40 @@ spring:
 
   jwt:
     access-token:
-      secret: chessMateGbswProjectAccessTokenSecret
-      expiration: 10000
+      secret: ${SPRING_JWT_ACCESS_TOKEN_SECRET:chessMateGbswProjectAccessTokenSecret}
+      expiration: ${SPRING_JWT_ACCESS_TOKEN_EXPIRATION:3600000}
     refresh-token:
-      secret: chessMateGbswProjectRefreshTokenSecret
-      expiration: 604800000
+      secret: ${SPRING_JWT_REFRESH_TOKEN_SECRET:chessMateGbswProjectRefreshTokenSecret}
+      expiration: ${SPRING_JWT_REFRESH_TOKEN_EXPIRATION:604800000}
 
 cookie:
-  domain: localhost
-
-oauth:
-  lichess:
-    redirect-url: http://localhost:8080/api/oauth/callback
+  domain: ${COOKIE_DOMAIN:localhost}
 
 client:
-  url: http://localhost:5173
+  url: ${CLIENT_URL:http://localhost:5173}
 
 
 cloudflare:
   r2:
-    endpoint: https://8abcc1ccfb278ca2c5b3e8ba07623e9e.r2.cloudflarestorage.com
-    accessKey: 599e880ffcface6a291030c9dbc2f0a1
-    secretKey: 06ee2c6f82726bb26b97cf2fabbfafd8224f7073fd0c87d68a3cf3383ee4d903
-    bucket: chessladder
-    cdn: https://pub-1e7b1be2d4da472a936752a572ed0419.r2.dev
+    endpoint: ${CLOUDFLARE_R2_ENDPOINT:https://8abcc1ccfb278ca2c5b3e8ba07623e9e.r2.cloudflarestorage.com}
+    accessKey: ${CLOUDFLARE_R2_ACCESS_KEY:599e880ffcface6a291030c9dbc2f0a1}
+    secretKey: ${CLOUDFLARE_R2_SECRET_KEY:06ee2c6f82726bb26b97cf2fabbfafd8224f7073fd0c87d68a3cf3383ee4d903}
+    bucket: ${CLOUDFLARE_R2_BUCKET:chessladder}
+    cdn: ${CLOUDFLARE_R2_CDN:https://pub-1e7b1be2d4da472a936752a572ed0419.r2.dev}
+
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.apache.coyote.http11.Http11Processor: DEBUG
+    # OIDC 인증 프로바이더 (여기서 invalid_nonce를 던짐)
+    org.springframework.security.oauth2.client.oidc.authentication: TRACE
+    # OAuth2 로그인 필터 전체
+    org.springframework.security.oauth2.client.web: TRACE
+    # 세션 생성 및 쿠키 관련 상세 로그
+    org.springframework.session: DEBUG
+    org.apache.catalina.session: DEBUG
+    # 스프링 시큐리티 필터 체인의 상세 동작
+    org.springframework.security.web.context: DEBUG
+    org.springframework.security.web.authentication.HttpSessionAuthenticationStrategy: DEBUG

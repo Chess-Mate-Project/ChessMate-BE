@@ -1,12 +1,11 @@
 package com.chessmate.infra_redis.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -52,15 +51,6 @@ public class RedisService {
         redisTemplate.delete(key);
     }
 
-    /**
-     * 패턴으로 키 삭제
-     */
-    public void deleteByPattern(String pattern) {
-        java.util.Set<String> keys = redisTemplate.keys(pattern);
-        if (keys != null && !keys.isEmpty()) {
-            redisTemplate.delete(keys);
-        }
-    }
 
     /**
      * 키 존재 여부 확인
@@ -70,73 +60,34 @@ public class RedisService {
     }
 
 
-
-    /// ///
-
-
   /**
    * 큐의 왼쪽(Head)에 데이터를 넣습니다. (Producer)
+   *
+   * @param key   Redis 큐 키
+   * @param value 저장할 데이터
    */
-  public void leftPush(String key, Object value) {
+  public void enqueue(String key, Object value) {
     redisTemplate.opsForList().leftPush(key, value);
   }
 
   /**
-   * 큐의 오른쪽(Tail)에서 데이터를 꺼내옵니다. (Consumer - Blocking)
-   * 데이터가 없으면 timeout 동안 대기합니다.
+   * 큐의 오른쪽(Tail)에서 데이터를 즉시 꺼내옵니다. (Consumer - Non-Blocking)
+   * 데이터가 없으면 null을 반환합니다.
+   *
+   * @param key  Redis 큐 키
+   * @param type 꺼낼 데이터 클래스 타입
+   * @param <T>  데이터 타입 파라미터
+   * @return 꺼낸 데이터 (없으면 null)
    */
-  public <T> T brPop(String key, long timeoutSeconds, Class<T> type) {
-    // bRPop은 리스트 형식으로 [Key, Value]를 반환하므로 index 1을 가져옵니다.
-    Object obj = redisTemplate.execute((RedisCallback<Object>) connection -> {
-      java.util.List<byte[]> result = connection.bRPop((int) timeoutSeconds, key.getBytes());
-      if (result == null || result.isEmpty()) return null;
-      return redisTemplate.getValueSerializer().deserialize(result.get(1));
-    });
+  public <T> T dequeue(String key, Class<T> type) {
+    Object obj = redisTemplate.opsForList().rightPop(key);
+    return convert(obj, type);
+  }
 
+
+  private <T> T convert(Object obj, Class<T> type) {
     if (obj == null) return null;
     return objectMapper.convertValue(obj, type);
   }
 
-  /**
-   * 여러 큐를 동시에 감시하다가 데이터가 들어오는 쪽에서 꺼내옵니다. (우선순위 큐용)
-   */
-  public <T> T brPopMultiple(long timeoutSeconds, Class<T> type, String... keys) {
-    Object obj = redisTemplate.execute((RedisCallback<Object>) connection -> {
-      byte[][] byteKeys = java.util.Arrays.stream(keys)
-          .map(String::getBytes)
-          .toArray(byte[][]::new);
-
-      java.util.List<byte[]> result = connection.bRPop((int) timeoutSeconds, byteKeys);
-      if (result == null || result.isEmpty()) return null;
-      return redisTemplate.getValueSerializer().deserialize(result.get(1));
-    });
-
-    if (obj == null) return null;
-    return objectMapper.convertValue(obj, type);
-  }
-
-  /// ///////////
-  public Long increment(String key) {
-    return redisTemplate.opsForValue().increment(key);
-  }
-
-  public Boolean setIfAbsent(String key, Object value, long expirationSeconds) {
-    return redisTemplate.opsForValue()
-        .setIfAbsent(key, value, expirationSeconds, TimeUnit.SECONDS);
-  }
-
-  public void expire(String key, long expirationSeconds) {
-    redisTemplate.expire(key, expirationSeconds, TimeUnit.SECONDS);
-  }
-
-  public Long sAdd(String key, Object value) {
-    return redisTemplate.opsForSet().add(key, value);
-  }
-
-  public Long getLong(String key) {
-    Object obj = redisTemplate.opsForValue().get(key);
-    if (obj == null) return null;
-    if (obj instanceof Number n) return n.longValue();
-    return Long.parseLong(String.valueOf(obj));
-  }
 }

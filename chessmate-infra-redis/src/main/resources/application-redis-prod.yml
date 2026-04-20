@@ -1,0 +1,20 @@
+spring:
+  config:
+    activate:
+      on-profile: redis-prod
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      key:
+        refresh_token_base: refresh_token
+        oauth:
+          pkce: oauth:pkce
+          lichess-token: oauth:lichess:token
+        user:
+          playtime: user:playtime
+          perfs: user:perfs
+          playcount: user:playcount
+        auth:
+          refresh-token: auth:refresh

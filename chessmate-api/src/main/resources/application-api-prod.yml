@@ -1,0 +1,41 @@
+spring:
+  config:
+    activate:
+      on-profile: api-prod
+  application:
+    name: ChessMate-api
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  jwt:
+    access-token:
+      secret: ${SPRING_JWT_ACCESS_TOKEN_SECRET}
+      expiration: ${SPRING_JWT_ACCESS_TOKEN_EXPIRATION}
+    refresh-token:
+      secret: ${SPRING_JWT_REFRESH_TOKEN_SECRET}
+      expiration: ${SPRING_JWT_REFRESH_TOKEN_EXPIRATION}
+
+cookie:
+  domain: ${COOKIE_DOMAIN}
+
+client:
+  url: ${CLIENT_URL}
+
+cloudflare:
+  r2:
+    endpoint: ${CLOUDFLARE_R2_ENDPOINT}
+    accessKey: ${CLOUDFLARE_R2_ACCESS_KEY}
+    secretKey: ${CLOUDFLARE_R2_SECRET_KEY}
+    bucket: ${CLOUDFLARE_R2_BUCKET}
+    cdn: ${CLOUDFLARE_R2_CDN}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+    org.springframework.security.oauth2: WARN
+    org.apache.coyote.http11.Http11Processor: WARN
+    org.springframework.security.oauth2.client.oidc.authentication: WARN
+    org.springframework.security.oauth2.client.web: WARN
+    org.springframework.session: WARN
+    org.apache.catalina.session: WARN
+    org.springframework.security.web.context: WARN
