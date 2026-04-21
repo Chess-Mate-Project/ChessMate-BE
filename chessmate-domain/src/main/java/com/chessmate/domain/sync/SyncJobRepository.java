@@ -10,4 +10,6 @@ public interface SyncJobRepository {
     Optional<SyncJob> findById(Long id);
 
     Optional<SyncJob> findLatestByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
+
+    boolean existsActiveByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
 }
