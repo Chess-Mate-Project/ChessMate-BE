@@ -259,6 +259,7 @@ public class ChessComGameSyncWorker {
      * cursor(마지막 완료 월 "yyyy/MM") 이후 항목만 반환.
      */
     private List<String> filterPending(List<String> archives, String cursor) {
+        if (archives == null) return List.of();
         if (cursor == null) return archives;
         int idx = -1;
         for (int i = 0; i < archives.size(); i++) {
