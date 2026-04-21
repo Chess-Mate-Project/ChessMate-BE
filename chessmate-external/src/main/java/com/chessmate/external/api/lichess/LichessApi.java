@@ -59,7 +59,7 @@ public interface LichessApi {
    */
   @GetExchange("/api/games/user/{username}")
   String getGames(
-      @RequestHeader("Authorization") String authHeader,
+      @RequestHeader(value = "Authorization", required = false) String authHeader,
       @RequestHeader("Accept") String accept,
       @PathVariable("username") String username,
       @RequestParam(value = "max", required = false) Integer max,
