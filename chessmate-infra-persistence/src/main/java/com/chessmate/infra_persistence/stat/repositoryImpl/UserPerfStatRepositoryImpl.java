@@ -86,6 +86,11 @@ public class UserPerfStatRepositoryImpl implements UserPerfStatRepository {
     }
 
     @Override
+    public boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
+        return jpaRepository.existsByUserIdAndPlatform(userId, platform);
+    }
+
+    @Override
     public long countRankAbove(Long userId, OAuthPlatForm platform, String timeClass, int rating) {
         return jpaRepository.countRankAbove(platform, timeClass, rating, userId);
     }

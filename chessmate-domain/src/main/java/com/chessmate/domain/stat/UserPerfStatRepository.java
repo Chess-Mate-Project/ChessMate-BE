@@ -42,6 +42,8 @@ public interface UserPerfStatRepository {
      */
     long countByPlatformAndTimeClass(OAuthPlatForm platform, String timeClass);
 
+    boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
+
     /**
      * 현재 유저보다 순위가 높은(rating 높거나, 동점 시 userId 작은) 사용자 수
      * 반환값 + 1 = 내 순위

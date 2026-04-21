@@ -10,6 +10,7 @@ import com.chessmate.domain.stat.UserDailyGameStat;
 import com.chessmate.domain.stat.UserDailyGameStatRepository;
 import com.chessmate.domain.stat.UserFirstMoveStat;
 import com.chessmate.domain.stat.UserFirstMoveStatRepository;
+import com.chessmate.domain.stat.UserPerfStatRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +46,7 @@ public class GameStatAggregator {
     private final UserDailyGameStatRepository dailyStatRepository;
     private final UserColorStatRepository colorStatRepository;
     private final UserFirstMoveStatRepository firstMoveStatRepository;
+    private final UserPerfStatRepository perfStatRepository;
 
     /**
      * 해당 유저/플랫폼에 대해 stat 테이블 중 하나라도 비어 있으면 true.
@@ -53,7 +55,8 @@ public class GameStatAggregator {
     public boolean isAnyStatEmpty(Long userId, OAuthPlatForm platform) {
         return !firstMoveStatRepository.existsByUserIdAndPlatform(userId, platform)
             || !colorStatRepository.existsByUserIdAndPlatform(userId, platform)
-            || !dailyStatRepository.existsByUserIdAndPlatform(userId, platform);
+            || !dailyStatRepository.existsByUserIdAndPlatform(userId, platform)
+            || !perfStatRepository.existsByUserIdAndPlatform(userId, platform);
     }
 
     @Transactional
