@@ -49,7 +49,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LichessGameSyncWorker {
 
-    private static final int CHUNK_SIZE = 100;
+    private static final int CHUNK_SIZE = 300;
     private static final String NDJSON = "application/x-ndjson";
     private static final Set<String> SUPPORTED_TIME_CLASSES = Set.of("blitz", "bullet", "rapid", "classical");
 

@@ -104,17 +104,23 @@ public class ScheduledSyncTrigger implements SmartLifecycle {
      */
     private int scheduleLichessUsers() {
         var users = lichessUserRepository.findAll();
+        int count = 0;
         for (var user : users) {
             try {
+                if (syncJobRepository.existsActiveByUserIdAndPlatform(user.getId(), OAuthPlatForm.LICHESS)) {
+                    log.debug("[ScheduledSyncTrigger] Lichess skip — 진행 중인 잡 존재 userId={}", user.getId());
+                    continue;
+                }
                 SyncJob job = SyncJob.create(user.getId(), OAuthPlatForm.LICHESS, user.getUsername());
                 SyncJob saved = syncJobRepository.save(job);
                 syncJobProducer.enqueue(OAuthPlatForm.LICHESS, saved.getId());
                 log.debug("[ScheduledSyncTrigger] Lichess enqueue userId={} username={}", user.getId(), user.getUsername());
+                count++;
             } catch (Exception e) {
                 log.error("[ScheduledSyncTrigger] Lichess enqueue 실패 userId={} error={}", user.getId(), e.getMessage());
             }
         }
-        return users.size();
+        return count;
     }
 
     /**
@@ -133,18 +139,22 @@ public class ScheduledSyncTrigger implements SmartLifecycle {
         String prevMonthCursor = YearMonth.now().minusMonths(1).format(YEAR_MONTH_FMT);
 
         var users = chesscomUserRepository.findAll();
+        int count = 0;
         for (var user : users) {
             try {
+                if (syncJobRepository.existsActiveByUserIdAndPlatform(user.getId(), OAuthPlatForm.CHESSCOM)) {
+                    log.debug("[ScheduledSyncTrigger] Chess.com skip — 진행 중인 잡 존재 userId={}", user.getId());
+                    continue;
+                }
+
                 Optional<SyncJob> lastJob = syncJobRepository.findLatestByUserIdAndPlatform(
                     user.getId(), OAuthPlatForm.CHESSCOM);
 
                 SyncJob job;
                 if (lastJob.isPresent() && lastJob.get().getStatus() == SyncStatus.COMPLETED) {
-                    // 증분: 전월 커서 → 당월만 재수집
                     job = SyncJob.createWithCursor(
                         user.getId(), OAuthPlatForm.CHESSCOM, user.getUsername(), prevMonthCursor);
                 } else {
-                    // 최초 또는 이전 실패: 전체 수집
                     job = SyncJob.create(user.getId(), OAuthPlatForm.CHESSCOM, user.getUsername());
                 }
 
@@ -152,10 +162,11 @@ public class ScheduledSyncTrigger implements SmartLifecycle {
                 syncJobProducer.enqueue(OAuthPlatForm.CHESSCOM, saved.getId());
                 log.debug("[ScheduledSyncTrigger] Chess.com enqueue userId={} username={} cursor={}",
                     user.getId(), user.getUsername(), job.getSyncCursor());
+                count++;
             } catch (Exception e) {
                 log.error("[ScheduledSyncTrigger] Chess.com enqueue 실패 userId={} error={}", user.getId(), e.getMessage());
             }
         }
-        return users.size();
+        return count;
     }
 }
