@@ -54,7 +54,7 @@ public class LichessGameSyncWorker {
     private static final Set<String> SUPPORTED_TIME_CLASSES = Set.of("blitz", "bullet", "rapid", "classical");
 
     @SuppressWarnings("UnstableApiUsage")
-    private static final RateLimiter RATE_LIMITER = RateLimiter.create(0.05);
+    private static final RateLimiter RATE_LIMITER = RateLimiter.create(0.33);
 
     private final LichessApi lichessApi;
     private final PlatformTokenStore tokenStore;
