@@ -63,7 +63,7 @@ public interface LichessApi {
       @RequestHeader("Accept") String accept,
       @PathVariable("username") String username,
       @RequestParam(value = "max", required = false) Integer max,
-      @RequestParam(value = "until", required = false) String until,
+      @RequestParam(value = "until", required = false) Long until,
       @RequestParam(value = "since", required = false) Long since,
       @RequestParam(value = "sort", required = false) String sort,
       @RequestParam(value = "rated", required = false) Boolean rated
