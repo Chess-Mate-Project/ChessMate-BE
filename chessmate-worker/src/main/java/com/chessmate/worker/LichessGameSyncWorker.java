@@ -18,6 +18,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -123,7 +124,17 @@ public class LichessGameSyncWorker {
                 log.info("[LichessWorker] 전체수집 청크 {}개 → {}개 저장", games.size(), saved.size());
 
                 // -1ms: 마지막 게임을 다음 청크에서 재조회하지 않도록
-                untilTimestamp = games.get(games.size() - 1).createdAt() - 1L;
+                // createdAt이 모두 null이면 커서를 진행할 수 없으므로 안전하게 종료
+                OptionalLong lastCreatedAt = games.stream()
+                    .map(LichessGamesDto::createdAt)
+                    .filter(t -> t != null && t > 0)
+                    .mapToLong(Long::longValue)
+                    .min();
+                if (lastCreatedAt.isEmpty()) {
+                    log.warn("[LichessWorker] 청크 내 유효한 createdAt 없음 — 수집 종료 userId={}", userId);
+                    break;
+                }
+                untilTimestamp = lastCreatedAt.getAsLong() - 1L;
                 job.progress(String.valueOf(untilTimestamp), saved.size());
                 syncJobRepository.save(job);
 
