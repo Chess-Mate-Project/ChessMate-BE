@@ -3,17 +3,16 @@ oauth:
     client-id: ChessLadder-local
     oauth-url: https://lichess.org
     base-api-url: https://lichess.org
-    redirect-uri: http://localhost:8080/login/oauth2/code/lichess
+    redirect-uri: http://localhost:8080/api/oauth/lichess/callback
 
   chesscom:
     client-id: 0cb23ccc-127e-11f1-9e9f-011b3c0d4706
     oauth-url: https://oauth.chess.com
     base-api-url: https://api.chess.com
-    redirect-uri: http://localhost:8080/login/oauth2/code/chesscom
+    redirect-uri: http://localhost:8080/api/oauth/chesscom/callback
 
 
 spring:
   config:
     activate:
       on-profile: external-local
-

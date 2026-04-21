@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/login/oauth2")
+@RequestMapping("/api/oauth")
 @RequiredArgsConstructor
 public class ChesscomOauthController implements PlatFormOAuthController {
 
@@ -35,7 +35,7 @@ public class ChesscomOauthController implements PlatFormOAuthController {
     return ResponseEntity.ok(new SuccessResponse<>("Chess.com의 OAuthUrl을 제공합니다.", response));
   }
 
-  @GetMapping("/code/chesscom")
+  @GetMapping("/chesscom/callback")
   public void getCode(
       @RequestParam(required = false) String code,
       @RequestParam(required = false) String state,
