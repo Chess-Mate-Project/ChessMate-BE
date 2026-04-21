@@ -16,4 +16,3 @@ spring:
   config:
     activate:
       on-profile: external-local
-

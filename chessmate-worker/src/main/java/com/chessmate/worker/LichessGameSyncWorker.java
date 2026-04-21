@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
  * Lichess 게임 수집 Worker.
  *
  * [전체 수집 - 최초 로그인]
- * - DB에 게임이 없을 때: until=gameId 역방향 커서 페이징 (dateDesc)
+ * - DB에 게임이 없을 때: until=epochMillis 역방향 커서 페이징 (dateDesc)
  * - RateLimiter: 0.05 permits/sec = 분당 3회 (100개 × 3 = 300게임/분)
  *
  * [증분 수집 - 정기 스케쥴러]
@@ -95,18 +95,18 @@ public class LichessGameSyncWorker {
         }
     }
 
-    /** 전체 수집: until(gameId) 역방향 커서 페이징 */
+    /** 전체 수집: until(epochMillis) 역방향 커서 페이징 */
     @SuppressWarnings("UnstableApiUsage")
     private void processFullSync(SyncJob job, Long userId, String username, String accessToken) {
         try {
-            String untilGameId = job.getSyncCursor();
+            Long untilTimestamp = job.getSyncCursor() != null ? Long.parseLong(job.getSyncCursor()) : null;
 
             while (true) {
                 RATE_LIMITER.acquire();
 
                 String ndjson = lichessApi.getGames(
                     buildAuthHeader(accessToken), NDJSON, username,
-                    CHUNK_SIZE, untilGameId, null, "dateDesc", null
+                    CHUNK_SIZE, untilTimestamp, null, "dateDesc", null
                 );
 
                 List<LichessGamesDto> games = parseNdjson(ndjson);
@@ -122,8 +122,9 @@ public class LichessGameSyncWorker {
                 List<Game> saved = gameRepository.saveAll(toSave);
                 log.info("[LichessWorker] 전체수집 청크 {}개 → {}개 저장", games.size(), saved.size());
 
-                untilGameId = games.get(games.size() - 1).id();
-                job.progress(untilGameId, saved.size());
+                // -1ms: 마지막 게임을 다음 청크에서 재조회하지 않도록
+                untilTimestamp = games.get(games.size() - 1).createdAt() - 1L;
+                job.progress(String.valueOf(untilTimestamp), saved.size());
                 syncJobRepository.save(job);
 
                 if (games.size() < CHUNK_SIZE) break;
