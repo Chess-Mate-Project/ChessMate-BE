@@ -6,8 +6,12 @@ import com.chessmate.domain.sync.SyncJobRepository;
 import com.chessmate.domain.sync.SyncStatus;
 import com.chessmate.infra_persistence.sync.jpaRepository.SyncJobJpaRepository;
 import com.chessmate.infra_persistence.sync.mapper.SyncJobMapper;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -38,8 +42,18 @@ public class SyncJobRepositoryImpl implements SyncJobRepository {
     }
 
     @Override
-    public boolean existsActiveByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
-        return jpaRepository.existsByUserIdAndPlatformAndStatusIn(
-            userId, platform, List.of(SyncStatus.PENDING, SyncStatus.IN_PROGRESS));
+    public Set<Long> findActiveUserIdsByPlatform(OAuthPlatForm platform, LocalDateTime activeAfter) {
+        return jpaRepository.findActiveUserIdsByPlatformAndStatusIn(
+            platform, List.of(SyncStatus.PENDING, SyncStatus.IN_PROGRESS), activeAfter);
+    }
+
+    @Override
+    public Map<Long, SyncStatus> findLatestStatusByPlatform(OAuthPlatForm platform) {
+        return jpaRepository.findLatestJobPerUserByPlatform(platform)
+            .stream()
+            .collect(Collectors.toMap(
+                e -> e.getUserId(),
+                e -> e.getStatus()
+            ));
     }
 }
