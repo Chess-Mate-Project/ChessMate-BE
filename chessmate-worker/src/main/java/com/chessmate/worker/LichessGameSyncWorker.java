@@ -35,8 +35,13 @@ import org.springframework.stereotype.Component;
  * - 신규 게임만 API 요청 → DB saveAll 중복 체크로 이중 방어
  * - 신규 게임이 있을 때만 stat 재집계
  *
+ * [토큰 없는 유저 (직접 INSERT된 유저)]
+ * - OAuth 토큰 없이 Lichess 공개 API로 수집 진행
+ * - RateLimiter(0.05 req/s)가 비인증 한도(20 req/min) 이내이므로 안전
+ * - 이후 OAuth 로그인 시 다음 스케줄부터 자동으로 인증 모드 전환
+ *
  * Lichess API (2025-04): https://lichess.org/api#tag/Games/operation/apiGamesUser
- * Rate Limit: ~20 req/s (OAuth 인증), 응답 스트리밍 NDJSON
+ * Rate Limit: ~20 req/s (OAuth 인증), 비인증 20 req/min
  */
 @Slf4j
 @Component
@@ -66,10 +71,7 @@ public class LichessGameSyncWorker {
         try {
             String accessToken = tokenStore.getLichessAccessToken(userId);
             if (accessToken == null) {
-                log.warn("[LichessWorker] 토큰 없음 userId={}", userId);
-                job.expireToken();
-                syncJobRepository.save(job);
-                return;
+                log.info("[LichessWorker] 토큰 없음 — 공개 API로 수집 진행 userId={}", userId);
             }
 
             job.start();
@@ -81,10 +83,10 @@ public class LichessGameSyncWorker {
 
             if (latestPlayedAt.isPresent()) {
                 log.info("[LichessWorker] 증분 수집 시작 userId={} username={} since={}", userId, username, latestPlayedAt.get());
-                processIncremental(job, userId, username, latestPlayedAt.get());
+                processIncremental(job, userId, username, latestPlayedAt.get(), accessToken);
             } else {
                 log.info("[LichessWorker] 전체 수집 시작 userId={} username={}", userId, username);
-                processFullSync(job, userId, username);
+                processFullSync(job, userId, username, accessToken);
             }
         } catch (Exception e) {
             log.error("[LichessWorker] 수집 실패 userId={} error={}", userId, e.getMessage(), e);
@@ -95,18 +97,15 @@ public class LichessGameSyncWorker {
 
     /** 전체 수집: until(gameId) 역방향 커서 페이징 */
     @SuppressWarnings("UnstableApiUsage")
-    private void processFullSync(SyncJob job, Long userId, String username) {
+    private void processFullSync(SyncJob job, Long userId, String username, String accessToken) {
         try {
             String untilGameId = job.getSyncCursor();
 
             while (true) {
                 RATE_LIMITER.acquire();
 
-                String token = tokenStore.getLichessAccessToken(userId);
-                if (token == null) { job.expireToken(); syncJobRepository.save(job); return; }
-
                 String ndjson = lichessApi.getGames(
-                    "Bearer " + token, NDJSON, username,
+                    buildAuthHeader(accessToken), NDJSON, username,
                     CHUNK_SIZE, untilGameId, null, "dateDesc", null
                 );
 
@@ -155,7 +154,7 @@ public class LichessGameSyncWorker {
      * 불필요한 API 호출 자체가 발생하지 않음.
      */
     @SuppressWarnings("UnstableApiUsage")
-    private void processIncremental(SyncJob job, Long userId, String username, LocalDateTime latestPlayedAt) {
+    private void processIncremental(SyncJob job, Long userId, String username, LocalDateTime latestPlayedAt, String accessToken) {
         try {
             // +1ms: 마지막 게임과 정확히 같은 시간대 게임 재수집 방지
             long since = latestPlayedAt.toInstant(ZoneOffset.UTC).toEpochMilli() + 1L;
@@ -164,11 +163,8 @@ public class LichessGameSyncWorker {
             while (true) {
                 RATE_LIMITER.acquire();
 
-                String token = tokenStore.getLichessAccessToken(userId);
-                if (token == null) { job.expireToken(); syncJobRepository.save(job); return; }
-
                 String ndjson = lichessApi.getGames(
-                    "Bearer " + token, NDJSON, username,
+                    buildAuthHeader(accessToken), NDJSON, username,
                     CHUNK_SIZE, null, since, "dateAsc", null
                 );
 
@@ -212,6 +208,11 @@ public class LichessGameSyncWorker {
             job.fail(e.getMessage());
             syncJobRepository.save(job);
         }
+    }
+
+    /** token이 있으면 "Bearer {token}", 없으면 null (헤더 생략 → 공개 API) */
+    private String buildAuthHeader(String token) {
+        return token != null ? "Bearer " + token : null;
     }
 
     private Game toGame(Long userId, String username, LichessGamesDto dto) {
