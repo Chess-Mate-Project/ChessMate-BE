@@ -7,9 +7,11 @@ import com.chessmate.domain.sync.SyncJob;
 import com.chessmate.domain.sync.SyncJobRepository;
 import com.chessmate.domain.sync.SyncStatus;
 import com.chessmate.infra_redis.sync.SyncJobProducer;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +55,9 @@ public class ScheduledSyncTrigger implements SmartLifecycle {
     private static final int PHASE = Integer.MAX_VALUE - 100;
 
     private static final DateTimeFormatter YEAR_MONTH_FMT = DateTimeFormatter.ofPattern("yyyy/MM");
+
+    // 이 시간보다 오래된 PENDING/IN_PROGRESS 잡은 크래시로 간주하고 재 enqueue 허용
+    private static final int STALE_THRESHOLD_MINUTES = 60;
 
     private final AtomicBoolean running = new AtomicBoolean(false);
 
@@ -100,14 +105,18 @@ public class ScheduledSyncTrigger implements SmartLifecycle {
 
     /**
      * 전체 Lichess 사용자 SyncJob enqueue.
-     * Worker가 DB 상태를 보고 전체/증분 수집 모드를 자동 결정.
+     * 플랫폼당 쿼리 1번으로 active userId Set을 조회 후 in-memory 체크.
+     * 60분 이상 된 PENDING/IN_PROGRESS는 크래시로 간주해 재 enqueue 허용.
      */
     private int scheduleLichessUsers() {
+        LocalDateTime staleThreshold = LocalDateTime.now().minusMinutes(STALE_THRESHOLD_MINUTES);
+        Set<Long> activeUserIds = syncJobRepository.findActiveUserIdsByPlatform(OAuthPlatForm.LICHESS, staleThreshold);
+
         var users = lichessUserRepository.findAll();
         int count = 0;
         for (var user : users) {
             try {
-                if (syncJobRepository.existsActiveByUserIdAndPlatform(user.getId(), OAuthPlatForm.LICHESS)) {
+                if (activeUserIds.contains(user.getId())) {
                     log.debug("[ScheduledSyncTrigger] Lichess skip — 진행 중인 잡 존재 userId={}", user.getId());
                     continue;
                 }
@@ -135,23 +144,24 @@ public class ScheduledSyncTrigger implements SmartLifecycle {
      *   filterPending("yyyy/MM") → 해당 월 이후만 반환 → 당월 archive 1건만 호출.
      */
     private int scheduleChesscomUsers() {
-        // 전월을 cursor로 설정 → filterPending이 당월 archive만 반환
         String prevMonthCursor = YearMonth.now().minusMonths(1).format(YEAR_MONTH_FMT);
+        LocalDateTime staleThreshold = LocalDateTime.now().minusMinutes(STALE_THRESHOLD_MINUTES);
+
+        // 플랫폼당 쿼리 2번으로 루프 내 DB 왕복 제거
+        Set<Long> activeUserIds = syncJobRepository.findActiveUserIdsByPlatform(OAuthPlatForm.CHESSCOM, staleThreshold);
+        Map<Long, SyncStatus> latestStatusByUserId = syncJobRepository.findLatestStatusByPlatform(OAuthPlatForm.CHESSCOM);
 
         var users = chesscomUserRepository.findAll();
         int count = 0;
         for (var user : users) {
             try {
-                if (syncJobRepository.existsActiveByUserIdAndPlatform(user.getId(), OAuthPlatForm.CHESSCOM)) {
+                if (activeUserIds.contains(user.getId())) {
                     log.debug("[ScheduledSyncTrigger] Chess.com skip — 진행 중인 잡 존재 userId={}", user.getId());
                     continue;
                 }
 
-                Optional<SyncJob> lastJob = syncJobRepository.findLatestByUserIdAndPlatform(
-                    user.getId(), OAuthPlatForm.CHESSCOM);
-
                 SyncJob job;
-                if (lastJob.isPresent() && lastJob.get().getStatus() == SyncStatus.COMPLETED) {
+                if (latestStatusByUserId.get(user.getId()) == SyncStatus.COMPLETED) {
                     job = SyncJob.createWithCursor(
                         user.getId(), OAuthPlatForm.CHESSCOM, user.getUsername(), prevMonthCursor);
                 } else {
