@@ -56,6 +56,8 @@ public interface UserPerfStatJpaRepository extends JpaRepository<UserPerfStatJpa
         Pageable pageable
     );
 
+    boolean existsByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
+
     long countByPlatformAndTimeClass(OAuthPlatForm platform, String timeClass);
 
     @Query("SELECT COUNT(s) FROM UserPerfStatJpaEntity s " +
