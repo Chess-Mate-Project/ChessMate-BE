@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 /**
@@ -40,10 +40,10 @@ public class PerfStatFetcher {
     private final UserPerfStatRepository perfStatRepository;
     private final UserColorStatRepository colorStatRepository;
 
-    private static final int MAX_RETRIES = 1;
-    private static final long BACKOFF_MS = 15_000L;
+    private static final int  MAX_RETRIES          = 5;
+    private static final long BASE_BACKOFF_MS       = 60_000L;
+    private static final long BACKOFF_INCREMENT_MS  = 5_000L;
 
-    @Transactional
     public void fetch(Long userId, OAuthPlatForm platform, String username, String accessToken) {
         try {
             if (platform == OAuthPlatForm.LICHESS) {
@@ -59,7 +59,8 @@ public class PerfStatFetcher {
 
     private void fetchLichess(Long userId, String username, String accessToken) {
         String authHeader = accessToken != null ? "Bearer " + accessToken : null;
-        LichessAccountDto account = fetchUserWithRetry(userId, username, authHeader);
+        LichessAccountDto account = callWithRetry(
+            () -> lichessApi.getUser(authHeader, username), "userId=" + userId);
         PerfsDto perfs = account.perfs();
         if (perfs == null) {
             log.warn("[PerfStatFetcher] Lichess perfs 없음 userId={}", userId);
@@ -103,7 +104,8 @@ public class PerfStatFetcher {
     }
 
     private void fetchChesscom(Long userId, String username) {
-        ChesscomPlayerStatsResponse statsResponse = chesscomApi.getPlayerStats(username);
+        ChesscomPlayerStatsResponse statsResponse = callWithRetry(
+            () -> chesscomApi.getPlayerStats(username), "userId=" + userId);
 
         perfStatRepository.deleteByUserIdAndPlatform(userId, OAuthPlatForm.CHESSCOM);
 
@@ -137,22 +139,23 @@ public class PerfStatFetcher {
         log.info("[PerfStatFetcher] Chess.com perf 저장 userId={} {}타입", userId, stats.size());
     }
 
-    private LichessAccountDto fetchUserWithRetry(Long userId, String username, String authHeader) {
+    private <T> T callWithRetry(Supplier<T> call, String context) {
         for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
             try {
-                return lichessApi.getUser(authHeader, username);
+                return call.get();
             } catch (HttpClientErrorException.TooManyRequests e) {
                 if (attempt < MAX_RETRIES) {
-                    log.warn("[PerfStatFetcher] 429 수신, {}ms 대기 후 재시도 userId={} attempt={}/{}",
-                        BACKOFF_MS, userId, attempt + 1, MAX_RETRIES);
+                    long wait = BASE_BACKOFF_MS + (long) attempt * BACKOFF_INCREMENT_MS;
+                    log.warn("[PerfStatFetcher] 429 수신, {}ms 대기 후 재시도 {} attempt={}/{}",
+                        wait, context, attempt + 1, MAX_RETRIES);
                     try {
-                        Thread.sleep(BACKOFF_MS);
+                        Thread.sleep(wait);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        throw e;
+                        throw new RuntimeException("Backoff sleep interrupted", ie);
                     }
                 } else {
-                    log.warn("[PerfStatFetcher] 429 재시도 소진, 이번 사이클 perf stat 수집 생략 userId={}", userId);
+                    log.warn("[PerfStatFetcher] 429 재시도 소진, 이번 사이클 수집 생략 {}", context);
                     throw e;
                 }
             }
@@ -170,7 +173,4 @@ public class PerfStatFetcher {
         };
     }
 
-    private ChesscomTimeClassStat nullStat() {
-        return null;
-    }
 }

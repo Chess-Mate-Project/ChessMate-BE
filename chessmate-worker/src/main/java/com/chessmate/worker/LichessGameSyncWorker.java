@@ -197,6 +197,10 @@ public class LichessGameSyncWorker {
 
                 // 다음 페이지: 마지막 게임 시간 +1ms를 새 since로 사용
                 LichessGamesDto last = games.getLast();
+                if (last.createdAt() == null || last.createdAt() <= 0) {
+                    log.warn("[LichessWorker] 증분 수집 마지막 게임 createdAt 없음 — 수집 종료 userId={}", userId);
+                    break;
+                }
                 since = last.createdAt() + 1L;
 
                 job.progress(last.id(), saved.size());
