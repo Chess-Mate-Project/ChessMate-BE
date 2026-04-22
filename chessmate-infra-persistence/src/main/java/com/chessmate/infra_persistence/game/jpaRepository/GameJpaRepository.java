@@ -12,8 +12,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface GameJpaRepository extends JpaRepository<GameJpaEntity, Long> {
 
-    @Query("SELECT g.platformGameId FROM GameJpaEntity g WHERE g.platform = :platform AND g.platformGameId IN :ids")
+    @Query("SELECT g.platformGameId FROM GameJpaEntity g WHERE g.userId = :userId AND g.platform = :platform AND g.platformGameId IN :ids")
     List<String> findExistingPlatformGameIds(
+        @Param("userId") Long userId,
         @Param("platform") OAuthPlatForm platform,
         @Param("ids") List<String> ids
     );

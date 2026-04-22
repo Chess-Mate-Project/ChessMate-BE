@@ -26,7 +26,7 @@ import lombok.Setter;
         @Index(name = "idx_game_user_platform", columnList = "user_id, platform")
     },
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_game_platform_id", columnNames = {"platform", "platform_game_id"})
+        @UniqueConstraint(name = "uk_game_user_platform_id", columnNames = {"user_id", "platform", "platform_game_id"})
     }
 )
 @Getter
