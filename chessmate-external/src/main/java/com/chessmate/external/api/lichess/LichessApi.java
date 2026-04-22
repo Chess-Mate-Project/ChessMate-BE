@@ -27,26 +27,19 @@ public interface LichessApi {
   );
 
   /**
-   * 특정 사용자의 게임 목록 조회 (NDJSON 스트리밍)
-   *
-   * API Endpoint: GET /api/games/user/{username}
-   *
-   * @param authHeader Authorization 헤더 (Bearer token)
-   * @param accept     Accept 헤더 — "application/x-ndjson" 고정
-   * @param username   Lichess 사용자명
-   * @param max        최대 게임 수 (최대 100)
-   * @param until      이 gameId 이전 게임만 조회 (커서 페이징)
-   * @param sort       정렬 방향 — "dateDesc" 고정
-   * @return 줄바꿈(\n) 구분 NDJSON 문자열
-   */
-  /**
-   * 특정 사용자의 공개 프로필 조회 (인증 불필요)
+   * 특정 사용자의 공개 프로필 조회
    * perfs(타임클래스별 레이팅) 포함
+   *
+   * Authorization 헤더는 선택적: 토큰 제공 시 인증 rate limit(20 req/s) 적용,
+   * 미제공 시 비인증 한도(20 req/min) 소모
    *
    * API Endpoint: GET /api/user/{username}
    */
   @GetExchange("/api/user/{username}")
-  LichessAccountDto getUser(@PathVariable("username") String username);
+  LichessAccountDto getUser(
+      @RequestHeader(value = "Authorization", required = false) String authHeader,
+      @PathVariable("username") String username
+  );
 
   /**
    * 특정 사용자의 게임 목록 조회.
