@@ -62,7 +62,6 @@ public class SecurityConfig {
                             "/api/user/platform-stats",
                             "/actuator/prometheus",
                             "/actuator/health"
-                            "/api/user/platform-stats"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
