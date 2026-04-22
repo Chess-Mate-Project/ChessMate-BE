@@ -48,3 +48,16 @@ logging:
     # 스프링 시큐리티 필터 체인의 상세 동작
     org.springframework.security.web.context: DEBUG
     org.springframework.security.web.authentication.HttpSessionAuthenticationStrategy: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
