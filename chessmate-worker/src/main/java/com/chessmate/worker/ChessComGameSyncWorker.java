@@ -97,6 +97,13 @@ public class ChessComGameSyncWorker {
             ChesscomGameArchivesResponse archivesResponse = chesscomApi.getGameArchives(username);
             List<String> allArchives = archivesResponse.getArchives();
 
+            if (allArchives == null) {
+                log.warn("[ChesscomWorker] archives null 응답 — 계정 이름 변경/삭제 의심, 수집 스킵 userId={} username={}", userId, username);
+                job.complete();
+                syncJobRepository.save(job);
+                return;
+            }
+
             // cursor가 전월로 설정돼 있으면 당월 아카이브만 처리 (증분 수집)
             List<String> pending = filterPending(allArchives, job.getSyncCursor());
             log.info("[ChesscomWorker] 처리 대상 아카이브 {}개 (cursor={})", pending.size(), job.getSyncCursor());
