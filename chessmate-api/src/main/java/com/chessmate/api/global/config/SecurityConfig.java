@@ -59,7 +59,9 @@ public class SecurityConfig {
                             "/api/oauth/chesscom/callback",
                             "/api/oauth/lichess/callback",
                             "/api/auth/token",
-                            "/api/user/platform-stats"
+                            "/api/user/platform-stats",
+                            "/actuator/prometheus",
+                            "/actuator/health"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

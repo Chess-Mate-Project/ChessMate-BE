@@ -39,3 +39,16 @@ logging:
     org.springframework.session: WARN
     org.apache.catalina.session: WARN
     org.springframework.security.web.context: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
