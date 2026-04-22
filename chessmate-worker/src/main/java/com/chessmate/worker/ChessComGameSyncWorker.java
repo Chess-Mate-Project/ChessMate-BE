@@ -157,9 +157,18 @@ public class ChessComGameSyncWorker {
 
     @SuppressWarnings("UnstableApiUsage")
     private void processSequential(SyncJob job, Long userId, String username, List<String> archives) {
+        int failCount = 0;
         for (String url : archives) {
             FALLBACK_RATE_LIMITER.acquire();
-            fetchAndSave(job, userId, username, url);
+            try {
+                fetchAndSave(job, userId, username, url);
+            } catch (Exception e) {
+                log.warn("[ChesscomWorker] archive 처리 실패 (스킵) url={} error={}", url, e.getMessage());
+                failCount++;
+            }
+        }
+        if (failCount > 0) {
+            log.warn("[ChesscomWorker] 순차 처리 중 {}개 archive 스킵됨 userId={}", failCount, userId);
         }
     }
 

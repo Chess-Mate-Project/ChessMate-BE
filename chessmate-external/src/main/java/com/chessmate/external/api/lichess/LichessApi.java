@@ -27,8 +27,11 @@ public interface LichessApi {
   );
 
   /**
-   * 특정 사용자의 공개 프로필 조회 (인증 불필요)
+   * 특정 사용자의 공개 프로필 조회
    * perfs(타임클래스별 레이팅) 포함
+   *
+   * Authorization 헤더는 선택적: 토큰 제공 시 인증 rate limit(20 req/s) 적용,
+   * 미제공 시 비인증 한도(20 req/min) 소모
    *
    * API Endpoint: GET /api/user/{username}
    */

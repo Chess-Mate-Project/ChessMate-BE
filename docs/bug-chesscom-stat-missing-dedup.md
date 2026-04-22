@@ -43,6 +43,8 @@ DB의 unique constraint도 `(platform, platform_game_id)`으로만 걸려 있어
 
 ## 수정 내용
 
+> **주의**: 아래 코드/스키마 변경은 이 PR에 포함되지 않으며 후속 PR에서 반영 예정입니다.
+
 ### 1. `GameJpaEntity.java` — unique constraint에 `user_id` 추가
 
 **파일**: `chessmate-infra-persistence/.../game/entity/GameJpaEntity.java`
