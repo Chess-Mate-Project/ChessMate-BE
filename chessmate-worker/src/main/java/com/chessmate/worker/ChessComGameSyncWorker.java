@@ -53,6 +53,10 @@ import org.springframework.web.client.HttpServerErrorException;
 @RequiredArgsConstructor
 public class ChessComGameSyncWorker {
 
+    private static final int  MAX_RETRIES         = 5;
+    private static final long BASE_BACKOFF_MS      = 60_000L;
+    private static final long BACKOFF_INCREMENT_MS = 5_000L;
+
     @Value("${chessmate.sync.chesscom.parallelism:5}")
     private int parallelism;
 
@@ -114,7 +118,7 @@ public class ChessComGameSyncWorker {
             // 신규 게임이 저장됐거나, stat 테이블 중 하나라도 비어 있으면 재집계
             if (newlySaved > 0 || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.CHESSCOM)) {
                 statAggregator.aggregate(userId, OAuthPlatForm.CHESSCOM);
-                perfStatFetcher.fetch(userId, OAuthPlatForm.CHESSCOM, username);
+                perfStatFetcher.fetch(userId, OAuthPlatForm.CHESSCOM, username, null);
             }
 
         } catch (Exception e) {
@@ -153,9 +157,18 @@ public class ChessComGameSyncWorker {
 
     @SuppressWarnings("UnstableApiUsage")
     private void processSequential(SyncJob job, Long userId, String username, List<String> archives) {
+        int failCount = 0;
         for (String url : archives) {
             FALLBACK_RATE_LIMITER.acquire();
-            fetchAndSave(job, userId, username, url);
+            try {
+                fetchAndSave(job, userId, username, url);
+            } catch (Exception e) {
+                log.warn("[ChesscomWorker] archive 처리 실패 (스킵) url={} error={}", url, e.getMessage());
+                failCount++;
+            }
+        }
+        if (failCount > 0) {
+            log.warn("[ChesscomWorker] 순차 처리 중 {}개 archive 스킵됨 userId={}", failCount, userId);
         }
     }
 
@@ -165,7 +178,7 @@ public class ChessComGameSyncWorker {
 
         ChesscomMonthlyArchiveResponse response;
         try {
-            response = chesscomApi.getArchiveByUrl(URI.create(url), authHeader);
+            response = fetchArchiveWithRetry(url, authHeader);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 log.info("[ChesscomWorker] 401 감지, 토큰 갱신 시도 userId={}", userId);
@@ -175,10 +188,9 @@ public class ChessComGameSyncWorker {
                     syncJobRepository.save(job);
                     throw new RuntimeException("TOKEN_EXPIRED after refresh failure");
                 }
-                response = chesscomApi.getArchiveByUrl(URI.create(url), "Bearer " + newToken);
+                response = fetchArchiveWithRetry(url, "Bearer " + newToken);
             } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                log.warn("[ChesscomWorker] 429 Rate Limit 초과, archive 스킵 url={}", url);
-                throw new RuntimeException("RATE_LIMITED: " + url);
+                throw e; // fetchArchiveWithRetry에서 이미 로깅 후 재시도 소진
             } else {
                 log.warn("[ChesscomWorker] HTTP {} 오류, archive 스킵 url={} error={}",
                     e.getStatusCode(), url, e.getMessage());
@@ -280,5 +292,33 @@ public class ChessComGameSyncWorker {
             return parts[parts.length - 2] + "/" + parts[parts.length - 1];
         }
         return url;
+    }
+
+    /**
+     * 429 시 BASE_BACKOFF_MS 부터 시작해 BACKOFF_INCREMENT_MS씩 늘리며 MAX_RETRIES 회 재시도.
+     * 재시도 소진 시 TooManyRequests 그대로 던짐.
+     */
+    private ChesscomMonthlyArchiveResponse fetchArchiveWithRetry(String url, String authHeader) {
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return chesscomApi.getArchiveByUrl(URI.create(url), authHeader);
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                if (attempt < MAX_RETRIES) {
+                    long wait = BASE_BACKOFF_MS + (long) attempt * BACKOFF_INCREMENT_MS;
+                    log.warn("[ChesscomWorker] 429 수신, {}ms 대기 후 재시도 url={} attempt={}/{}",
+                        wait, url, attempt + 1, MAX_RETRIES);
+                    try {
+                        Thread.sleep(wait);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Backoff sleep interrupted", ie);
+                    }
+                } else {
+                    log.warn("[ChesscomWorker] 429 재시도 소진, archive 스킵 url={}", url);
+                    throw e;
+                }
+            }
+        }
+        throw new IllegalStateException("unreachable");
     }
 }
