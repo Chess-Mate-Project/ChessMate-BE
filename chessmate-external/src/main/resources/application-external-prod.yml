@@ -1,14 +1,14 @@
 oauth:
   lichess:
     client-id: ${LICHESS_CLIENT_ID}
-    oauth-url: https://lichess.org/oauth
-    base-api-url: https://lichess.org/api
+    oauth-url: https://lichess.org
+    base-api-url: https://lichess.org
     redirect-uri: ${LICHESS_REDIRECT_URL}
 
   chesscom:
     client-id: ${CHESSCOM_CLIENT_ID}
-    oauth-url: https://oauth.chess.com/authorize
-    base-api-url: https://api.chess.com/pub
+    oauth-url: https://oauth.chess.com
+    base-api-url: https://api.chess.com
     redirect-uri: ${CHESSCOM_REDIRECT_URL}
 
 spring:

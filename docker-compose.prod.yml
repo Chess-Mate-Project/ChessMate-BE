@@ -1,6 +1,8 @@
 services:
   api:
     image: ${DOCKER_USERNAME}/chessladder-api:latest
+    container_name: chessladder-api
+    restart: always
     ports:
       - "8080:8080"
     environment:
@@ -8,13 +10,17 @@ services:
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       SPRING_JWT_ACCESS_TOKEN_SECRET: ${SPRING_JWT_ACCESS_TOKEN_SECRET}
       SPRING_JWT_ACCESS_TOKEN_EXPIRATION: ${SPRING_JWT_ACCESS_TOKEN_EXPIRATION}
       SPRING_JWT_REFRESH_TOKEN_SECRET: ${SPRING_JWT_REFRESH_TOKEN_SECRET}
       SPRING_JWT_REFRESH_TOKEN_EXPIRATION: ${SPRING_JWT_REFRESH_TOKEN_EXPIRATION}
+      LICHESS_CLIENT_ID: ${LICHESS_CLIENT_ID}
+      LICHESS_REDIRECT_URL: ${LICHESS_REDIRECT_URL}
+      CHESSCOM_CLIENT_ID: ${CHESSCOM_CLIENT_ID}
+      CHESSCOM_REDIRECT_URL: ${CHESSCOM_REDIRECT_URL}
       CLOUDFLARE_R2_ENDPOINT: ${CLOUDFLARE_R2_ENDPOINT}
       CLOUDFLARE_R2_ACCESS_KEY: ${CLOUDFLARE_R2_ACCESS_KEY}
       CLOUDFLARE_R2_SECRET_KEY: ${CLOUDFLARE_R2_SECRET_KEY}
@@ -22,17 +28,11 @@ services:
       CLOUDFLARE_R2_CDN: ${CLOUDFLARE_R2_CDN}
       CLIENT_URL: ${CLIENT_URL}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN}
-      LICHESS_CLIENT_ID: ${LICHESS_CLIENT_ID}
-      LICHESS_REDIRECT_URL: ${LICHESS_REDIRECT_URL}
-      CHESSCOM_CLIENT_ID: ${CHESSCOM_CLIENT_ID}
-      CHESSCOM_REDIRECT_URL: ${CHESSCOM_REDIRECT_URL}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
 
   worker:
     image: ${DOCKER_USERNAME}/chessladder-worker:latest
+    container_name: chessladder-worker
+    restart: always
     ports:
       - "9000:9000"
     environment:
@@ -40,26 +40,21 @@ services:
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SPRING_JWT_ACCESS_TOKEN_SECRET: ${SPRING_JWT_ACCESS_TOKEN_SECRET}
+      SPRING_JWT_ACCESS_TOKEN_EXPIRATION: ${SPRING_JWT_ACCESS_TOKEN_EXPIRATION}
+      SPRING_JWT_REFRESH_TOKEN_SECRET: ${SPRING_JWT_REFRESH_TOKEN_SECRET}
+      SPRING_JWT_REFRESH_TOKEN_EXPIRATION: ${SPRING_JWT_REFRESH_TOKEN_EXPIRATION}
       LICHESS_CLIENT_ID: ${LICHESS_CLIENT_ID}
       LICHESS_REDIRECT_URL: ${LICHESS_REDIRECT_URL}
       CHESSCOM_CLIENT_ID: ${CHESSCOM_CLIENT_ID}
       CHESSCOM_REDIRECT_URL: ${CHESSCOM_REDIRECT_URL}
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
+      CLOUDFLARE_R2_ENDPOINT: ${CLOUDFLARE_R2_ENDPOINT}
+      CLOUDFLARE_R2_ACCESS_KEY: ${CLOUDFLARE_R2_ACCESS_KEY}
+      CLOUDFLARE_R2_SECRET_KEY: ${CLOUDFLARE_R2_SECRET_KEY}
+      CLOUDFLARE_R2_BUCKET: ${CLOUDFLARE_R2_BUCKET}
+      CLOUDFLARE_R2_CDN: ${CLOUDFLARE_R2_CDN}
+      CLIENT_URL: ${CLIENT_URL}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN}
