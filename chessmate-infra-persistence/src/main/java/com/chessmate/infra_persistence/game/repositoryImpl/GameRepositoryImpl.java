@@ -37,11 +37,12 @@ public class GameRepositoryImpl implements GameRepository {
     public List<Game> saveAll(List<Game> games) {
         if (games.isEmpty()) return List.of();
 
-        // 중복 체크: 같은 플랫폼 내에서 이미 저장된 platformGameId 조회
+        // 중복 체크: 같은 유저+플랫폼 내에서 이미 저장된 platformGameId 조회
+        var userId = games.get(0).getUserId();
         var platform = games.get(0).getPlatform();
         var requestedIds = games.stream().map(Game::getPlatformGameId).toList();
         Set<String> existing = Set.copyOf(
-            jpaRepository.findExistingPlatformGameIds(platform, requestedIds)
+            jpaRepository.findExistingPlatformGameIds(userId, platform, requestedIds)
         );
 
         var newGames = games.stream()
