@@ -4,7 +4,6 @@ import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.domain.stat.UserColorStat;
 import com.chessmate.domain.stat.UserColorStatRepository;
 import com.chessmate.domain.stat.UserPerfStat;
-import com.chessmate.domain.stat.UserPerfStatRepository;
 import com.chessmate.external.api.chesscom.ChesscomApi;
 import com.chessmate.external.api.lichess.LichessApi;
 import com.chessmate.external.dto.account.LichessAccountDto;
@@ -37,8 +36,8 @@ public class PerfStatFetcher {
 
     private final LichessApi lichessApi;
     private final ChesscomApi chesscomApi;
-    private final UserPerfStatRepository perfStatRepository;
     private final UserColorStatRepository colorStatRepository;
+    private final PerfStatPersister perfStatPersister;
 
     private static final int  MAX_RETRIES          = 5;
     private static final long BASE_BACKOFF_MS       = 60_000L;
@@ -66,8 +65,6 @@ public class PerfStatFetcher {
             log.warn("[PerfStatFetcher] Lichess perfs 없음 userId={}", userId);
             return;
         }
-
-        perfStatRepository.deleteByUserIdAndPlatform(userId, OAuthPlatForm.LICHESS);
 
         List<UserPerfStat> stats = new ArrayList<>();
         for (String timeClass : TIME_CLASSES) {
@@ -99,15 +96,13 @@ public class PerfStatFetcher {
                 .build());
         }
 
-        perfStatRepository.saveAll(stats);
+        perfStatPersister.replaceStats(userId, OAuthPlatForm.LICHESS, stats);
         log.info("[PerfStatFetcher] Lichess perf 저장 userId={} {}타입", userId, stats.size());
     }
 
     private void fetchChesscom(Long userId, String username) {
         ChesscomPlayerStatsResponse statsResponse = callWithRetry(
             () -> chesscomApi.getPlayerStats(username), "userId=" + userId);
-
-        perfStatRepository.deleteByUserIdAndPlatform(userId, OAuthPlatForm.CHESSCOM);
 
         Map<String, ChesscomTimeClassStat> timeClassMap = new HashMap<>();
         timeClassMap.put("bullet", statsResponse.chessBullet());
@@ -135,7 +130,7 @@ public class PerfStatFetcher {
                 .build());
         }
 
-        perfStatRepository.saveAll(stats);
+        perfStatPersister.replaceStats(userId, OAuthPlatForm.CHESSCOM, stats);
         log.info("[PerfStatFetcher] Chess.com perf 저장 userId={} {}타입", userId, stats.size());
     }
 
