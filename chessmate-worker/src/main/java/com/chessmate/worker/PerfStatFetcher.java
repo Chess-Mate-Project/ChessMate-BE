@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 
 /**
  * 플랫폼 API에서 타임클래스별 레이팅/승패 통계를 가져와 user_perf_stat에 저장.
@@ -39,11 +40,14 @@ public class PerfStatFetcher {
     private final UserPerfStatRepository perfStatRepository;
     private final UserColorStatRepository colorStatRepository;
 
+    private static final int MAX_RETRIES = 1;
+    private static final long BACKOFF_MS = 15_000L;
+
     @Transactional
-    public void fetch(Long userId, OAuthPlatForm platform, String username) {
+    public void fetch(Long userId, OAuthPlatForm platform, String username, String accessToken) {
         try {
             if (platform == OAuthPlatForm.LICHESS) {
-                fetchLichess(userId, username);
+                fetchLichess(userId, username, accessToken);
             } else {
                 fetchChesscom(userId, username);
             }
@@ -53,8 +57,9 @@ public class PerfStatFetcher {
         }
     }
 
-    private void fetchLichess(Long userId, String username) {
-        LichessAccountDto account = lichessApi.getUser(username);
+    private void fetchLichess(Long userId, String username, String accessToken) {
+        String authHeader = accessToken != null ? "Bearer " + accessToken : null;
+        LichessAccountDto account = fetchUserWithRetry(userId, username, authHeader);
         PerfsDto perfs = account.perfs();
         if (perfs == null) {
             log.warn("[PerfStatFetcher] Lichess perfs 없음 userId={}", userId);
@@ -130,6 +135,29 @@ public class PerfStatFetcher {
 
         perfStatRepository.saveAll(stats);
         log.info("[PerfStatFetcher] Chess.com perf 저장 userId={} {}타입", userId, stats.size());
+    }
+
+    private LichessAccountDto fetchUserWithRetry(Long userId, String username, String authHeader) {
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return lichessApi.getUser(authHeader, username);
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                if (attempt < MAX_RETRIES) {
+                    log.warn("[PerfStatFetcher] 429 수신, {}ms 대기 후 재시도 userId={} attempt={}/{}",
+                        BACKOFF_MS, userId, attempt + 1, MAX_RETRIES);
+                    try {
+                        Thread.sleep(BACKOFF_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw e;
+                    }
+                } else {
+                    log.warn("[PerfStatFetcher] 429 재시도 소진, 이번 사이클 perf stat 수집 생략 userId={}", userId);
+                    throw e;
+                }
+            }
+        }
+        throw new IllegalStateException("unreachable");
     }
 
     private PerfDto resolvePerf(PerfsDto perfs, String timeClass) {

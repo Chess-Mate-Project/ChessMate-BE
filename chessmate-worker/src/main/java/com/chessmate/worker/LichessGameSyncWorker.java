@@ -146,7 +146,7 @@ public class LichessGameSyncWorker {
             log.info("[LichessWorker] 전체 수집 완료 userId={} total={}", userId, job.getTotalFetched());
 
             statAggregator.aggregate(userId, OAuthPlatForm.LICHESS);
-            perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username);
+            perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username, accessToken);
 
         } catch (Exception e) {
             log.error("[LichessWorker] 전체 수집 실패 userId={} error={}", userId, e.getMessage(), e);
@@ -212,7 +212,7 @@ public class LichessGameSyncWorker {
             // 신규 게임이 저장됐거나, stat 테이블 중 하나라도 비어 있으면 재집계
             if (totalNewlySaved > 0 || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.LICHESS)) {
                 statAggregator.aggregate(userId, OAuthPlatForm.LICHESS);
-                perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username);
+                perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username, accessToken);
             }
 
         } catch (Exception e) {

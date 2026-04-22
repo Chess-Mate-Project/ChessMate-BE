@@ -46,7 +46,10 @@ public interface LichessApi {
    * API Endpoint: GET /api/user/{username}
    */
   @GetExchange("/api/user/{username}")
-  LichessAccountDto getUser(@PathVariable("username") String username);
+  LichessAccountDto getUser(
+      @RequestHeader(value = "Authorization", required = false) String authHeader,
+      @PathVariable("username") String username
+  );
 
   /**
    * 특정 사용자의 게임 목록 조회.
