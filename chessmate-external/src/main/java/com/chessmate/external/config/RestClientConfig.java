@@ -105,6 +105,7 @@ public class RestClientConfig {
             log.info("[ChessCom API] archives 응답 Body: {}", new String(responseBody, StandardCharsets.UTF_8));
             return new ClientHttpResponse() {
               @Override public HttpStatusCode getStatusCode() throws IOException { return response.getStatusCode(); }
+              @Override public String getStatusText() throws IOException { return response.getStatusText(); }
               @Override public HttpHeaders getHeaders() { return response.getHeaders(); }
               @Override public InputStream getBody() { return new ByteArrayInputStream(responseBody); }
               @Override public void close() { response.close(); }
