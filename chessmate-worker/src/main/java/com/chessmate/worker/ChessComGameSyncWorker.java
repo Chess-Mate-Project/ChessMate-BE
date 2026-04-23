@@ -84,7 +84,10 @@ public class ChessComGameSyncWorker {
 
     public void process(SyncJob job) {
         Long userId = job.getUserId();
-        String username = job.getPlatformUsername();
+        // Chess.com API는 대소문자 혼용 username에 301을 반환하므로 lowercase로 정규화
+        String username = job.getPlatformUsername() != null
+            ? job.getPlatformUsername().toLowerCase()
+            : null;
 
         job.start();
         syncJobRepository.save(job);
