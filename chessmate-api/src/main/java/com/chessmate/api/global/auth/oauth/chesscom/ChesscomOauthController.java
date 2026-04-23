@@ -5,10 +5,12 @@ import com.chessmate.api.global.auth.oauth.common.CookieManager;
 import com.chessmate.api.global.auth.oauth.common.PlatFormOAuthController;
 import com.chessmate.api.global.auth.oauth.common.dto.OAuthUrlResponse;
 import com.chessmate.common.dto.OAuthPlatForm;
+import com.chessmate.common.exception.AuthException;
 import com.chessmate.common.response.SuccessResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/oauth")
 @RequiredArgsConstructor
+@Slf4j
 public class ChesscomOauthController implements PlatFormOAuthController {
 
   @Value("${client.url}")
@@ -41,13 +44,17 @@ public class ChesscomOauthController implements PlatFormOAuthController {
       @RequestParam(required = false) String state,
       HttpServletResponse res
   ) throws IOException {
-
-    TokenResponse response = chesscomOAuthService.callback(code, state);
-
-    cookieManager.addAuthCookies(res, response, OAuthPlatForm.CHESSCOM);
-
-
-    res.sendRedirect(clientUrl);
+    try {
+      TokenResponse response = chesscomOAuthService.callback(code, state);
+      cookieManager.addAuthCookies(res, response, OAuthPlatForm.CHESSCOM);
+      res.sendRedirect(clientUrl);
+    } catch (AuthException e) {
+      log.warn("[ChesscomCallback] 인증 실패, 로그인 페이지로 redirect - {}", e.getMessage());
+      res.sendRedirect(clientUrl + "/?error=auth_failed");
+    } catch (Exception e) {
+      log.error("[ChesscomCallback] 예상치 못한 에러, 로그인 페이지로 redirect", e);
+      res.sendRedirect(clientUrl + "/?error=server_error");
+    }
   }
 
 }
