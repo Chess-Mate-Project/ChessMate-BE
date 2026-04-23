@@ -41,7 +41,7 @@ public class PublicUserController {
       @RequestParam OAuthPlatForm platform,
       @AuthenticationPrincipal UserPrincipal principal
   ) {
-    Long excludeUserId = platform == principal.getProvider() ? principal.getId() : null;
+    Long excludeUserId = (principal != null && platform == principal.getProvider()) ? principal.getId() : null;
     SearchUsersResponse response = userService.searchUsers(username, platform, excludeUserId);
 
     return ResponseEntity.ok(new SuccessResponse<>(

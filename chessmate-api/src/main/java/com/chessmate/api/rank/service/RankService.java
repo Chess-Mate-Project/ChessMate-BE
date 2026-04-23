@@ -36,17 +36,17 @@ public class RankService {
   @Transactional(readOnly = true)
   public RankingResponse getRankers(Long userId, OAuthPlatForm userProvider, OAuthPlatForm platform,
                                     GameType gameType, Pageable pageable) {
-    if (userId == null || userProvider == null || platform == null) {
-      return buildGuestResponse(pageable);
-    }
-
     String timeClass = gameType.toTimeClass();
     int pageSize = Math.max(pageable.getPageSize(), 1);
     int currentPage = pageable.getPageNumber();
 
     // DB 레벨 페이지네이션: 요청된 페이지만 조회
     long total = userPerfStatRepository.countByPlatformAndTimeClass(platform, timeClass);
-    MyRankInfo myRankInfo = buildMyRankInfo(userId, userProvider, platform, timeClass);
+
+    // 비로그인이면 myRankInfo만 notLoggedIn, 랭킹 목록은 항상 조회
+    MyRankInfo myRankInfo = (userId != null && userProvider != null)
+        ? buildMyRankInfo(userId, userProvider, platform, timeClass)
+        : MyRankInfo.notLoggedIn();
 
     long startOffset = (long) currentPage * pageSize;
 
@@ -182,14 +182,4 @@ public class RankService {
     return rankers;
   }
 
-  private RankingResponse buildGuestResponse(Pageable pageable) {
-    return RankingResponse.builder()
-        .myRankInfo(MyRankInfo.notLoggedIn())
-        .ranking(List.of())
-        .totalCount(0)
-        .currentPage(pageable.getPageNumber())
-        .pageSize(pageable.getPageSize())
-        .totalPages(0)
-        .build();
-  }
 }

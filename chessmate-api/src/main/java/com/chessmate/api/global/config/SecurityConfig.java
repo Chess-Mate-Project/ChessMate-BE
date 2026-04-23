@@ -54,6 +54,7 @@ public class SecurityConfig {
                             "/api/auth/refresh",
                             "/api/auth/logout",
                             "/api/rank/ranking",
+                            "/api/users/**",
                             "/api/oauth/chesscom/url",
                             "/api/oauth/lichess/url",
                             "/api/oauth/chesscom/callback",
