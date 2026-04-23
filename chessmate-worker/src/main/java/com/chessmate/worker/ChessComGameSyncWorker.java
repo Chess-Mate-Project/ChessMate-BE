@@ -101,8 +101,8 @@ public class ChessComGameSyncWorker {
             List<String> allArchives = archivesResponse.getArchives();
 
             if (allArchives == null) {
-                log.warn("[ChesscomWorker] archives null 응답 — 계정 이름 변경/삭제 의심, 수집 스킵 userId={} username={}", userId, username);
-                job.complete();
+                log.warn("[ChesscomWorker] archives null 응답 — 수집 실패 처리 userId={} username={}", userId, username);
+                job.fail("archives_null");
                 syncJobRepository.save(job);
                 return;
             }
