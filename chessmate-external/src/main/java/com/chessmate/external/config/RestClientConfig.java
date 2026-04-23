@@ -3,15 +3,20 @@ package com.chessmate.external.config;
 import com.chessmate.external.api.chesscom.ChesscomApi;
 import com.chessmate.external.oauth.chesscom.ChesscomOauthApi;
 import com.chessmate.external.oauth.lichess.LichessOauthApi;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Configuration
@@ -94,6 +99,17 @@ public class RestClientConfig {
           }
           ClientHttpResponse response = execution.execute(request, body);
           log.info("[ChessCom API] 응답 상태: {}", response.getStatusCode());
+
+          if (request.getURI().getPath().endsWith("/archives")) {
+            byte[] responseBody = response.getBody().readAllBytes();
+            log.info("[ChessCom API] archives 응답 Body: {}", new String(responseBody, StandardCharsets.UTF_8));
+            return new ClientHttpResponse() {
+              @Override public HttpStatusCode getStatusCode() throws IOException { return response.getStatusCode(); }
+              @Override public HttpHeaders getHeaders() { return response.getHeaders(); }
+              @Override public InputStream getBody() { return new ByteArrayInputStream(responseBody); }
+              @Override public void close() { response.close(); }
+            };
+          }
           return response;
         })
         .build();
