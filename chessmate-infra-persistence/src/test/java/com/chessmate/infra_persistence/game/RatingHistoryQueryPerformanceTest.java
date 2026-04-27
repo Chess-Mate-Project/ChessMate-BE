@@ -1,12 +1,10 @@
 package com.chessmate.infra_persistence.game;
 
 import com.chessmate.common.dto.OAuthPlatForm;
-import com.chessmate.domain.game.GameResult;
-import com.chessmate.infra_persistence.game.entity.GameJpaEntity;
-import com.chessmate.infra_persistence.game.jpaRepository.GameJpaRepository;
-import com.chessmate.infra_persistence.game.projection.MonthlyRatingProjection;
-import java.time.LocalDateTime;
+import com.chessmate.infra_persistence.stat.entity.UserMonthlyRatingStatJpaEntity;
+import com.chessmate.infra_persistence.stat.jpaRepository.UserMonthlyRatingStatJpaRepository;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,154 +14,166 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * rating-history 쿼리의 성능 문제를 재현하는 테스트.
+ * fix-134: user_monthly_rating_stat 테이블 기반 rating-history 조회 검증.
  *
- * <p>문제: {@code findMonthlyLastRating}의 코릴레이티드 서브쿼리가
- * 게임 건수가 늘어날수록 O(N²)으로 느려짐.
- *
- * <p>원인:
- * <pre>
- *   WHERE g.playedAt = (
- *       SELECT MAX(g2.playedAt) FROM game g2
- *       WHERE g2.timeClass = g.timeClass
- *         AND YEAR(g2.playedAt) = YEAR(g.playedAt)
- *         AND MONTH(g2.playedAt) = MONTH(g.playedAt) ...
- *   )
- * </pre>
- * 외부 쿼리의 후보 행마다 서브쿼리가 한 번씩 실행되고,
- * YEAR()/MONTH() 함수 호출로 인해 인덱스도 활용되지 않음.
- *
- * <p>수정 방향: 코릴레이티드 서브쿼리 → GROUP BY + MAX() 또는 윈도우 함수(ROW_NUMBER)로 교체.
+ * 기존 GameRepository.findMonthlyLastRating()의 O(N²) 코릴레이티드 서브쿼리를
+ * 사전 집계 테이블로 교체하면서 이 테스트도 새 구조에 맞게 재작성.
  */
 @DataJpaTest
 class RatingHistoryQueryPerformanceTest {
 
     @Autowired
-    private GameJpaRepository gameJpaRepository;
+    private UserMonthlyRatingStatJpaRepository monthlyRatingStatRepository;
 
     @Autowired
     private TestEntityManager entityManager;
 
     private static final Long USER_ID = 1L;
     private static final OAuthPlatForm PLATFORM = OAuthPlatForm.LICHESS;
-    private static final int GAME_COUNT = 30_000;
 
-    /**
-     * 소량 데이터(360건)에서 쿼리 정확도를 검증한다.
-     * 이 테스트는 항상 통과해야 한다.
-     */
     @Test
-    @DisplayName("[정상] 소량 데이터에서 월별 마지막 레이팅 반환 검증")
-    void should_return_monthly_last_rating_correctly() {
-        // given: 12개월 × 3 타임클래스 × 10건 = 360건
-        LocalDateTime base = LocalDateTime.now().minusMonths(11)
-            .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+    @DisplayName("[정상] 12개월 × 3 타임클래스 데이터에서 월별 레이팅 전체 반환")
+    void should_return_monthly_ratings_correctly() {
+        // given: 12개월 × 3 타임클래스 = 36건
         String[] timeClasses = {"blitz", "rapid", "bullet"};
-
-        for (int month = 0; month < 12; month++) {
+        for (int month = 1; month <= 12; month++) {
             for (String tc : timeClasses) {
-                for (int day = 0; day < 10; day++) {
-                    entityManager.persist(GameJpaEntity.builder()
-                        .userId(USER_ID)
-                        .platform(PLATFORM)
-                        .platformGameId("small-" + month + "-" + tc + "-" + day)
-                        .username("tester")
-                        .opponentUsername("opp")
-                        .playerColor("WHITE")
-                        .result(GameResult.WIN)
-                        .timeClass(tc)
-                        .timeControl("300+0")
-                        .rated(true)
-                        .rating(1500 + day * 10)
-                        .moves("e4 e5")
-                        .variant("standard")
-                        .playedAt(base.plusMonths(month).plusDays(day))
-                        .createdAt(LocalDateTime.now())
-                        .build());
-                }
+                entityManager.persist(UserMonthlyRatingStatJpaEntity.builder()
+                    .userId(USER_ID)
+                    .platform(PLATFORM)
+                    .timeClass(tc)
+                    .year(2025)
+                    .month(month)
+                    .rating(1500 + month * 10)
+                    .build());
             }
         }
         entityManager.flush();
         entityManager.clear();
 
-        LocalDateTime since = base;
+        // when
+        List<UserMonthlyRatingStatJpaEntity> result =
+            monthlyRatingStatRepository.findByUserIdAndPlatform(USER_ID, PLATFORM);
+
+        // then: 36행, 12월 레이팅 = 1500 + 12*10 = 1620
+        assertThat(result).hasSize(36);
+        assertThat(result)
+            .filteredOn(r -> r.getMonth() == 12)
+            .allMatch(r -> r.getRating() == 1620);
+    }
+
+    @Test
+    @DisplayName("[정상] findByUserIdAndPlatformAndTimeClassAndYearAndMonth — 증분 업데이트 키 조회")
+    void should_find_by_composite_key_for_incremental_update() {
+        // given
+        entityManager.persist(UserMonthlyRatingStatJpaEntity.builder()
+            .userId(USER_ID).platform(PLATFORM)
+            .timeClass("blitz").year(2025).month(4)
+            .rating(1600)
+            .build());
+        entityManager.flush();
+        entityManager.clear();
+
+        // when: 존재하는 행
+        Optional<UserMonthlyRatingStatJpaEntity> found =
+            monthlyRatingStatRepository.findByUserIdAndPlatformAndTimeClassAndYearAndMonth(
+                USER_ID, PLATFORM, "blitz", 2025, 4);
+
+        // then
+        assertThat(found).isPresent();
+        assertThat(found.get().getRating()).isEqualTo(1600);
+
+        // when: 존재하지 않는 행 (월이 다름)
+        Optional<UserMonthlyRatingStatJpaEntity> notFound =
+            monthlyRatingStatRepository.findByUserIdAndPlatformAndTimeClassAndYearAndMonth(
+                USER_ID, PLATFORM, "blitz", 2025, 5);
+
+        assertThat(notFound).isEmpty();
+    }
+
+    @Test
+    @DisplayName("[정상] existsByUserIdAndPlatform — 집계 데이터 존재 여부 체크")
+    void should_return_false_when_no_data_exists() {
+        // given: 데이터 없음
+        assertThat(monthlyRatingStatRepository.existsByUserIdAndPlatform(USER_ID, PLATFORM)).isFalse();
+
+        // when: 데이터 추가
+        entityManager.persist(UserMonthlyRatingStatJpaEntity.builder()
+            .userId(USER_ID).platform(PLATFORM)
+            .timeClass("blitz").year(2025).month(1)
+            .rating(1500)
+            .build());
+        entityManager.flush();
+        entityManager.clear();
+
+        // then
+        assertThat(monthlyRatingStatRepository.existsByUserIdAndPlatform(USER_ID, PLATFORM)).isTrue();
+    }
+
+    @Test
+    @DisplayName("[정상] deleteByUserIdAndPlatform — 해당 유저 데이터만 삭제")
+    void should_delete_only_target_user_data() {
+        // given: 두 유저 데이터
+        entityManager.persist(UserMonthlyRatingStatJpaEntity.builder()
+            .userId(USER_ID).platform(PLATFORM)
+            .timeClass("blitz").year(2025).month(1).rating(1500).build());
+        entityManager.persist(UserMonthlyRatingStatJpaEntity.builder()
+            .userId(2L).platform(PLATFORM)
+            .timeClass("blitz").year(2025).month(1).rating(1600).build());
+        entityManager.flush();
+        entityManager.clear();
 
         // when
-        List<MonthlyRatingProjection> result =
-            gameJpaRepository.findMonthlyLastRating(USER_ID, PLATFORM, null, since);
+        monthlyRatingStatRepository.deleteByUserIdAndPlatform(USER_ID, PLATFORM);
 
-        // then: 12개월 × 3 타임클래스 = 36행
-        assertThat(result).hasSize(36);
-        // 각 월의 마지막 게임(day=9) 레이팅: 1500 + 9*10 = 1590
-        assertThat(result).allMatch(r -> r.getRating() == 1590);
+        // then: USER_ID 데이터만 삭제되고 2L 데이터는 유지
+        assertThat(monthlyRatingStatRepository.findByUserIdAndPlatform(USER_ID, PLATFORM)).isEmpty();
+        assertThat(monthlyRatingStatRepository.findByUserIdAndPlatform(2L, PLATFORM)).hasSize(1);
     }
 
     /**
-     * 대용량 데이터(30,000건)에서 코릴레이티드 서브쿼리 성능 병목을 재현한다.
-     *
-     * <p>이 테스트는 현재 실패한다 — 코릴레이티드 서브쿼리로 인해 500ms를 초과하기 때문.
-     * 쿼리를 GROUP BY + MAX() 또는 윈도우 함수로 교체한 뒤에는 통과해야 한다.
+     * 다수 유저 데이터 중 단일 유저 조회 시 인덱스(user_id, platform)가 작동하는지 검증.
+     * 구 방식: Game 30,000건 코릴레이티드 서브쿼리 O(N²)
+     * 신 방식: 36,000건 집계 테이블에서 인덱스 조회 O(1)
      */
     @Test
-    @DisplayName("[재현] 대용량 Game 30,000건에서 rating-history 코릴레이티드 서브쿼리 지연")
-    void reproduction_correlatedSubquery_slowness_with_large_dataset() {
-        // given
-        insertGames(GAME_COUNT);
-
-        LocalDateTime since = LocalDateTime.now().minusMonths(11)
-            .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-
-        // when
-        long startNs = System.nanoTime();
-        List<MonthlyRatingProjection> result =
-            gameJpaRepository.findMonthlyLastRating(USER_ID, PLATFORM, null, since);
-        long elapsedMs = (System.nanoTime() - startNs) / 1_000_000;
-
-        // then
-        System.out.printf(
-            "%n[PERF] game %,d건 → findMonthlyLastRating: %dms | 결과 rows: %d%n",
-            GAME_COUNT, elapsedMs, result.size()
-        );
-
-        assertThat(result).isNotEmpty();
-
-        // 수정 후 목표 임계치: 500ms 이하.
-        // 코릴레이티드 서브쿼리 상태에서는 이 assertion이 실패함 → 버그 재현됨.
-        assertThat(elapsedMs)
-            .as("쿼리 응답시간 %dms — 500ms 이하여야 함 (현재: 코릴레이티드 서브쿼리 병목으로 초과)", elapsedMs)
-            .isLessThan(500L);
-    }
-
-    private void insertGames(int count) {
+    @DisplayName("[성능] 1,000 유저 × 36행 = 36,000건에서 단일 유저 조회 속도 검증")
+    void index_lookup_should_be_fast_with_large_dataset() {
+        // given: 1,000 유저 × 12개월 × 3 타임클래스 = 36,000행
         String[] timeClasses = {"blitz", "rapid", "bullet"};
-        LocalDateTime base = LocalDateTime.now().minusMonths(11)
-            .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-
-        for (int i = 0; i < count; i++) {
-            entityManager.persist(GameJpaEntity.builder()
-                .userId(USER_ID)
-                .platform(PLATFORM)
-                .platformGameId("perf-game-" + i)
-                .username("tester")
-                .opponentUsername("opp-" + i)
-                .playerColor(i % 2 == 0 ? "WHITE" : "BLACK")
-                .result(GameResult.WIN)
-                .timeClass(timeClasses[i % timeClasses.length])
-                .timeControl("300+0")
-                .rated(true)
-                .rating(1500 + (i % 300))
-                .moves("e4 e5")
-                .variant("standard")
-                .playedAt(base.plusHours(i))
-                .createdAt(LocalDateTime.now())
-                .build());
-
-            if ((i + 1) % 500 == 0) {
+        for (long uid = 1; uid <= 1000; uid++) {
+            for (int month = 1; month <= 12; month++) {
+                for (String tc : timeClasses) {
+                    entityManager.persist(UserMonthlyRatingStatJpaEntity.builder()
+                        .userId(uid).platform(PLATFORM)
+                        .timeClass(tc).year(2025).month(month)
+                        .rating(1500 + (int)(uid % 300))
+                        .build());
+                }
+            }
+            if (uid % 100 == 0) {
                 entityManager.flush();
                 entityManager.clear();
             }
         }
         entityManager.flush();
         entityManager.clear();
+
+        // when
+        long startNs = System.nanoTime();
+        List<UserMonthlyRatingStatJpaEntity> result =
+            monthlyRatingStatRepository.findByUserIdAndPlatform(USER_ID, PLATFORM);
+        long elapsedMs = (System.nanoTime() - startNs) / 1_000_000;
+
+        System.out.printf(
+            "%n[PERF] 36,000건 중 단일 유저 조회: %dms | 결과 rows: %d%n",
+            elapsedMs, result.size()
+        );
+
+        // then
+        assertThat(result).hasSize(36);
+        assertThat(elapsedMs)
+            .as("인덱스 조회 %dms — 100ms 이하여야 함", elapsedMs)
+            .isLessThan(100L);
     }
 }

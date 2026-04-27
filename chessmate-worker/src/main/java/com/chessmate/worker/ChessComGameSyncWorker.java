@@ -122,7 +122,10 @@ public class ChessComGameSyncWorker {
             log.info("[ChesscomWorker] 수집 완료 userId={} 신규={}건 total={}건",
                 userId, allNewlySaved.size(), job.getTotalFetched());
 
-            if (!allNewlySaved.isEmpty() || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.CHESSCOM)) {
+            if (statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.CHESSCOM)) {
+                statAggregator.aggregate(userId, OAuthPlatForm.CHESSCOM);
+                perfStatFetcher.fetch(userId, OAuthPlatForm.CHESSCOM, username, null);
+            } else if (!allNewlySaved.isEmpty()) {
                 statAggregator.aggregateIncremental(userId, OAuthPlatForm.CHESSCOM, allNewlySaved);
                 perfStatFetcher.fetch(userId, OAuthPlatForm.CHESSCOM, username, null);
             }

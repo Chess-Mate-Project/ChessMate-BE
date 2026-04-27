@@ -10,6 +10,8 @@ import com.chessmate.domain.stat.UserDailyGameStat;
 import com.chessmate.domain.stat.UserDailyGameStatRepository;
 import com.chessmate.domain.stat.UserFirstMoveStat;
 import com.chessmate.domain.stat.UserFirstMoveStatRepository;
+import com.chessmate.domain.stat.UserMonthlyRatingStat;
+import com.chessmate.domain.stat.UserMonthlyRatingStatRepository;
 import com.chessmate.domain.stat.UserPerfStatRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -43,6 +45,7 @@ public class GameStatAggregator {
     private final UserColorStatRepository colorStatRepository;
     private final UserFirstMoveStatRepository firstMoveStatRepository;
     private final UserPerfStatRepository perfStatRepository;
+    private final UserMonthlyRatingStatRepository monthlyRatingStatRepository;
 
     /**
      * stat 테이블 중 하나라도 비어 있으면 true.
@@ -52,7 +55,8 @@ public class GameStatAggregator {
         return !firstMoveStatRepository.existsByUserIdAndPlatform(userId, platform)
             || !colorStatRepository.existsByUserIdAndPlatform(userId, platform)
             || !dailyStatRepository.existsByUserIdAndPlatform(userId, platform)
-            || !perfStatRepository.existsByUserIdAndPlatform(userId, platform);
+            || !perfStatRepository.existsByUserIdAndPlatform(userId, platform)
+            || !monthlyRatingStatRepository.existsByUserIdAndPlatform(userId, platform);
     }
 
     /**
@@ -70,6 +74,7 @@ public class GameStatAggregator {
         incrementDailyStats(userId, platform, rated);
         incrementColorStats(userId, platform, rated);
         incrementFirstMoveStats(userId, platform, rated);
+        incrementMonthlyRatingStat(userId, platform, rated);
     }
 
     /**
@@ -96,6 +101,7 @@ public class GameStatAggregator {
         computeDailyStats(userId, platform, ratedGames);
         computeColorStats(userId, platform, ratedGames);
         computeFirstMoveStats(userId, platform, ratedGames);
+        computeMonthlyRatingStat(userId, platform, ratedGames);
 
         log.info("[Aggregator] full aggregate done userId={} platform={} rated={}", userId, platform, ratedGames.size());
     }
@@ -283,6 +289,75 @@ public class GameStatAggregator {
             }
         }
         firstMoveStatRepository.saveAll(toSave);
+    }
+
+    // ======================== Monthly Rating Stat ========================
+
+    private void computeMonthlyRatingStat(Long userId, OAuthPlatForm platform, List<Game> games) {
+        Map<String, Game> map = new HashMap<>();
+        for (Game game : games) {
+            if (game.getTimeClass() == null || game.getPlayedAt() == null || game.getRating() == null) continue;
+            int year = game.getPlayedAt().getYear();
+            int month = game.getPlayedAt().getMonthValue();
+            String key = game.getTimeClass() + ":" + year + ":" + month;
+            map.merge(key, game, (prev, next) ->
+                next.getPlayedAt().isAfter(prev.getPlayedAt()) ? next : prev);
+        }
+
+        List<UserMonthlyRatingStat> stats = new ArrayList<>();
+        for (Map.Entry<String, Game> e : map.entrySet()) {
+            String[] parts = e.getKey().split(":");
+            Game g = e.getValue();
+            stats.add(UserMonthlyRatingStat.builder()
+                .userId(userId).platform(platform)
+                .timeClass(parts[0])
+                .year(Integer.parseInt(parts[1]))
+                .month(Integer.parseInt(parts[2]))
+                .rating(g.getRating())
+                .build());
+        }
+
+        monthlyRatingStatRepository.deleteByUserIdAndPlatform(userId, platform);
+        monthlyRatingStatRepository.saveAll(stats);
+        log.debug("[Aggregator] monthly rating stat saved count={}", stats.size());
+    }
+
+    private void incrementMonthlyRatingStat(Long userId, OAuthPlatForm platform, List<Game> games) {
+        Map<String, Game> delta = new HashMap<>();
+        for (Game g : games) {
+            if (g.getTimeClass() == null || g.getPlayedAt() == null || g.getRating() == null) continue;
+            int year = g.getPlayedAt().getYear();
+            int month = g.getPlayedAt().getMonthValue();
+            String key = g.getTimeClass() + ":" + year + ":" + month;
+            delta.merge(key, g, (prev, next) ->
+                next.getPlayedAt().isAfter(prev.getPlayedAt()) ? next : prev);
+        }
+
+        List<UserMonthlyRatingStat> toSave = new ArrayList<>();
+        for (var entry : delta.entrySet()) {
+            String[] parts = entry.getKey().split(":");
+            String tc = parts[0];
+            int year = Integer.parseInt(parts[1]);
+            int month = Integer.parseInt(parts[2]);
+            Game g = entry.getValue();
+            var existing = monthlyRatingStatRepository
+                .findByUserIdAndPlatformAndTimeClassAndYearAndMonth(userId, platform, tc, year, month);
+            if (existing.isPresent()) {
+                var e = existing.get();
+                toSave.add(UserMonthlyRatingStat.builder()
+                    .id(e.getId()).userId(userId).platform(platform)
+                    .timeClass(tc).year(year).month(month)
+                    .rating(g.getRating())
+                    .build());
+            } else {
+                toSave.add(UserMonthlyRatingStat.builder()
+                    .userId(userId).platform(platform)
+                    .timeClass(tc).year(year).month(month)
+                    .rating(g.getRating())
+                    .build());
+            }
+        }
+        monthlyRatingStatRepository.saveAll(toSave);
     }
 
     // ======================== First Move Parser ========================

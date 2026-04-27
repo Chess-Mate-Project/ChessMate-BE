@@ -213,7 +213,10 @@ public class LichessGameSyncWorker {
             syncJobRepository.save(job);
             log.info("[LichessWorker] 증분 수집 완료 userId={} 신규={}건", userId, allNewlySaved.size());
 
-            if (!allNewlySaved.isEmpty() || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.LICHESS)) {
+            if (statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.LICHESS)) {
+                statAggregator.aggregate(userId, OAuthPlatForm.LICHESS);
+                perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username, accessToken);
+            } else if (!allNewlySaved.isEmpty()) {
                 statAggregator.aggregateIncremental(userId, OAuthPlatForm.LICHESS, allNewlySaved);
                 perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username, accessToken);
             }
