@@ -17,6 +17,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -111,23 +112,18 @@ public class ChessComGameSyncWorker {
             List<String> pending = filterPending(allArchives, job.getSyncCursor());
             log.info("[ChesscomWorker] 처리 대상 아카이브 {}개 (cursor={})", pending.size(), job.getSyncCursor());
 
-            int savedBefore = job.getTotalFetched();
-
-            if (accessToken != null) {
-                processParallel(job, userId, username, pending);
-            } else {
-                processSequential(job, userId, username, pending);
-            }
+            List<Game> allNewlySaved = accessToken != null
+                ? processParallel(job, userId, username, pending)
+                : processSequential(job, userId, username, pending);
 
             job.complete();
             syncJobRepository.save(job);
 
-            int newlySaved = job.getTotalFetched() - savedBefore;
-            log.info("[ChesscomWorker] 수집 완료 userId={} 신규={}건 total={}건", userId, newlySaved, job.getTotalFetched());
+            log.info("[ChesscomWorker] 수집 완료 userId={} 신규={}건 total={}건",
+                userId, allNewlySaved.size(), job.getTotalFetched());
 
-            // 신규 게임이 저장됐거나, stat 테이블 중 하나라도 비어 있으면 재집계
-            if (newlySaved > 0 || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.CHESSCOM)) {
-                statAggregator.aggregate(userId, OAuthPlatForm.CHESSCOM);
+            if (!allNewlySaved.isEmpty() || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.CHESSCOM)) {
+                statAggregator.aggregateIncremental(userId, OAuthPlatForm.CHESSCOM, allNewlySaved);
                 perfStatFetcher.fetch(userId, OAuthPlatForm.CHESSCOM, username, null);
             }
 
@@ -139,19 +135,20 @@ public class ChessComGameSyncWorker {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private void processParallel(SyncJob job, Long userId, String username, List<String> archives) {
+    private List<Game> processParallel(SyncJob job, Long userId, String username, List<String> archives) {
         ExecutorService executor = Executors.newFixedThreadPool(parallelism);
         AtomicInteger failCount = new AtomicInteger(0);
+        List<CompletableFuture<List<Game>>> futures;
         try {
-            List<CompletableFuture<Void>> futures = archives.stream()
-                .map(url -> CompletableFuture.runAsync(() -> {
+            futures = archives.stream()
+                .map(url -> CompletableFuture.supplyAsync(() -> {
                     PARALLEL_RATE_LIMITER.acquire();
                     try {
-                        fetchAndSave(job, userId, username, url);
+                        return fetchAndSave(job, userId, username, url);
                     } catch (Exception e) {
-                        // 개별 archive 실패는 job 전체를 실패시키지 않음
                         log.warn("[ChesscomWorker] archive 처리 실패 (스킵) url={} error={}", url, e.getMessage());
                         failCount.incrementAndGet();
+                        return List.<Game>of();
                     }
                 }, executor))
                 .toList();
@@ -163,15 +160,17 @@ public class ChessComGameSyncWorker {
         if (failCount.get() > 0) {
             log.warn("[ChesscomWorker] 병렬 처리 중 {}개 archive 스킵됨 userId={}", failCount.get(), userId);
         }
+        return futures.stream().flatMap(f -> f.join().stream()).toList();
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private void processSequential(SyncJob job, Long userId, String username, List<String> archives) {
+    private List<Game> processSequential(SyncJob job, Long userId, String username, List<String> archives) {
+        List<Game> allSaved = new ArrayList<>();
         int failCount = 0;
         for (String url : archives) {
             FALLBACK_RATE_LIMITER.acquire();
             try {
-                fetchAndSave(job, userId, username, url);
+                allSaved.addAll(fetchAndSave(job, userId, username, url));
             } catch (Exception e) {
                 log.warn("[ChesscomWorker] archive 처리 실패 (스킵) url={} error={}", url, e.getMessage());
                 failCount++;
@@ -180,9 +179,10 @@ public class ChessComGameSyncWorker {
         if (failCount > 0) {
             log.warn("[ChesscomWorker] 순차 처리 중 {}개 archive 스킵됨 userId={}", failCount, userId);
         }
+        return allSaved;
     }
 
-    private void fetchAndSave(SyncJob job, Long userId, String username, String url) {
+    private List<Game> fetchAndSave(SyncJob job, Long userId, String username, String url) {
         String token = tokenStore.getChesscomAccessToken(userId);
         String authHeader = token != null ? "Bearer " + token : null;
 
@@ -200,7 +200,7 @@ public class ChessComGameSyncWorker {
                 }
                 response = fetchArchiveWithRetry(url, "Bearer " + newToken);
             } else if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                throw e; // fetchArchiveWithRetry에서 이미 로깅 후 재시도 소진
+                throw e;
             } else {
                 log.warn("[ChesscomWorker] HTTP {} 오류, archive 스킵 url={} error={}",
                     e.getStatusCode(), url, e.getMessage());
@@ -215,7 +215,7 @@ public class ChessComGameSyncWorker {
             String yearMonth = extractYearMonth(url);
             job.progressAtomic(yearMonth, 0);
             syncJobRepository.save(job);
-            return;
+            return List.of();
         }
 
         List<Game> toSave = response.getGames().stream()
@@ -231,6 +231,7 @@ public class ChessComGameSyncWorker {
         String yearMonth = extractYearMonth(url);
         job.progressAtomic(yearMonth, saved.size());
         syncJobRepository.save(job);
+        return saved;
     }
 
     private Game toGame(Long userId, String username, ChesscomGameResponse dto) {

@@ -5,7 +5,9 @@ import com.chessmate.domain.stat.UserDailyGameStat;
 import com.chessmate.domain.stat.UserDailyGameStatRepository;
 import com.chessmate.infra_persistence.stat.jpaRepository.UserDailyGameStatJpaRepository;
 import com.chessmate.infra_persistence.stat.mapper.UserDailyGameStatMapper;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -35,6 +37,12 @@ public class UserDailyGameStatRepositoryImpl implements UserDailyGameStatReposit
     public List<UserDailyGameStat> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
         return jpaRepository.findByUserIdAndPlatform(userId, platform).stream()
             .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<UserDailyGameStat> findByUserIdAndPlatformAndDate(Long userId, OAuthPlatForm platform, LocalDate date) {
+        return jpaRepository.findByUserIdAndPlatformAndDate(userId, platform, date)
+            .map(mapper::toDomain);
     }
 
     @Override

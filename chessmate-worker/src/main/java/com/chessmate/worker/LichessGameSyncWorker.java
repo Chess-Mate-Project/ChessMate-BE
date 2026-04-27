@@ -170,7 +170,7 @@ public class LichessGameSyncWorker {
         try {
             // +1ms: 마지막 게임과 정확히 같은 시간대 게임 재수집 방지
             long since = latestPlayedAt.toInstant(ZoneOffset.UTC).toEpochMilli() + 1L;
-            int totalNewlySaved = 0;
+            List<Game> allNewlySaved = new ArrayList<>();
 
             while (true) {
                 RATE_LIMITER.acquire();
@@ -192,7 +192,7 @@ public class LichessGameSyncWorker {
 
                 // saveAll 내부에서 platformGameId 중복 제거 → 실제 신규만 저장
                 List<Game> saved = gameRepository.saveAll(toSave);
-                totalNewlySaved += saved.size();
+                allNewlySaved.addAll(saved);
                 log.info("[LichessWorker] 증분 청크 {}개 → {}개 신규 저장", games.size(), saved.size());
 
                 // 다음 페이지: 마지막 게임 시간 +1ms를 새 since로 사용
@@ -211,11 +211,10 @@ public class LichessGameSyncWorker {
 
             job.complete();
             syncJobRepository.save(job);
-            log.info("[LichessWorker] 증분 수집 완료 userId={} 신규={}건", userId, totalNewlySaved);
+            log.info("[LichessWorker] 증분 수집 완료 userId={} 신규={}건", userId, allNewlySaved.size());
 
-            // 신규 게임이 저장됐거나, stat 테이블 중 하나라도 비어 있으면 재집계
-            if (totalNewlySaved > 0 || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.LICHESS)) {
-                statAggregator.aggregate(userId, OAuthPlatForm.LICHESS);
+            if (!allNewlySaved.isEmpty() || statAggregator.isAnyStatEmpty(userId, OAuthPlatForm.LICHESS)) {
+                statAggregator.aggregateIncremental(userId, OAuthPlatForm.LICHESS, allNewlySaved);
                 perfStatFetcher.fetch(userId, OAuthPlatForm.LICHESS, username, accessToken);
             }
 
