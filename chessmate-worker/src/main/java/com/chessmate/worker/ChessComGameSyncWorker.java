@@ -68,7 +68,7 @@ public class ChessComGameSyncWorker {
     @SuppressWarnings("UnstableApiUsage")
     private static final RateLimiter PARALLEL_RATE_LIMITER = RateLimiter.create(2.0);
 
-    private static final Set<String> SUPPORTED_TIME_CLASSES = Set.of("blitz", "bullet", "rapid", "classical");
+    private static final Set<String> SUPPORTED_TIME_CLASSES = Set.of("blitz", "bullet", "rapid", "daily");
 
     // Chess.com result 값 → GameResult 매핑
     private static final Set<String> DRAW_RESULTS = Set.of(
