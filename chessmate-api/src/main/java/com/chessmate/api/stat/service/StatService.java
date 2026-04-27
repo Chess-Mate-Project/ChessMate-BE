@@ -10,6 +10,7 @@ import com.chessmate.api.stat.dto.UserPerfStatResponse;
 import com.chessmate.api.stat.dto.YearlyGameStatResponse;
 import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.domain.stat.UserColorStat;
+import com.chessmate.domain.stat.UserMonthlyRatingStat;
 import com.chessmate.domain.stat.UserColorStatRepository;
 import com.chessmate.domain.stat.UserDailyGameStatRepository;
 import com.chessmate.domain.stat.UserFirstMoveStatRepository;
@@ -148,6 +149,9 @@ public class StatService {
                 YearMonth ym = YearMonth.of(s.getYear(), s.getMonth());
                 return !ym.isBefore(oneYearAgo) && !ym.isAfter(now);
             })
+            .sorted(Comparator
+                .comparing((UserMonthlyRatingStat s) -> YearMonth.of(s.getYear(), s.getMonth()))
+                .thenComparing(UserMonthlyRatingStat::getTimeClass))
             .map(s -> new MonthlyRatingEntry(
                 YearMonth.of(s.getYear(), s.getMonth()).format(YEAR_MONTH_FORMAT),
                 s.getTimeClass(),
