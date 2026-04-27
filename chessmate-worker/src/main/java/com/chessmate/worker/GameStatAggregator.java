@@ -10,6 +10,8 @@ import com.chessmate.domain.stat.UserDailyGameStat;
 import com.chessmate.domain.stat.UserDailyGameStatRepository;
 import com.chessmate.domain.stat.UserFirstMoveStat;
 import com.chessmate.domain.stat.UserFirstMoveStatRepository;
+import com.chessmate.domain.stat.UserMonthlyRatingStat;
+import com.chessmate.domain.stat.UserMonthlyRatingStatRepository;
 import com.chessmate.domain.stat.UserPerfStatRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,20 +24,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 게임 수집 완료 후 집계 통계를 재계산하는 컴포넌트.
+ * 게임 수집 완료 후 집계 통계를 계산하는 컴포넌트.
+ *
+ * 두 가지 집계 전략:
+ * - aggregate()            : full recompute (초기 전체 수집 / 긴급 재집계용)
+ * - aggregateIncremental() : 증분 업데이트 (30분 스케줄 증분 sync용)
  *
  * 집계 항목:
- * - user_daily_game_stat: 날짜별 총/승/무/패
- * - user_color_stat: (timeClass × 색상)별 승/무/패
- * - user_first_move_stat: (timeClass × 색상 × 첫수)별 count
- * - lichess_user_stat: Lichess 사용자 요약 통계 (rated 게임 기준)
- *
- * 전략: full recompute (delete → saveAll)
- *
- * Lichess 주의사항:
- * - API에서 rated=true 파라미터로 레이팅 게임만 수집
- * - 따라서 game 테이블의 Lichess 게임은 전부 rated
- * - lichess_user_stat의 all_games = rated_games = game 테이블 집계 결과
+ * - user_daily_game_stat   : 날짜별 총/승/무/패
+ * - user_color_stat        : (timeClass x 색상)별 승/무/패
+ * - user_first_move_stat   : (timeClass x 색상 x 첫수)별 count
  */
 @Slf4j
 @Component
@@ -47,48 +45,71 @@ public class GameStatAggregator {
     private final UserColorStatRepository colorStatRepository;
     private final UserFirstMoveStatRepository firstMoveStatRepository;
     private final UserPerfStatRepository perfStatRepository;
+    private final UserMonthlyRatingStatRepository monthlyRatingStatRepository;
 
     /**
-     * 해당 유저/플랫폼에 대해 stat 테이블 중 하나라도 비어 있으면 true.
-     * 신규 게임 없이도 강제 재집계가 필요한 상황(수동 삭제, 집계 실패 등) 감지용.
+     * stat 테이블 중 하나라도 비어 있으면 true.
+     * 수동 삭제 / 집계 실패 등 긴급 상황 감지용.
      */
     public boolean isAnyStatEmpty(Long userId, OAuthPlatForm platform) {
         return !firstMoveStatRepository.existsByUserIdAndPlatform(userId, platform)
             || !colorStatRepository.existsByUserIdAndPlatform(userId, platform)
             || !dailyStatRepository.existsByUserIdAndPlatform(userId, platform)
-            || !perfStatRepository.existsByUserIdAndPlatform(userId, platform);
+            || !perfStatRepository.existsByUserIdAndPlatform(userId, platform)
+            || !monthlyRatingStatRepository.existsByUserIdAndPlatform(userId, platform);
     }
 
+    /**
+     * 증분 집계: 새로 저장된 게임만 기존 stat에 더한다.
+     * Game 테이블 전체 로드 없이 신규 게임 수에 비례하는 DB 접근만 발생한다.
+     */
+    @Transactional
+    public void aggregateIncremental(Long userId, OAuthPlatForm platform, List<Game> newGames) {
+        List<Game> rated = newGames.stream()
+            .filter(g -> Boolean.TRUE.equals(g.getRated()))
+            .toList();
+        if (rated.isEmpty()) return;
+
+        log.info("[Aggregator] incremental aggregate userId={} platform={} newGames={}", userId, platform, rated.size());
+        incrementDailyStats(userId, platform, rated);
+        incrementColorStats(userId, platform, rated);
+        incrementFirstMoveStats(userId, platform, rated);
+        incrementMonthlyRatingStat(userId, platform, rated);
+    }
+
+    /**
+     * 전체 재집계: Game 테이블 전체를 읽어 stat을 delete → 재계산 → saveAll.
+     * 초기 전체 수집(processFullSync) 및 stat 테이블 긴급 복구 시 사용.
+     */
     @Transactional
     public void aggregate(Long userId, OAuthPlatForm platform) {
-        log.info("[Aggregator] 집계 시작 userId={} platform={}", userId, platform);
+        log.info("[Aggregator] full aggregate start userId={} platform={}", userId, platform);
 
         List<Game> allGames = gameRepository.findByUserIdAndPlatform(userId, platform);
         if (allGames.isEmpty()) {
-            log.info("[Aggregator] 집계할 게임 없음 userId={}", userId);
+            log.info("[Aggregator] no games to aggregate userId={}", userId);
             return;
         }
 
-        // 스탯 집계는 레이팅 게임만 사용
         List<Game> ratedGames = allGames.stream()
             .filter(g -> Boolean.TRUE.equals(g.getRated()))
             .toList();
 
-        log.info("[Aggregator] 전체={}건 / rated={}건 userId={} platform={}",
+        log.info("[Aggregator] total={} rated={} userId={} platform={}",
             allGames.size(), ratedGames.size(), userId, platform);
 
         computeDailyStats(userId, platform, ratedGames);
         computeColorStats(userId, platform, ratedGames);
         computeFirstMoveStats(userId, platform, ratedGames);
+        computeMonthlyRatingStat(userId, platform, ratedGames);
 
-        log.info("[Aggregator] 집계 완료 userId={} platform={} rated={}", userId, platform, ratedGames.size());
+        log.info("[Aggregator] full aggregate done userId={} platform={} rated={}", userId, platform, ratedGames.size());
     }
 
-    // ======================== Daily Stats ========================
+    // ======================== Full Recompute ========================
 
     private void computeDailyStats(Long userId, OAuthPlatForm platform, List<Game> games) {
-        Map<LocalDate, int[]> map = new HashMap<>(); // [total, wins, draws, losses]
-
+        Map<LocalDate, int[]> map = new HashMap<>();
         for (Game game : games) {
             if (game.getPlayedAt() == null) continue;
             LocalDate date = game.getPlayedAt().toLocalDate();
@@ -110,14 +131,11 @@ public class GameStatAggregator {
 
         dailyStatRepository.deleteByUserIdAndPlatform(userId, platform);
         dailyStatRepository.saveAll(stats);
-        log.debug("[Aggregator] daily stat {}건 저장", stats.size());
+        log.debug("[Aggregator] daily stat saved count={}", stats.size());
     }
 
-    // ======================== Color Stats ========================
-
     private void computeColorStats(Long userId, OAuthPlatForm platform, List<Game> games) {
-        Map<String, int[]> map = new HashMap<>(); // [wins, draws, losses]
-
+        Map<String, int[]> map = new HashMap<>();
         for (Game game : games) {
             if (game.getTimeClass() == null || game.getPlayerColor() == null) continue;
             String key = game.getTimeClass() + ":" + game.getPlayerColor();
@@ -140,21 +158,16 @@ public class GameStatAggregator {
 
         colorStatRepository.deleteByUserIdAndPlatform(userId, platform);
         colorStatRepository.saveAll(stats);
-        log.debug("[Aggregator] color stat {}건 저장", stats.size());
+        log.debug("[Aggregator] color stat saved count={}", stats.size());
     }
-
-    // ======================== First Move Stats ========================
 
     private void computeFirstMoveStats(Long userId, OAuthPlatForm platform, List<Game> games) {
         Map<String, Integer> map = new HashMap<>();
-
         for (Game game : games) {
             if (game.getTimeClass() == null || game.getPlayerColor() == null
                 || game.getMoves() == null || game.getMoves().isBlank()) continue;
-
             String firstMove = extractFirstMove(game.getMoves(), game.getPlayerColor(), platform);
             if (firstMove == null) continue;
-
             String key = game.getTimeClass() + ":" + game.getPlayerColor() + ":" + firstMove;
             map.merge(key, 1, Integer::sum);
         }
@@ -171,20 +184,184 @@ public class GameStatAggregator {
 
         firstMoveStatRepository.deleteByUserIdAndPlatform(userId, platform);
         firstMoveStatRepository.saveAll(stats);
-        log.debug("[Aggregator] first move stat {}건 저장", stats.size());
+        log.debug("[Aggregator] first move stat saved count={}", stats.size());
     }
 
-    // ======================== First Move 파싱 ========================
+    // ======================== Incremental Update ========================
 
-    /**
-     * 첫 수 추출.
-     *
-     * Lichess: moves = "e4 e5 Nf3 Nc6 ..."
-     *   WHITE → 0번째 토큰, BLACK → 1번째 토큰
-     *
-     * Chess.com: moves = PGN (헤더 + 수순)
-     *   "1. e4 e5 2. Nf3 ..." 형식에서 파싱
-     */
+    private void incrementDailyStats(Long userId, OAuthPlatForm platform, List<Game> games) {
+        Map<LocalDate, int[]> delta = new HashMap<>();
+        for (Game g : games) {
+            if (g.getPlayedAt() == null) continue;
+            LocalDate date = g.getPlayedAt().toLocalDate();
+            int[] c = delta.computeIfAbsent(date, d -> new int[4]);
+            c[0]++;
+            if (GameResult.WIN == g.getResult())        c[1]++;
+            else if (GameResult.DRAW == g.getResult())  c[2]++;
+            else if (GameResult.LOSS == g.getResult())  c[3]++;
+        }
+
+        List<UserDailyGameStat> toSave = new ArrayList<>();
+        for (var entry : delta.entrySet()) {
+            LocalDate date = entry.getKey();
+            int[] d = entry.getValue();
+            var existing = dailyStatRepository.findByUserIdAndPlatformAndDate(userId, platform, date);
+            if (existing.isPresent()) {
+                var e = existing.get();
+                toSave.add(UserDailyGameStat.builder()
+                    .id(e.getId()).userId(userId).platform(platform).date(date)
+                    .total(e.getTotal() + d[0]).wins(e.getWins() + d[1])
+                    .draws(e.getDraws() + d[2]).losses(e.getLosses() + d[3])
+                    .build());
+            } else {
+                toSave.add(UserDailyGameStat.builder()
+                    .userId(userId).platform(platform).date(date)
+                    .total(d[0]).wins(d[1]).draws(d[2]).losses(d[3])
+                    .build());
+            }
+        }
+        dailyStatRepository.saveAll(toSave);
+    }
+
+    private void incrementColorStats(Long userId, OAuthPlatForm platform, List<Game> games) {
+        Map<String, int[]> delta = new HashMap<>();
+        for (Game g : games) {
+            if (g.getTimeClass() == null || g.getPlayerColor() == null) continue;
+            String key = g.getTimeClass() + ":" + g.getPlayerColor();
+            int[] c = delta.computeIfAbsent(key, k -> new int[3]);
+            if (GameResult.WIN == g.getResult())        c[0]++;
+            else if (GameResult.DRAW == g.getResult())  c[1]++;
+            else if (GameResult.LOSS == g.getResult())  c[2]++;
+        }
+
+        List<UserColorStat> toSave = new ArrayList<>();
+        for (var entry : delta.entrySet()) {
+            String[] parts = entry.getKey().split(":");
+            String tc = parts[0], color = parts[1];
+            int[] d = entry.getValue();
+            var existing = colorStatRepository.findByUserIdAndPlatformAndTimeClassAndColor(userId, platform, tc, color);
+            if (existing.isPresent()) {
+                var e = existing.get();
+                toSave.add(UserColorStat.builder()
+                    .id(e.getId()).userId(userId).platform(platform).timeClass(tc).color(color)
+                    .wins(e.getWins() + d[0]).draws(e.getDraws() + d[1]).losses(e.getLosses() + d[2])
+                    .build());
+            } else {
+                toSave.add(UserColorStat.builder()
+                    .userId(userId).platform(platform).timeClass(tc).color(color)
+                    .wins(d[0]).draws(d[1]).losses(d[2])
+                    .build());
+            }
+        }
+        colorStatRepository.saveAll(toSave);
+    }
+
+    private void incrementFirstMoveStats(Long userId, OAuthPlatForm platform, List<Game> games) {
+        Map<String, Integer> delta = new HashMap<>();
+        for (Game g : games) {
+            if (g.getTimeClass() == null || g.getPlayerColor() == null
+                || g.getMoves() == null || g.getMoves().isBlank()) continue;
+            String firstMove = extractFirstMove(g.getMoves(), g.getPlayerColor(), platform);
+            if (firstMove == null) continue;
+            String key = g.getTimeClass() + ":" + g.getPlayerColor() + ":" + firstMove;
+            delta.merge(key, 1, Integer::sum);
+        }
+
+        List<UserFirstMoveStat> toSave = new ArrayList<>();
+        for (var entry : delta.entrySet()) {
+            String[] parts = entry.getKey().split(":");
+            String tc = parts[0], color = parts[1], move = parts[2];
+            int d = entry.getValue();
+            var existing = firstMoveStatRepository.findByUserIdAndPlatformAndTimeClassAndColorAndMove(userId, platform, tc, color, move);
+            if (existing.isPresent()) {
+                var e = existing.get();
+                toSave.add(UserFirstMoveStat.builder()
+                    .id(e.getId()).userId(userId).platform(platform)
+                    .timeClass(tc).color(color).move(move)
+                    .count(e.getCount() + d)
+                    .build());
+            } else {
+                toSave.add(UserFirstMoveStat.builder()
+                    .userId(userId).platform(platform)
+                    .timeClass(tc).color(color).move(move)
+                    .count(d)
+                    .build());
+            }
+        }
+        firstMoveStatRepository.saveAll(toSave);
+    }
+
+    // ======================== Monthly Rating Stat ========================
+
+    private void computeMonthlyRatingStat(Long userId, OAuthPlatForm platform, List<Game> games) {
+        Map<String, Game> map = new HashMap<>();
+        for (Game game : games) {
+            if (game.getTimeClass() == null || game.getPlayedAt() == null || game.getRating() == null) continue;
+            int year = game.getPlayedAt().getYear();
+            int month = game.getPlayedAt().getMonthValue();
+            String key = game.getTimeClass() + ":" + year + ":" + month;
+            map.merge(key, game, (prev, next) ->
+                next.getPlayedAt().isAfter(prev.getPlayedAt()) ? next : prev);
+        }
+
+        List<UserMonthlyRatingStat> stats = new ArrayList<>();
+        for (Map.Entry<String, Game> e : map.entrySet()) {
+            String[] parts = e.getKey().split(":");
+            Game g = e.getValue();
+            stats.add(UserMonthlyRatingStat.builder()
+                .userId(userId).platform(platform)
+                .timeClass(parts[0])
+                .year(Integer.parseInt(parts[1]))
+                .month(Integer.parseInt(parts[2]))
+                .rating(g.getRating())
+                .build());
+        }
+
+        monthlyRatingStatRepository.deleteByUserIdAndPlatform(userId, platform);
+        monthlyRatingStatRepository.saveAll(stats);
+        log.debug("[Aggregator] monthly rating stat saved count={}", stats.size());
+    }
+
+    private void incrementMonthlyRatingStat(Long userId, OAuthPlatForm platform, List<Game> games) {
+        Map<String, Game> delta = new HashMap<>();
+        for (Game g : games) {
+            if (g.getTimeClass() == null || g.getPlayedAt() == null || g.getRating() == null) continue;
+            int year = g.getPlayedAt().getYear();
+            int month = g.getPlayedAt().getMonthValue();
+            String key = g.getTimeClass() + ":" + year + ":" + month;
+            delta.merge(key, g, (prev, next) ->
+                next.getPlayedAt().isAfter(prev.getPlayedAt()) ? next : prev);
+        }
+
+        List<UserMonthlyRatingStat> toSave = new ArrayList<>();
+        for (var entry : delta.entrySet()) {
+            String[] parts = entry.getKey().split(":");
+            String tc = parts[0];
+            int year = Integer.parseInt(parts[1]);
+            int month = Integer.parseInt(parts[2]);
+            Game g = entry.getValue();
+            var existing = monthlyRatingStatRepository
+                .findByUserIdAndPlatformAndTimeClassAndYearAndMonth(userId, platform, tc, year, month);
+            if (existing.isPresent()) {
+                var e = existing.get();
+                toSave.add(UserMonthlyRatingStat.builder()
+                    .id(e.getId()).userId(userId).platform(platform)
+                    .timeClass(tc).year(year).month(month)
+                    .rating(g.getRating())
+                    .build());
+            } else {
+                toSave.add(UserMonthlyRatingStat.builder()
+                    .userId(userId).platform(platform)
+                    .timeClass(tc).year(year).month(month)
+                    .rating(g.getRating())
+                    .build());
+            }
+        }
+        monthlyRatingStatRepository.saveAll(toSave);
+    }
+
+    // ======================== First Move Parser ========================
+
     private String extractFirstMove(String moves, String playerColor, OAuthPlatForm platform) {
         try {
             if (platform == OAuthPlatForm.LICHESS) {
@@ -212,9 +389,7 @@ public class GameStatAggregator {
             ? pgn.substring(movesStart).trim()
             : pgn.trim();
 
-        // {[%clk ...]} 같은 중괄호 주석 제거
         String cleaned = movesSection.replaceAll("\\{[^}]*\\}", "");
-        // "1." 또는 "1..." 형식의 수 번호 제거
         cleaned = cleaned.replaceAll("\\d+\\.{1,3}", "").trim();
         String[] tokens = cleaned.trim().split("\\s+");
 

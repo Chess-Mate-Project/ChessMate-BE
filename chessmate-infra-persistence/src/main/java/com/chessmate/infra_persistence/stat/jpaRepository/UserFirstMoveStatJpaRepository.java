@@ -3,6 +3,7 @@ package com.chessmate.infra_persistence.stat.jpaRepository;
 import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.infra_persistence.stat.entity.UserFirstMoveStatJpaEntity;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,7 @@ public interface UserFirstMoveStatJpaRepository extends JpaRepository<UserFirstM
     @Query("DELETE FROM UserFirstMoveStatJpaEntity s WHERE s.userId = :userId AND s.platform = :platform")
     void deleteByUserIdAndPlatform(@Param("userId") Long userId, @Param("platform") OAuthPlatForm platform);
     List<UserFirstMoveStatJpaEntity> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
+    Optional<UserFirstMoveStatJpaEntity> findByUserIdAndPlatformAndTimeClassAndColorAndMove(Long userId, OAuthPlatForm platform, String timeClass, String color, String move);
 
     List<UserFirstMoveStatJpaEntity> findByUserIdAndPlatformAndTimeClass(Long userId, OAuthPlatForm platform, String timeClass);
 

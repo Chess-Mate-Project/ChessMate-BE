@@ -6,6 +6,7 @@ import com.chessmate.domain.stat.UserColorStatRepository;
 import com.chessmate.infra_persistence.stat.jpaRepository.UserColorStatJpaRepository;
 import com.chessmate.infra_persistence.stat.mapper.UserColorStatMapper;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -35,6 +36,12 @@ public class UserColorStatRepositoryImpl implements UserColorStatRepository {
     public List<UserColorStat> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
         return jpaRepository.findByUserIdAndPlatform(userId, platform).stream()
             .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<UserColorStat> findByUserIdAndPlatformAndTimeClassAndColor(Long userId, OAuthPlatForm platform, String timeClass, String color) {
+        return jpaRepository.findByUserIdAndPlatformAndTimeClassAndColor(userId, platform, timeClass, color)
+            .map(mapper::toDomain);
     }
 
     @Override

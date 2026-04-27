@@ -3,6 +3,7 @@ package com.chessmate.infra_persistence.stat.jpaRepository;
 import com.chessmate.common.dto.OAuthPlatForm;
 import com.chessmate.infra_persistence.stat.entity.UserColorStatJpaEntity;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,7 @@ public interface UserColorStatJpaRepository extends JpaRepository<UserColorStatJ
     @Query("DELETE FROM UserColorStatJpaEntity s WHERE s.userId = :userId AND s.platform = :platform")
     void deleteByUserIdAndPlatform(@Param("userId") Long userId, @Param("platform") OAuthPlatForm platform);
     List<UserColorStatJpaEntity> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform);
+    Optional<UserColorStatJpaEntity> findByUserIdAndPlatformAndTimeClassAndColor(Long userId, OAuthPlatForm platform, String timeClass, String color);
 
     List<UserColorStatJpaEntity> findByUserIdAndPlatformAndTimeClass(Long userId, OAuthPlatForm platform, String timeClass);
 
