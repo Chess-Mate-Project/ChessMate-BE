@@ -25,7 +25,7 @@ import lombok.Setter;
     },
     uniqueConstraints = {
         @UniqueConstraint(name = "uk_monthly_rating_stat",
-            columnNames = {"user_id", "platform", "time_class", "`year`", "`month`"})
+            columnNames = {"user_id", "platform", "time_class", "stat_year", "stat_month"})
     }
 )
 @Getter
@@ -49,10 +49,10 @@ public class UserMonthlyRatingStatJpaEntity {
     @Column(name = "time_class", nullable = false, length = 20)
     private String timeClass;
 
-    @Column(name = "`year`", nullable = false)
+    @Column(name = "stat_year", nullable = false)
     private int year;
 
-    @Column(name = "`month`", nullable = false)
+    @Column(name = "stat_month", nullable = false)
     private int month;
 
     @Column(name = "rating", nullable = false)
