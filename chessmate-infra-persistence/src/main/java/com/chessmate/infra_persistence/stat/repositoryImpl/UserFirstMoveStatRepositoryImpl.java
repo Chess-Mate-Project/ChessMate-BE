@@ -6,6 +6,7 @@ import com.chessmate.domain.stat.UserFirstMoveStatRepository;
 import com.chessmate.infra_persistence.stat.jpaRepository.UserFirstMoveStatJpaRepository;
 import com.chessmate.infra_persistence.stat.mapper.UserFirstMoveStatMapper;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -35,6 +36,12 @@ public class UserFirstMoveStatRepositoryImpl implements UserFirstMoveStatReposit
     public List<UserFirstMoveStat> findByUserIdAndPlatform(Long userId, OAuthPlatForm platform) {
         return jpaRepository.findByUserIdAndPlatform(userId, platform).stream()
             .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<UserFirstMoveStat> findByUserIdAndPlatformAndTimeClassAndColorAndMove(Long userId, OAuthPlatForm platform, String timeClass, String color, String move) {
+        return jpaRepository.findByUserIdAndPlatformAndTimeClassAndColorAndMove(userId, platform, timeClass, color, move)
+            .map(mapper::toDomain);
     }
 
     @Override
