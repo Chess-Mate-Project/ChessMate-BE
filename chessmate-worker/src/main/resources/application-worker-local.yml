@@ -19,3 +19,16 @@ logging:
   level:
     org.springframework.batch: DEBUG
     org.springframework.batch.core: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
