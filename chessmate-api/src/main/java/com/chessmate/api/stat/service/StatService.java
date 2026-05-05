@@ -9,14 +9,14 @@ import com.chessmate.api.stat.dto.StreakResponse;
 import com.chessmate.api.stat.dto.UserPerfStatResponse;
 import com.chessmate.api.stat.dto.YearlyGameStatResponse;
 import com.chessmate.common.dto.OAuthPlatForm;
-import com.chessmate.domain.game.GameRepository;
 import com.chessmate.domain.stat.UserColorStat;
+import com.chessmate.domain.stat.UserMonthlyRatingStat;
 import com.chessmate.domain.stat.UserColorStatRepository;
 import com.chessmate.domain.stat.UserDailyGameStatRepository;
 import com.chessmate.domain.stat.UserFirstMoveStatRepository;
+import com.chessmate.domain.stat.UserMonthlyRatingStatRepository;
 import com.chessmate.domain.stat.UserPerfStatRepository;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -32,11 +32,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class StatService {
 
-    private final GameRepository gameRepository;
     private final UserDailyGameStatRepository dailyStatRepository;
     private final UserColorStatRepository colorStatRepository;
     private final UserFirstMoveStatRepository firstMoveStatRepository;
     private final UserPerfStatRepository perfStatRepository;
+    private final UserMonthlyRatingStatRepository monthlyRatingStatRepository;
 
     private static final DateTimeFormatter YEAR_MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -139,16 +139,23 @@ public class StatService {
      */
     public RatingHistoryResponse getRatingHistory(Long userId, OAuthPlatForm platform, String timeClass) {
         YearMonth now = YearMonth.now();
-        YearMonth oneYearAgo = now.minusMonths(11); // 이번 달 포함 12개월
-        LocalDateTime since = oneYearAgo.atDay(1).atStartOfDay();
+        YearMonth oneYearAgo = now.minusMonths(11);
 
-        List<MonthlyRatingEntry> data = gameRepository
-            .findMonthlyLastRating(userId, platform, timeClass, since)
+        List<MonthlyRatingEntry> data = monthlyRatingStatRepository
+            .findByUserIdAndPlatform(userId, platform)
             .stream()
-            .map(r -> new MonthlyRatingEntry(
-                YearMonth.of(r.year(), r.month()).format(YEAR_MONTH_FORMAT),
-                r.timeClass(),
-                r.rating()
+            .filter(s -> timeClass == null || timeClass.equals(s.getTimeClass()))
+            .filter(s -> {
+                YearMonth ym = YearMonth.of(s.getYear(), s.getMonth());
+                return !ym.isBefore(oneYearAgo) && !ym.isAfter(now);
+            })
+            .sorted(Comparator
+                .comparing((UserMonthlyRatingStat s) -> YearMonth.of(s.getYear(), s.getMonth()))
+                .thenComparing(UserMonthlyRatingStat::getTimeClass))
+            .map(s -> new MonthlyRatingEntry(
+                YearMonth.of(s.getYear(), s.getMonth()).format(YEAR_MONTH_FORMAT),
+                s.getTimeClass(),
+                s.getRating()
             ))
             .toList();
 
