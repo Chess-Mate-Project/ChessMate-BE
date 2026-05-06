@@ -3,12 +3,7 @@ spring:
     activate:
       on-profile: worker-prod
   application:
-    name: ChessMate-batch
-  batch:
-    job:
-      enabled: false
-    jdbc:
-      initialize-schema: never
+    name: ChessMate-worker
 
 chessmate:
   sync:
@@ -18,8 +13,6 @@ chessmate:
 logging:
   level:
     root: INFO
-    org.springframework.batch: WARN
-    org.springframework.batch.core: WARN
 
 management:
   endpoints:

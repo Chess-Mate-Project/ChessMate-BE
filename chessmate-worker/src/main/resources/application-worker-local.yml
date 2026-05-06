@@ -3,12 +3,7 @@ spring:
     activate:
       on-profile: worker-local
   application:
-    name: ChessMate-batch
-  batch:
-    job:
-      enabled: false
-    jdbc:
-      initialize-schema: always
+    name: ChessMate-worker
 
 chessmate:
   sync:
@@ -17,8 +12,6 @@ chessmate:
 
 logging:
   level:
-    org.springframework.batch: DEBUG
-    org.springframework.batch.core: DEBUG
 
 management:
   endpoints:
